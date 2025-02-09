@@ -92,14 +92,14 @@ def new_message_text(name: str, user_id: int, username: str | None) -> str:
     Возвращает текст для нового сообщения.
     """
     user_link = generate_user_link(name, user_id, username)
-    return f"Сообщение от пользователя {user_link}"
+    return f"📨 Уведомление о сообщении\nОт: {user_link}"
 
 def new_message_text_2(name: str, user_id: int, username: str | None) -> str:
     """
     Возвращает альтернативный текст для нового сообщения.
     """
     user_link = generate_user_link(name, user_id, username)
-    return f"📨 Новое сообщение\n━━━━━━━━━━━━━━━\n👤 Получатель: {user_link}"
+    return f"👇 Сообщение для пользователя {user_link} 👇"
 
 def deleted_message_text(name: str, user_id: int, username: str | None, deleted_text: str = "") -> str:
     """
