@@ -183,8 +183,9 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
                         for channel_id in channels:
                             try:
                                 # Сначала пробуем получить сообщение
-                                msg = await event.bot.get_message(
-                                    chat_id=channel_id,
+                                msg = await event.bot.forward_message(
+                                    chat_id=connection.user.id,
+                                    from_chat_id=channel_id,
                                     message_id=message_old.temp_message_id
                                 )
                                 if msg:
