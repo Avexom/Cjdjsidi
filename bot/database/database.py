@@ -387,3 +387,11 @@ async def main():
 if __name__ == "__main__":
     import asyncio
     asyncio.run(main())
+async def reset_channel_indexes():
+    """
+    Сбросить channel_index для всех пользователей на 0
+    """
+    async with get_db_session() as session:
+        await session.execute(
+            update(User).values(channel_index=0)
+        )

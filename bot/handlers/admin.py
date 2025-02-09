@@ -112,3 +112,10 @@ async def set_subscription_price(message: Message):
     except Exception as e:
         logger.error(f"Ошибка при установке цены подписки: {e}")
         await message.answer("Произошла ошибка при установке цены подписки.")
+@admin_router.message(Command("reset_channels"))
+async def reset_channels(message: Message):
+    try:
+        await db.reset_channel_indexes()
+        await message.answer("Индексы каналов успешно сброшены для всех пользователей.")
+    except Exception as e:
+        await message.answer(f"Произошла ошибка при сбросе индексов: {e}")
