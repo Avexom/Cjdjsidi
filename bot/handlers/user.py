@@ -284,10 +284,15 @@ async def close(callback: CallbackQuery):
     await callback.message.delete()
 
 @user_router.message(F.text == "📱 Модули")
-async def modules_menu(message: Message):
+async def modules_menu(message: Message, user: dict):
     """Показывает меню модулей"""
     await message.delete()
-    await message.answer("📱 Доступные модули:", reply_markup=kb.modules_keyboard)
+    text = (
+        "📱 Управление модулями:\n\n"
+        f"🔢 Калькулятор: {'✅ Вкл' if user.calc_enabled else '❌ Выкл'}\n"
+        f"❤️ Love: {'✅ Вкл' if user.love_enabled else '❌ Выкл'}"
+    )
+    await message.answer(text=text, reply_markup=kb.modules_keyboard)
 
 @user_router.callback_query(F.data == "module_calc")
 async def calculator_module(callback: CallbackQuery):

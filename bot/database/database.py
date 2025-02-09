@@ -44,6 +44,8 @@ class User(Base):
     edit_notifications = Column(Boolean, default=True)
     delete_notifications = Column(Boolean, default=True)
     last_message_time = Column(DateTime, default=datetime.now)
+    calc_enabled = Column(Boolean, default=False)
+    love_enabled = Column(Boolean, default=False)
 
 
 class Message(Base):
