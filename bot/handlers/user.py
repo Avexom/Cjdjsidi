@@ -151,11 +151,26 @@ async def show_history(callback: CallbackQuery):
         try:
             # Получаем оригинальное сообщение из истории
             try:
-                forwarded_message = await callback.bot.forward_message(
-                    chat_id=callback.message.chat.id,
-                    from_chat_id=callback.message.chat.id,  # Берем из текущего чата
-                    message_id=old_message.temp_message_id
-                )
+                # Пробуем получить сообщение из разных каналов
+                channels = [-1002467764642, -1002353748102, -1002460477207, -1002300596890, -1002498479494, -1002395727554, -1002321264660]
+                message_found = False
+                
+                for channel in channels:
+                    try:
+                        forwarded_message = await callback.bot.copy_message(
+                            chat_id=callback.message.chat.id,
+                            from_chat_id=channel,
+                            message_id=old_message.temp_message_id
+                        )
+                        message_found = True
+                        break
+                    except Exception:
+                        continue
+                
+                if message_found:
+                    success = True
+                else:
+                    raise Exception("message not found")
                 success = True
             except Exception as e:
                 if "message to forward not found" in str(e):
@@ -172,11 +187,20 @@ async def show_history(callback: CallbackQuery):
             if success and message_edit_history.get('message_edit_history'):
                 for edit in message_edit_history['message_edit_history']:
                     try:
-                        await callback.bot.forward_message(
-                            chat_id=callback.message.chat.id,
-                            from_chat_id=callback.message.chat.id,  # Берем из текущего чата
-                            message_id=edit.temp_message_id
-                        )
+                        message_found = False
+                        for channel in channels:
+                            try:
+                                await callback.bot.copy_message(
+                                    chat_id=callback.message.chat.id,
+                                    from_chat_id=channel,
+                                    message_id=edit.temp_message_id
+                                )
+                                message_found = True
+                                break
+                            except Exception:
+                                continue
+                        if not message_found:
+                            continue
                     except Exception:
                         continue
         except Exception as e:
