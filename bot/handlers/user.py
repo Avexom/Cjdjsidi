@@ -348,19 +348,24 @@ async def show_top(message: Message):
     await message.delete()
     top_users = await db.get_top_users(10)
 
-    text = "🏆 Топ-10 пользователей:\n\n"
+    medals = ["🥇", "🥈", "🥉"]
+    text = "🏆 Топ-10 самых активных пользователей:\n\n"
     for i, user in enumerate(top_users, 1):
         telegram_id = user['telegram_id']
         username = user.get('username', '')
+        first_name = user.get('first_name', '')
+        display_name = first_name if first_name else (username if username else f"user{telegram_id}")
+        
+        rank = medals[i-1] if i <= 3 else f"{i}."
         if username:
-            user_link = f"<a href='t.me/{username}'>{username}</a>"
+            user_link = f"<a href='t.me/{username}'>{display_name}</a>"
         else:
-            user_link = f"<a href='tg://user?id={telegram_id}'>user{telegram_id}</a>"
+            user_link = f"<a href='tg://user?id={telegram_id}'>{display_name}</a>"
             
-        text += (f"{i}. {user_link}\n"
-                f"📝 Сообщений: {user['messages']}\n"
-                f"✏️ Изменено: {user['edited']}\n"
-                f"🗑 Удалено: {user['deleted']}\n\n")
+        text += (f"{rank} {user_link}\n"
+                f"├ 📝 Сообщений: {user['messages']}\n"
+                f"├ ✏️ Изменено: {user['edited']}\n"
+                f"└ 🗑 Удалено: {user['deleted']}\n\n")
 
     await message.answer(text=text, reply_markup=kb.close_keyboard, parse_mode="HTML")
 
