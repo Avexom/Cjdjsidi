@@ -251,9 +251,8 @@ async def functions_menu(message: Message, user: dict):
 @user_router.callback_query(F.data.startswith("toggle_module_"))
 async def toggle_module_handler(callback: CallbackQuery):
     module = callback.data.replace("toggle_module_", "")
-    new_state = await db.toggle_module(callback.from_user.id, module)
-    # Получаем обновленные данные пользователя после изменения
     user = await db.get_user(telegram_id=callback.from_user.id)
+    new_state = await db.toggle_module(callback.from_user.id, module)
     
     text = (
         "📱 Управление модулями:\n\n"
@@ -261,8 +260,7 @@ async def toggle_module_handler(callback: CallbackQuery):
         f"❤️ Love: {'✅ Вкл' if user.love_enabled else '❌ Выкл'}"
     )
     
-    if callback.message.text != text:
-        await callback.message.edit_text(text=text, reply_markup=kb.modules_keyboard)
+    await callback.message.edit_text(text=text, reply_markup=kb.modules_keyboard)
     await callback.answer(f"Модуль {'включен ✅' if new_state else 'выключен ❌'}")
 
 @user_router.callback_query(F.data.startswith("toggle_"))
