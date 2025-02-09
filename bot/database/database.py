@@ -644,3 +644,30 @@ async def get_recent_logs(limit: int = 50) -> List[Dict[str, Any]]:
             })
             
     return logs[:limit]
+async def get_user_stats(telegram_id: int) -> Dict[str, Any]:
+    """Получение статистики пользователя"""
+    async with get_db_session() as session:
+        user = await session.scalar(
+            select(User).where(User.telegram_id == telegram_id)
+        )
+        return {
+            "sent_messages": user.active_messages_count,
+            "edited_messages": user.edited_messages_count,
+            "deleted_messages": user.deleted_messages_count,
+            "registration_date": user.created_at.strftime("%d.%m.%Y")
+        }
+
+async def toggle_notification(telegram_id: int, notification_type: str) -> bool:
+    """Переключение состояния уведомлений"""
+    async with get_db_session() as session:
+        user = await session.scalar(
+            select(User).where(User.telegram_id == telegram_id)
+        )
+        current_settings = getattr(user, f"{notification_type}_notifications", False)
+        await session.execute(
+            update(User)
+            .where(User.telegram_id == telegram_id)
+            .values(**{f"{notification_type}_notifications": not current_settings})
+        )
+        await session.commit()
+        return not current_settings

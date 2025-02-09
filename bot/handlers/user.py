@@ -227,3 +227,55 @@ async def close(callback: CallbackQuery):
 async def test(message: Message):
     await db.create_subscription(user_telegram_id=message.from_user.id, end_date=datetime.now() + timedelta(days=30))
     await message.answer(text="Подписка создана")
+@user_router.message(F.text == "📊 Статистика")
+async def show_user_stats(message: Message, user: dict):
+    """Показывает статистику пользователя"""
+    await message.delete()
+    stats = await db.get_user_stats(user.telegram_id)
+    text = (
+        f"📊 Ваша статистика:\n\n"
+        f"Отправлено сообщений: {stats['sent_messages']}\n"
+        f"Изменено сообщений: {stats['edited_messages']}\n"
+        f"Удалено сообщений: {stats['deleted_messages']}\n"
+        f"Дата регистрации: {stats['registration_date']}"
+    )
+    await message.answer(text=text, reply_markup=kb.close_keyboard)
+
+@user_router.message(F.text == "⚙️ Настройки")
+async def settings(message: Message):
+    """Показывает меню настроек"""
+    await message.delete()
+    text = "⚙️ Настройки:\n\nВыберите, что хотите настроить:"
+    await message.answer(text=text, reply_markup=kb.settings_keyboard)
+
+@user_router.message(F.text == "❓ Помощь")
+async def help_command(message: Message):
+    """Показывает справку по командам"""
+    await message.delete()
+    text = (
+        "🤖 Доступные команды:\n\n"
+        "👤 Профиль - информация о вашем профиле\n"
+        "📊 Статистика - ваша статистика\n"
+        "⚙️ Настройки - настройки бота\n"
+        "❓ Помощь - эта справка\n"
+        "💳 Купить подписку - приобрести подписку"
+    )
+    await message.answer(text=text, reply_markup=kb.close_keyboard)
+
+@user_router.callback_query(F.data == "notifications_settings")
+async def notification_settings(callback: CallbackQuery):
+    """Настройки уведомлений"""
+    await callback.answer()
+    text = (
+        "🔔 Настройки уведомлений:\n\n"
+        "Выберите, какие уведомления хотите получать:"
+    )
+    await callback.message.edit_text(text=text, reply_markup=kb.notifications_keyboard)
+
+@user_router.callback_query(F.data.startswith("toggle_notification_"))
+async def toggle_notification(callback: CallbackQuery):
+    """Включение/выключение определенного типа уведомлений"""
+    notification_type = callback.data.split("_")[-1]
+    current_state = await db.toggle_notification(callback.from_user.id, notification_type)
+    await callback.answer(f"Уведомления {'включены' if current_state else 'выключены'}")
+    await notification_settings(callback)
