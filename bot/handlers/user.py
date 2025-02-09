@@ -78,7 +78,7 @@ async def buy_subscription(message: Message, user: dict):
     await message.delete()
     subscription = await db.get_subscription(user_telegram_id=message.from_user.id)
     if subscription:
-        await message.answer(text=texts.subscription_buy_already_active, reply_markup=kb.close_keyboard)
+        await message.answer(text=texts.SUBSCRIPTION_BUY_ALREADY_ACTIVE, reply_markup=kb.close_keyboard)
     else:
         me = await message.bot.me()
         price = await get_cached_subscription_price()
