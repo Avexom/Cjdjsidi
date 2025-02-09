@@ -11,7 +11,7 @@ from async_lru import alru_cache  # Используем async_lru для кэш
 import bot.database.database as db
 import bot.assets.texts as texts
 import bot.keyboards.user as kb
-from config import HISTORY_GROUP_ID
+#from config import HISTORY_GROUP_ID # Removed
 from bot.services.payments import create_invoice, check_payment, delete_invoice
 
 # Настройка логирования
@@ -140,10 +140,10 @@ async def show_history(callback: CallbackQuery):
         old_message = message_edit_history['old_message']
         await callback.message.answer(text=f"История редактирования сообщения {old_message.message_id}", reply_markup=kb.close_keyboard)
 
-        await callback.bot.copy_message(chat_id=callback.message.chat.id, from_chat_id=HISTORY_GROUP_ID, message_id=old_message.temp_message_id, reply_markup=kb.close_keyboard)
+        await callback.bot.copy_message(chat_id=callback.message.chat.id, from_chat_id=old_message.chat_id, message_id=old_message.temp_message_id, reply_markup=kb.close_keyboard)
 
         for edit in message_edit_history['message_edit_history']:
-            await callback.bot.copy_message(chat_id=callback.message.chat.id, from_chat_id=HISTORY_GROUP_ID, message_id=edit.temp_message_id, reply_markup=kb.close_keyboard)
+            await callback.bot.copy_message(chat_id=callback.message.chat.id, from_chat_id=edit.chat_id, message_id=edit.temp_message_id, reply_markup=kb.close_keyboard)
     except Exception as e:
         logger.error(f"Ошибка при показе истории: {e}")
         await callback.answer(text="Произошла ошибка при показе истории.")
