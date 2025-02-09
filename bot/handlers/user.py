@@ -342,48 +342,7 @@ async def love_module(callback: CallbackQuery):
 async def test(message: Message):
     await db.create_subscription(user_telegram_id=message.from_user.id, end_date=datetime.now() + timedelta(days=30))
     await message.answer(text="Подписка создана")
-@user_router.message(F.text == "🏆 Топ")
-async def show_top(message: Message):
-    """Показывает топ пользователей"""
-    await message.delete()
-    top_users = await db.get_top_users(10)
 
-    medals = ["🥇", "🥈", "🥉"]
-    text = "🏆 Топ-10 самых активных пользователей:\n\n"
-    for i, user in enumerate(top_users, 1):
-        try:
-            user_info = await message.bot.get_chat(user['telegram_id'])
-            if user_info.first_name:
-                display_name = user_info.first_name
-                if user_info.last_name:
-                    display_name += f" {user_info.last_name}"
-            else:
-                display_name = user_info.title if hasattr(user_info, 'title') else user_info.username
-            
-            username = user_info.username
-        except:
-        try:
-            chat_member = await message.bot.get_chat_member(message.chat.id, user['telegram_id'])
-            display_name = chat_member.user.first_name
-            if chat_member.user.last_name:
-                display_name += f" {chat_member.user.last_name}"
-            username = chat_member.user.username
-        except:
-            display_name = f"Участник {user['telegram_id']}"
-            username = None
-            
-    rank = medals[i-1] if i <= 3 else f"{i}."
-    if username:
-        user_link = f"<a href='t.me/{username}'>{display_name}</a>"
-    else:
-        user_link = f"<a href='tg://user?id={user['telegram_id']}'>{display_name}</a>"
-            
-        text += (f"{rank} {user_link}\n"
-                f"├ 📝 Сообщений: {user['messages']}\n"
-                f"├ ✏️ Изменено: {user['edited']}\n"
-                f"└ 🗑 Удалено: {user['deleted']}\n\n")
-
-    await message.answer(text=text, reply_markup=kb.close_keyboard, parse_mode="HTML")
 
 @user_router.message(F.text == "📊 Статистика")
 async def show_user_stats(message: Message, user: dict):
