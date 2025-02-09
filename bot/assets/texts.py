@@ -107,13 +107,11 @@ def deleted_message_text(name: str, user_id: int, username: str | None, deleted_
     """
     user_link = generate_user_link(name, user_id, username)
     current_time = datetime.now().strftime("%H:%M:%S")
-    return f"""Шпион | Spy 🐾| Слежка:
-📨 Сообщение
-━━━━━━━━━━━━━━━
-👤 Получатель: {user_link}
-📝 Содержание:{deleted_text}
+    return f"""🗑 {user_link} удалил для тебя сообщение
 
-🗑 {user_link} удалил сообщение
+Удаленное сообщение:
+{deleted_text}
+
 ⏰ Время удаления: {current_time}"""
 
 def edited_message_text(name: str, user_id: int, username: str | None) -> str:
