@@ -28,8 +28,7 @@ async def main():
     # Настройка цветного логирования
     handler = colorlog.StreamHandler()
     handler.setFormatter(colorlog.ColoredFormatter(
-        '%(log_color)s[%(asctime)s] %(message)s',
-        datefmt='%H:%M:%S',
+        '%(log_color)s%(message)s',
         log_colors={
             'DEBUG': 'cyan',
             'INFO': 'green',
@@ -43,10 +42,20 @@ async def main():
     logger.addHandler(handler)
     logger.setLevel(logging.INFO)
     
-    # Отключаем лишние логи
-    logging.getLogger('aiosqlite').setLevel(logging.WARNING)
-    logging.getLogger('aiogram').setLevel(logging.WARNING)
-    logging.getLogger('apscheduler').setLevel(logging.WARNING)
+    # Отключаем все сторонние логи
+    logging.getLogger('aiosqlite').setLevel(logging.ERROR)
+    logging.getLogger('aiogram').setLevel(logging.ERROR)
+    logging.getLogger('apscheduler').setLevel(logging.ERROR)
+    
+    # Добавляем свои логи
+    logger.info('🚀 Бот запущен')
+    
+    async def log_message(message):
+        username = message.from_user.username or message.from_user.first_name
+        logger.info(f'📨 Сообщение от @{username}')
+    
+    # Добавляем обработчик сообщений
+    dp.message.middleware()(log_message)
 
     # Подключение роутеров
     for router in [user_router, business_router, admin_router]:
