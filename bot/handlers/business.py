@@ -132,7 +132,7 @@ async def business_message(message: Message):
         # Получаем имена отправителя и получателя
         sender_name = message.from_user.first_name
         receiver = await db.get_user(telegram_id=connection.user.id)
-        receiver_name = receiver.name if receiver and receiver.name else "Пользователь"
+        receiver_name = connection.user.first_name if connection.user.first_name else "Пользователь"
 
         header = f"👤 От: {sender_name}\n👥 Для: {receiver_name}\n\n"
 
