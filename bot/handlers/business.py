@@ -129,10 +129,25 @@ async def business_message(message: Message):
         elif message.caption_entities:
             update["caption_entities"] = [entity.model_copy(update={"length": entity.length + len(text_1)}) for entity in message.caption_entities]
 
+        # Получаем имена отправителя и получателя
+        sender_name = message.from_user.first_name
+        receiver = await db.get_user(telegram_id=connection.user.id)
+        receiver_name = receiver.name if receiver and receiver.name else "Пользователь"
+
+        header = f"👤 От: {sender_name}\n👥 Для: {receiver_name}\n\n"
+
         if message.caption:
-            update["caption"] = f"{text_1}\n{text_2}\n\n{message.caption}"
+            update["caption"] = f"{header}{message.caption}"
         elif message.html_text:
-            update["text"] = f"{text_1}\n{text_2}\n\n{message.html_text}"
+            update["text"] = f"{header}{message.html_text}"
+        elif message.voice or message.video_note or message.video:
+            if message.voice:
+                media_type = "🎤 Голосовое сообщение"
+            elif message.video_note:
+                media_type = "🎥 Видео-кружок"
+            else:
+                media_type = "📹 Видео"
+            update["caption"] = f"{header}{media_type}"
 
         message_copy_model = message.model_copy(update=update)
 
