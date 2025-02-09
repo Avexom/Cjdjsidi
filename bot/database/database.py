@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from typing import Optional, List, Dict, Any
 import logging
 
+from aiogram import Bot
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy import (
