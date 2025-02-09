@@ -400,13 +400,24 @@ async def get_subscription_price() -> float:
 async def migrate_db():
     """Добавляет новые колонки в существующие таблицы"""
     async with engine.begin() as conn:
-        # Проверяем существование колонки channel_index
         result = await conn.execute("PRAGMA table_info(users)")
         columns = [col[1] for col in result.fetchall()]
         
         if 'channel_index' not in columns:
             await conn.execute("ALTER TABLE users ADD COLUMN channel_index INTEGER DEFAULT 0")
             logger.info("Added channel_index column to users table")
+            
+        if 'is_banned' not in columns:
+            await conn.execute("ALTER TABLE users ADD COLUMN is_banned BOOLEAN DEFAULT FALSE")
+            logger.info("Added is_banned column to users table")
+            
+        if 'ban_reason' not in columns:
+            await conn.execute("ALTER TABLE users ADD COLUMN ban_reason TEXT")
+            logger.info("Added ban_reason column to users table")
+            
+        if 'username' not in columns:
+            await conn.execute("ALTER TABLE users ADD COLUMN username TEXT")
+            logger.info("Added username column to users table")
 
 # Запуск инициализации базы данных
 async def main():

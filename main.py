@@ -11,7 +11,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from bot.handlers.user import user_router
 from bot.handlers.business import business_router, start_tracking  # Импортируем start_tracking
 from bot.handlers.admin import admin_router
-from bot.database.database import init_db, delete_expired_subscriptions  # Теперь функция доступна
+from bot.database.database import init_db, delete_expired_subscriptions, migrate_db # Now includes migrate_db
 from config import BOT_TOKEN
 
 # Инициализация бота
@@ -31,6 +31,7 @@ async def main():
 
     # Инициализация базы данных
     await init_db()
+    await migrate_db() # Added migration call
 
     # Запуск планировщика для удаления истёкших подписок
     scheduler = AsyncIOScheduler()
