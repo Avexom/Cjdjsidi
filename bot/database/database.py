@@ -447,6 +447,19 @@ async def update_user_channel_index(telegram_id: int, channel_index: int):
 
 async def increment_messages_count(from_user_id: int, to_user_id: int):
     """
+
+async def get_user_by_username(username: str) -> Optional[User]:
+    """
+    Получить пользователя по его username.
+    
+    :param username: Username пользователя
+    :return: Объект User или None, если пользователь не найден
+    """
+    async with get_db_session() as session:
+        return await session.scalar(
+            select(User).where(User.username == username)
+        )
+
     Увеличить счетчик сообщений между пользователями
     """
     async with get_db_session() as session:
