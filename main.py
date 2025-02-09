@@ -9,7 +9,7 @@ from aiogram.methods import DeleteWebhook
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from bot.handlers.user import user_router
-from bot.handlers.business import business_router, start_tracking  # Импортируем start_tracking
+from bot.handlers.business import business_router
 from bot.handlers.admin import admin_router
 from bot.database.database import init_db, delete_expired_subscriptions, migrate_db # Now includes migrate_db
 from config import BOT_TOKEN
@@ -37,9 +37,6 @@ async def main():
     scheduler = AsyncIOScheduler()
     scheduler.add_job(delete_expired_subscriptions, 'interval', hours=1)
     scheduler.start()
-
-    # Запуск отслеживания статуса пользователя для уведомлений "Онлайн+"
-    await start_tracking(bot)
 
     # Удаление вебхука и запуск бота
     await bot(DeleteWebhook(drop_pending_updates=True))
