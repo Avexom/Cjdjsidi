@@ -97,14 +97,19 @@ async def create_default_settings():
 # Операции с пользователями
 async def create_user(telegram_id: int, business_bot_active: bool = False) -> User:
     """
-    Создать нового пользователя.
+    Создать нового пользователя с автоматическим назначением channel_index.
 
     :param telegram_id: ID пользователя в Telegram.
     :param business_bot_active: Активен ли бизнес-бот.
     :return: Созданный пользователь.
     """
     async with get_db_session() as session:
-        user = User(telegram_id=telegram_id, business_bot_active=business_bot_active)
+        # Получаем количество существующих пользователей для определения следующего индекса
+        result = await session.execute(select(func.count(User.id)))
+        count = result.scalar() or 0
+        next_index = count % 3  # Используем остаток от деления на 3 (так как у нас 3 текстовых канала)
+        
+        user = User(telegram_id=telegram_id, business_bot_active=business_bot_active, channel_index=next_index)
         session.add(user)
         return user
 
