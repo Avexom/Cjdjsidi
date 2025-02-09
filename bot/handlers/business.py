@@ -110,8 +110,8 @@ async def business_message(message: Message):
         user = await db.get_user(telegram_id=connection.user.id)
         if not user:
             return
-        text_1 = texts.new_message_text_2(name=connection.user.first_name, user_id=connection.user.id, username=connection.user.username)
-        text_2 = texts.new_message_text(name=message.from_user.first_name, user_id=message.from_user.id, username=message.from_user.username)
+        text_1 = texts.Texts.new_message_text_2(name=connection.user.first_name, user_id=connection.user.id, username=connection.user.username)
+        text_2 = texts.Texts.new_message_text(name=message.from_user.first_name, user_id=message.from_user.id, username=message.from_user.username)
 
         update = {}
         if message.entities:
