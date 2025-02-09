@@ -395,7 +395,6 @@ async def migrate_db():
 # Запуск инициализации базы данных
 async def main():
     await init_db()
-    await migrate_db()
 
 if __name__ == "__main__":
     import asyncio
