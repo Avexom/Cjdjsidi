@@ -270,18 +270,23 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
                                     continue
 
                             if not message_found:
-                                deleted_text = "\n⚠️ Оригинальное сообщение недоступно"
+                                # Если сообщение не найдено, отправляем только уведомление об удалении
+                                text = f"🗑 {user_link} удалил для тебя сообщение\n⏰ Время удаления: {current_time}\n⚠️ Оригинальное сообщение недоступно"
+                                await event.bot.send_message(
+                                    chat_id=connection.user.id,
+                                    text=text,
+                                    parse_mode=ParseMode.HTML
+                                )
 
                         except Exception as e:
                             logger.error(f"Не удалось переслать удаленное сообщение: {e}")
-                            deleted_text = ""
-
-                    text = f"🗑 {user_link} удалил для тебя сообщение\n⏰ Время удаления: {current_time}{deleted_text}"
-                    await event.bot.send_message(
-                        chat_id=connection.user.id,
-                        text=text,
-                        parse_mode=ParseMode.HTML
-                    )
+                            # В случае ошибки отправляем базовое уведомление
+                            text = f"🗑 {user_link} удалил для тебя сообщение\n⏰ Время удаления: {current_time}"
+                            await event.bot.send_message(
+                                chat_id=connection.user.id,
+                                text=text,
+                                parse_mode=ParseMode.HTML
+                            )
     except Exception as e:
         logger.error(f"Ошибка при обработке удаленных сообщений: {e}")
 
