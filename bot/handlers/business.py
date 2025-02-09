@@ -182,15 +182,17 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
                         # Пробуем получить сообщение из всех каналов
                         for channel_id in channels:
                             try:
-                                msg = await event.bot.forward_message(
+                                msg = await event.bot.copy_message(
                                     chat_id=event.bot.id,
                                     from_chat_id=channel_id,
                                     message_id=message_old.temp_message_id
                                 )
                                 if msg:
                                     if msg.text:
-                                        deleted_text = f"\n\nТут должно быть сообщение которое удалили\n<i>{msg.text}</i>"
-                                    # Удаляем пересланное сообщение
+                                        deleted_text = f"\n\n💬 {msg.text}"
+                                    elif msg.caption:
+                                        deleted_text = f"\n\n💬 {msg.caption}"
+                                    # Удаляем скопированное сообщение
                                     await event.bot.delete_message(chat_id=event.bot.id, message_id=msg.message_id)
                                     break
                             except Exception:
