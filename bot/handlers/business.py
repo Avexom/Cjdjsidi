@@ -256,8 +256,9 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
                     user_link = f'<a href="tg://user?id={event.chat.id}">{username}</a>'
                     
                     try:
-                        # Отправляем только уведомление о удалении
-                        text = f"🗑 {user_link} удалил сообщение\n⏰ Время удаления: {current_time}"
+                        # Получаем содержимое удаленного сообщения
+                        deleted_text = f"\n📝 Текст сообщения: {message_old.text}" if message_old.text else ""
+                        text = f"🗑 {user_link} удалил сообщение{deleted_text}\n⏰ Время удаления: {current_time}"
                         await event.bot.send_message(
                             chat_id=connection.user.id,
                             text=text,
