@@ -461,7 +461,8 @@ async def migrate_db():
             logger.info("Added delete_notifications column to users table")
 
         if 'last_message_time' not in columns:
-            await conn.execute(text("ALTER TABLE users ADD COLUMN last_message_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP"))
+            await conn.execute(text("ALTER TABLE users ADD COLUMN last_message_time TIMESTAMP"))
+            await conn.execute(text("UPDATE users SET last_message_time = CURRENT_TIMESTAMP"))
             logger.info("Added last_message_time column to users table")
 
 
