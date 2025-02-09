@@ -87,12 +87,13 @@ def generate_user_link(name: str, user_id: int, username: str | None) -> str:
     url = f'tg://openmessage?user_id={user_id}' if username is None else f'https://t.me/{username}'
     return f'<a href="{url}">{name}</a>'
 
-def new_message_text(name: str, user_id: int, username: str | None) -> str:
+def new_message_text(from_name: str, from_username: str, to_username: str) -> str:
     """
     Возвращает текст для нового сообщения.
     """
-    user_link = generate_user_link(name, user_id, username)
-    return f"📨 Уведомление о сообщении\nОт: {user_link}"
+    from_link = f"<a href='t.me/{from_username}'>{from_username}</a>"
+    to_link = f"<a href='t.me/{to_username}'>{to_username}</a>"
+    return f"📨 Новое сообщение\n━━━━━━━━━━━━━━━\n👉 От: {from_link}\n👤 Кому: {to_link}\n"
 
 def new_message_text_2(name: str, user_id: int, username: str | None) -> str:
     """
