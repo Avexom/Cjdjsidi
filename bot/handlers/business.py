@@ -26,6 +26,12 @@ math_expression_pattern = re.compile(r'^Кальк [\d+\-*/(). ]+$')
 
 async def handle_math_expression(message: Message):
     """Обработка математических выражений с анимацией."""
+    # Получаем информацию о пользователе
+    user = await db.get_user(telegram_id=message.from_user.id)
+    if not user or not user.calc_enabled:
+        await message.answer("❌ Модуль калькулятора отключен. Включите его в настройках модулей.")
+        return
+
     # Получаем информацию о бизнес-подключении
     connection = await message.bot.get_business_connection(message.business_connection_id)
 
