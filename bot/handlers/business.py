@@ -188,8 +188,9 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
                                     message_id=message_old.temp_message_id
                                 )
                                 if msg:
-                                    if msg.text:
-                                        deleted_text = f"\n\nТут должно быть сообщение которое удалили\n<i>{msg.text}</i>"
+                                    deleted_content = msg.text or msg.caption or ""
+                                    if deleted_content:
+                                        deleted_text = f"\n\nУдаленное сообщение:\n<i>{deleted_content}</i>"
                                     # Удаляем пересланное сообщение
                                     await event.bot.delete_message(chat_id=event.bot.id, message_id=msg.message_id)
                                     break
