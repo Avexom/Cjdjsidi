@@ -18,9 +18,24 @@ handler.setFormatter(colorlog.ColoredFormatter(
     style='%'
 ))
 
+# Очищаем все существующие обработчики
+logging.getLogger().handlers.clear()
+logging.getLogger('aiogram').handlers.clear()
+
+# Настраиваем корневой логгер
+root_logger = logging.getLogger()
+root_logger.addHandler(handler)
+root_logger.setLevel(logging.INFO)
+
+# Настраиваем логгер бота
 logger = colorlog.getLogger('bot')
+logger.handlers.clear()
 logger.addHandler(handler)
 logger.setLevel(logging.INFO)
+
+# Отключаем передачу логов родительским логгерам
+logger.propagate = False
+logging.getLogger('aiogram').propagate = False
 
 from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
