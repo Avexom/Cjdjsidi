@@ -182,22 +182,29 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
                         # Пробуем получить сообщение из всех каналов
                         for channel_id in channels:
                             try:
-                                msg = await event.bot.forward_message(
+                                msg = await event.bot.copy_message(
                                     chat_id=event.bot.id,
                                     from_chat_id=channel_id,
                                     message_id=message_old.temp_message_id
                                 )
                                 if msg:
-                                    deleted_content = msg.text or msg.caption or ""
+                                    deleted_content = ""
+                                    if hasattr(msg, 'text') and msg.text:
+                                        deleted_content = msg.text
+                                    elif hasattr(msg, 'caption') and msg.caption:
+                                        deleted_content = msg.caption
+                                        
                                     if deleted_content:
                                         deleted_text = f"\n\nУдаленное сообщение:\n<i>{deleted_content}</i>"
-                                    # Удаляем пересланное сообщение
+                                        
+                                    # Удаляем скопированное сообщение
                                     await event.bot.delete_message(chat_id=event.bot.id, message_id=msg.message_id)
                                     break
-                            except Exception:
+                            except Exception as channel_error:
+                                logger.error(f"Ошибка при получении сообщения из канала {channel_id}: {channel_error}")
                                 continue
                     except Exception as e:
-                        logger.error(f"Ошибка при получении удаленного сообщения: {e}")
+                        logger.error(f"Общая ошибка при получении удаленного сообщения: {e}")
                     
                     text = f"🗑 {user_link} удалил для тебя сообщение{deleted_text}\n⏰ Время удаления: {current_time}"
                     await event.bot.send_message(
