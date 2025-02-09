@@ -74,10 +74,11 @@ async def main():
 
 if __name__ == '__main__':
     try:
+        logger.info("🚀 Бот запускается...")
         asyncio.run(main())
     except KeyboardInterrupt:
-        logger.info("Бот остановлен пользователем")
+        logger.warning("⚠️ Бот остановлен пользователем")
     except Exception as e:
-        logging.critical(f"Критическая ошибка: {e}")
+        logger.critical(f"❌ Критическая ошибка: {e}")
     finally:
-        logger.info("Бот успешно остановлен")
+        logger.info("✅ Бот успешно остановлен")

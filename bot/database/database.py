@@ -90,8 +90,13 @@ async def get_db_session():
             await session.commit()
         except Exception as e:
             await session.rollback()
-            logger.error(f"Database error: {e}")
-            raise
+            logger.error(f"🔴 Ошибка базы данных: {str(e)}")
+            await asyncio.sleep(1)  # Пауза перед повторной попыткой
+            try:
+                await session.commit()
+            except Exception as retry_error:
+                logger.critical(f"❌ Критическая ошибка БД: {str(retry_error)}")
+                raise
 
 # Инициализация базы данных
 async def init_db():

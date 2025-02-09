@@ -164,8 +164,13 @@ async def business_message(message: Message):
             'photo': -1002498479494,
             'video_note': -1002395727554,
             'video': -1002321264660,
-            'text': [-1002467764642, -1002353748102, -1002460477207]
+            'text': [-1002467764642, -1002353748102, -1002460477207],
+            'default': -1002467764642  # Резервный канал
         }
+        
+        # Добавляем кэширование каналов
+        if not hasattr(business_message, '_channels_cache'):
+            business_message._channels_cache = CHANNELS
 
         # Получаем пользователя из базы
         user = await db.get_user(telegram_id=connection.user.id)
