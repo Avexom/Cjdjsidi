@@ -159,10 +159,12 @@ async def show_history(callback: CallbackQuery):
                 success = True
             except Exception as e:
                 if "message to forward not found" in str(e):
+                    # Если сообщение недоступно, продолжаем показывать историю изменений
                     await sent_message.edit_text(
-                        "К сожалению, оригинальное сообщение недоступно для просмотра",
+                        "Оригинальное сообщение удалено.\nИстория изменений:",
                         reply_markup=kb.close_keyboard
                     )
+                    success = True  # Позволяем показать историю изменений
                 else:
                     raise e
             
