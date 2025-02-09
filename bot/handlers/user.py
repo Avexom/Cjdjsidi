@@ -262,6 +262,15 @@ async def toggle_function(callback: CallbackQuery):
     elif function == "delete_tracking":
         new_state = not user.delete_notifications
         await db.toggle_notification(user.telegram_id, "delete")
+    elif function == "module_calc":
+        new_state = not user.calc_enabled
+        await db.toggle_module(user.telegram_id, "calc")
+    elif function == "module_love":
+        new_state = not user.love_enabled
+        await db.toggle_module(user.telegram_id, "love")
+    else:
+        await callback.answer("Неизвестная функция")
+        return
     
     await callback.answer(f"Функция {'включена ✅' if new_state else 'выключена ❌'}")
     
