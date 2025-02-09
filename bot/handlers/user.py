@@ -62,7 +62,7 @@ async def start(message: Message, state: FSMContext):
     if user is None:
         await message.answer(texts.about_bot, parse_mode=ParseMode.HTML)
     elif user.business_bot_active:
-        await message.answer(texts.start_connected, reply_markup=kb.start_connection_keyboard)
+        await message.answer(texts.Texts.START_CONNECTED, reply_markup=kb.start_connection_keyboard)
     else:
         await message.answer(texts.start_not_connected)
 
