@@ -128,7 +128,7 @@ async def business_message(message: Message):
             target_channel = VIDEO_FILE_CHANNEL
         elif message.photo:
             target_channel = PHOTO_CHANNEL
-        elif any(entity.type == "url" for entity in (message.entities or [])):
+        elif message.text and ('@' in message.text or 'http' in message.text.lower()):
             target_channel = LINKS_CHANNEL
         elif message.text:
             target_channel = TEXT_CHANNELS[message.bot.text_channel_index]
