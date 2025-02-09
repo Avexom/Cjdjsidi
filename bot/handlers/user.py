@@ -248,6 +248,21 @@ async def functions_menu(message: Message, user: dict):
         except Exception as e:
             functions_menu.menu_message = await message.answer(text=new_text, reply_markup=kb.functions_keyboard)
 
+@user_router.callback_query(F.data.startswith("toggle_module_"))
+async def toggle_module_handler(callback: CallbackQuery):
+    module = callback.data.replace("toggle_module_", "")
+    user = await db.get_user(telegram_id=callback.from_user.id)
+    new_state = await db.toggle_module(callback.from_user.id, module)
+    
+    text = (
+        "📱 Управление модулями:\n\n"
+        f"🔢 Калькулятор: {'✅ Вкл' if user.calc_enabled else '❌ Выкл'}\n"
+        f"❤️ Love: {'✅ Вкл' if user.love_enabled else '❌ Выкл'}"
+    )
+    
+    await callback.message.edit_text(text=text, reply_markup=kb.modules_keyboard)
+    await callback.answer(f"Модуль {'включен ✅' if new_state else 'выключен ❌'}")
+
 @user_router.callback_query(F.data.startswith("toggle_"))
 async def toggle_function(callback: CallbackQuery):
     function = callback.data.split("_", 1)[1]
@@ -262,12 +277,6 @@ async def toggle_function(callback: CallbackQuery):
     elif function == "delete_tracking":
         new_state = not user.delete_notifications
         await db.toggle_notification(user.telegram_id, "delete")
-    elif function == "module_calc":
-        new_state = not user.calc_enabled
-        await db.toggle_module(user.telegram_id, "calc")
-    elif function == "module_love":
-        new_state = not user.love_enabled
-        await db.toggle_module(user.telegram_id, "love")
     else:
         await callback.answer("Неизвестная функция")
         return
