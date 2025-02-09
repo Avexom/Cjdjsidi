@@ -447,6 +447,35 @@ async def update_user_channel_index(telegram_id: int, channel_index: int):
 
 async def increment_messages_count(from_user_id: int, to_user_id: int):
     """
+    Увеличить счетчик сообщений между пользователями
+    """
+    async with get_db_session() as session:
+        stats = await session.scalar(
+            select(UserMessageStats).where(
+                and_(
+                    UserMessageStats.from_user_id == from_user_id,
+                    UserMessageStats.to_user_id == to_user_id
+                )
+            )
+        )
+        if stats:
+            await session.execute(
+                update(UserMessageStats)
+                .where(
+                    and_(
+                        UserMessageStats.from_user_id == from_user_id,
+                        UserMessageStats.to_user_id == to_user_id
+                    )
+                )
+                .values(messages_count=UserMessageStats.messages_count + 1)
+            )
+        else:
+            stats = UserMessageStats(
+                from_user_id=from_user_id,
+                to_user_id=to_user_id,
+                messages_count=1
+            )
+            session.add(stats)
 
 async def get_user_by_username(username: str) -> Optional[User]:
     """
@@ -459,9 +488,6 @@ async def get_user_by_username(username: str) -> Optional[User]:
         return await session.scalar(
             select(User).where(User.username == username)
         )
-
-    Увеличить счетчик сообщений между пользователями
-    """
     async with get_db_session() as session:
         stats = await session.scalar(
             select(UserMessageStats).where(
