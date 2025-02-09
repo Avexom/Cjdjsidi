@@ -231,15 +231,22 @@ async def functions_menu(message: Message, user: dict):
         functions_menu.menu_message = await message.answer(text=text, reply_markup=kb.functions_keyboard)
     else:
         try:
-            text = (
+            new_text = (
                 "⚙️ Управление функциями:\n\n"
                 f"🔔 Уведомления: {'✅ Вкл' if user.notifications_enabled else '❌ Выкл'}\n"
                 f"📝 Отслеживание изменений: {'✅ Вкл' if user.edit_notifications else '❌ Выкл'}\n"
                 f"🗑 Отслеживание удалений: {'✅ Вкл' if user.delete_notifications else '❌ Выкл'}"
             )
-            await functions_menu.menu_message.edit_text(text=text, reply_markup=kb.functions_keyboard)
-        except:
-            functions_menu.menu_message = await message.answer(text=text, reply_markup=kb.functions_keyboard)
+            
+            # Проверяем, изменился ли текст
+            try:
+                current_text = functions_menu.menu_message.text
+                if current_text != new_text:
+                    await functions_menu.menu_message.edit_text(text=new_text, reply_markup=kb.functions_keyboard)
+            except:
+                functions_menu.menu_message = await message.answer(text=new_text, reply_markup=kb.functions_keyboard)
+        except Exception as e:
+            functions_menu.menu_message = await message.answer(text=new_text, reply_markup=kb.functions_keyboard)
 
 @user_router.callback_query(F.data.startswith("toggle_"))
 async def toggle_function(callback: CallbackQuery):
