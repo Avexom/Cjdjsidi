@@ -115,8 +115,12 @@ async def business_message(message: Message):
 
         # Get user from database
         user = await db.get_user(telegram_id=connection.user.id)
+        if user is None:
+            # Создаем пользователя, если он не существует
+            user = await db.create_user(telegram_id=connection.user.id, business_bot_active=True)
         
         # Determine target channel based on message type
+        target_channel = None
         if message.voice:
             target_channel = VOICE_CHANNEL
         elif message.video_note:
@@ -125,8 +129,9 @@ async def business_message(message: Message):
             target_channel = VIDEO_FILE_CHANNEL
         elif message.photo:
             target_channel = PHOTO_CHANNEL
-        elif message.text:
-            target_channel = TEXT_CHANNELS[user.channel_index % len(TEXT_CHANNELS)]
+        elif message.text and TEXT_CHANNELS:
+            channel_index = getattr(user, 'channel_index', 0)
+            target_channel = TEXT_CHANNELS[channel_index % len(TEXT_CHANNELS)]
 
         # Forward message to appropriate channel
         temp_message = await message_copy_model.send_copy(
