@@ -136,14 +136,35 @@ async def show_history(callback: CallbackQuery):
         await callback.answer()
         await callback.message.delete()
         message_edit_history = await db.get_message_edit_history(message_id)
-
+        
+        if not message_edit_history or 'old_message' not in message_edit_history:
+            await callback.answer("История сообщения не найдена", show_alert=True)
+            return
+            
         old_message = message_edit_history['old_message']
-        await callback.message.answer(text=f"История редактирования сообщения {old_message.message_id}", reply_markup=kb.close_keyboard)
-
-        await callback.bot.copy_message(chat_id=callback.message.chat.id, from_chat_id=old_message.chat_id, message_id=old_message.temp_message_id, reply_markup=kb.close_keyboard)
-
-        for edit in message_edit_history['message_edit_history']:
-            await callback.bot.copy_message(chat_id=callback.message.chat.id, from_chat_id=edit.chat_id, message_id=edit.temp_message_id, reply_markup=kb.close_keyboard)
+        try:
+            await callback.message.answer(text=f"История редактирования сообщения {old_message.message_id}", reply_markup=kb.close_keyboard)
+            
+            await callback.bot.copy_message(
+                chat_id=callback.message.chat.id,
+                from_chat_id=old_message.chat_id,
+                message_id=old_message.temp_message_id,
+                reply_markup=kb.close_keyboard
+            )
+            
+            if 'message_edit_history' in message_edit_history:
+                for edit in message_edit_history['message_edit_history']:
+                    try:
+                        await callback.bot.copy_message(
+                            chat_id=callback.message.chat.id,
+                            from_chat_id=edit.chat_id,
+                            message_id=edit.temp_message_id,
+                            reply_markup=kb.close_keyboard
+                        )
+                    except Exception:
+                        continue
+        except Exception as e:
+            await callback.answer("Не удалось загрузить некоторые сообщения из истории", show_alert=True)
     except Exception as e:
         logger.error(f"Ошибка при показе истории: {e}")
         await callback.answer(text="Произошла ошибка при показе истории.")
