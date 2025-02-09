@@ -150,16 +150,25 @@ async def show_history(callback: CallbackQuery):
         success = False
         try:
             # Пробуем отправить оригинальное сообщение
-            await callback.bot.copy_message(
-                chat_id=callback.message.chat.id,
-                from_chat_id=old_message.chat_id,
-                message_id=old_message.temp_message_id,
-                reply_markup=kb.close_keyboard
-            )
-            success = True
+            try:
+                await callback.bot.copy_message(
+                    chat_id=callback.message.chat.id,
+                    from_chat_id=old_message.chat_id,
+                    message_id=old_message.temp_message_id,
+                    reply_markup=kb.close_keyboard
+                )
+                success = True
+            except Exception as e:
+                if "message to copy not found" in str(e):
+                    await sent_message.edit_text(
+                        "К сожалению, оригинальное сообщение было удалено из чата и недоступно для просмотра",
+                        reply_markup=kb.close_keyboard
+                    )
+                else:
+                    raise e
             
-            # Отправляем историю изменений
-            if message_edit_history.get('message_edit_history'):
+            # Отправляем историю изменений только если оригинальное сообщение успешно отправлено
+            if success and message_edit_history.get('message_edit_history'):
                 for edit in message_edit_history['message_edit_history']:
                     try:
                         await callback.bot.copy_message(
