@@ -70,12 +70,15 @@ async def generate_admin_panel_text(stats):
 """
 
 # Хэндлеры
+from aiogram.types import CallbackQuery
+from bot.keyboards.user import admin_keyboard
+
 @admin_router.message(F.text == "/admin")
 async def admin_panel(message: Message):
     try:
-        stats = await get_cached_statistics()  # Используем кэшированную статистику
+        stats = await get_cached_statistics()
         text = await generate_admin_panel_text(stats)
-        await message.answer(text, parse_mode=ParseMode.HTML)
+        await message.answer(text, parse_mode=ParseMode.HTML, reply_markup=admin_keyboard)
     except Exception as e:
         logger.error(f"Ошибка при получении статистики: {e}")
         await message.answer("Произошла ошибка при получении статистики.")
@@ -190,3 +193,38 @@ async def show_logs(message: Message):
         await message.answer(f"Последние ошибки бота:\n{log_message}")
     except Exception as e:
         await message.answer(f"Ошибка при получении логов: {e}")
+# Callback handlers
+@admin_router.callback_query(F.data == "admin_stats")
+async def admin_stats_callback(callback: CallbackQuery):
+    await callback.answer()
+    await detailed_stats(callback.message)
+
+@admin_router.callback_query(F.data == "admin_logs")
+async def admin_logs_callback(callback: CallbackQuery):
+    await callback.answer()
+    await show_logs(callback.message)
+
+@admin_router.callback_query(F.data == "admin_broadcast")
+async def admin_broadcast_callback(callback: CallbackQuery):
+    await callback.answer()
+    await callback.message.answer("Введите текст для рассылки в формате:\n/broadcast текст_сообщения")
+
+@admin_router.callback_query(F.data == "admin_price")
+async def admin_price_callback(callback: CallbackQuery):
+    await callback.answer()
+    await callback.message.answer("Введите новую цену подписки в формате:\n/price сумма")
+
+@admin_router.callback_query(F.data == "admin_give")
+async def admin_give_callback(callback: CallbackQuery):
+    await callback.answer()
+    await callback.message.answer("Введите данные в формате:\n/give айди_пользователя количество_дней")
+
+@admin_router.callback_query(F.data == "admin_ban")
+async def admin_ban_callback(callback: CallbackQuery):
+    await callback.answer()
+    await callback.message.answer("Введите данные в формате:\n/ban айди_пользователя причина")
+
+@admin_router.callback_query(F.data == "admin_unban")
+async def admin_unban_callback(callback: CallbackQuery):
+    await callback.answer()
+    await callback.message.answer("Введите данные в формате:\n/unban айди_пользователя")

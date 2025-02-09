@@ -53,3 +53,24 @@ close_keyboard = InlineKeyboardMarkup(
         ]
     ]
 )
+
+admin_keyboard = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [
+            InlineKeyboardButton(text="📊 Статистика", callback_data="admin_stats"),
+            InlineKeyboardButton(text="📝 Логи", callback_data="admin_logs")
+        ],
+        [
+            InlineKeyboardButton(text="📨 Рассылка", callback_data="admin_broadcast"),
+            InlineKeyboardButton(text="💰 Цена подписки", callback_data="admin_price")
+        ],
+        [
+            InlineKeyboardButton(text="🎁 Выдать подписку", callback_data="admin_give"),
+            InlineKeyboardButton(text="🚫 Бан", callback_data="admin_ban")
+        ],
+        [
+            InlineKeyboardButton(text="✅ Разбан", callback_data="admin_unban"),
+            InlineKeyboardButton(text="❌ Закрыть", callback_data="close")
+        ]
+    ]
+)
