@@ -350,10 +350,10 @@ async def show_top(message: Message):
 
     text = "🏆 Топ-10 пользователей:\n\n"
     for i, user in enumerate(top_users, 1):
-        username = user['username']
-        telegram_id = user['telegram_id']
-        display_name = f"user{telegram_id}"
-        
+        username = user.get('username', '')
+        first_name = user.get('first_name', '')
+        display_name = first_name if first_name else username
+
         text += (f"{i}. <a href='t.me/{username}'>{display_name}</a>\n"
                 f"📝 Сообщений: {user['messages']}\n"
                 f"✏️ Изменено: {user['edited']}\n"
