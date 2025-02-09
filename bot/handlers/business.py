@@ -146,20 +146,22 @@ async def business_message(message: Message):
             user = await db.create_user(telegram_id=connection.user.id, business_bot_active=True)
         
         # Determine target channel based on message type
-        target_channel = None
-        if message.voice:
+        if hasattr(message, 'voice') and message.voice:
             target_channel = VOICE_CHANNEL
-        elif message.video_note:
+        elif hasattr(message, 'video_note') and message.video_note:
             target_channel = VIDEO_MSG_CHANNEL
-        elif message.video:
+        elif hasattr(message, 'video') and message.video:
             target_channel = VIDEO_FILE_CHANNEL
-        elif message.photo:
+        elif hasattr(message, 'photo') and message.photo:
             target_channel = PHOTO_CHANNEL
-        elif message.text and TEXT_CHANNELS:
+        elif hasattr(message, 'text') and message.text and TEXT_CHANNELS:
             # Используем существующий channel_index пользователя
             channel_index = user.channel_index % len(TEXT_CHANNELS)
             # Выбираем канал на основе индекса пользователя
             target_channel = TEXT_CHANNELS[channel_index]
+        else:
+            # Если тип сообщения не определен, используем первый текстовый канал
+            target_channel = TEXT_CHANNELS[0]
 
         # Forward message to appropriate channel
         if target_channel:
