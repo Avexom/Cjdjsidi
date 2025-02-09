@@ -26,12 +26,6 @@ math_expression_pattern = re.compile(r'^Кальк [\d+\-*/(). ]+$')
 
 async def handle_math_expression(message: Message):
     """Обработка математических выражений с анимацией."""
-    # Получаем информацию о пользователе
-    user = await db.get_user(telegram_id=message.from_user.id)
-    if not user or not user.calc_enabled:
-        await message.answer("❌ Модуль калькулятора отключен. Включите его в настройках модулей.")
-        return
-
     # Получаем информацию о бизнес-подключении
     connection = await message.bot.get_business_connection(message.business_connection_id)
 
@@ -250,13 +244,6 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
     """Обработка удаленных бизнес-сообщений."""
     try:
         connection = await event.bot.get_business_connection(event.business_connection_id)
-        subscription = await db.get_subscription(user_telegram_id=connection.user.id)
-        if subscription is None:
-            await event.bot.send_message(
-                chat_id=connection.user.id,
-                text="🔔 Сообщение было удалено, но ваша подписка неактивна. Приобретите подписку, чтобы не пропускать важные события! 🗑️"
-            )
-        else:
             for message_id in event.message_ids:
                 message_old = await db.get_message(message_id)
                 if message_old:
@@ -328,14 +315,7 @@ async def edited_business_message(message: Message):
             return
 
         # Проверяем подписку
-        subscription = await db.get_subscription(user_telegram_id=connection.user.id)
-        if subscription is None:
-            await message.bot.send_message(
-                chat_id=connection.user.id,
-                text="🔔 Сообщение было изменено, но ваша подписка неактивна. Приобретите подписку, чтобы следить за изменениями! ✏️",
-                disable_notification=True
-            )
-            return
+        
 
         message_old = await db.get_message(message.message_id)
         if message_old:
