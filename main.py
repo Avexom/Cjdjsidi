@@ -1,10 +1,8 @@
+
 import asyncio
 import logging
 import colorlog
 from datetime import datetime
-
-# Настройка логгера
-logger = colorlog.getLogger('bot')
 
 from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
@@ -15,7 +13,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from bot.handlers.user import user_router
 from bot.handlers.business import business_router
 from bot.handlers.admin import admin_router
-from bot.database.database import init_db, delete_expired_subscriptions, migrate_db # Now includes migrate_db
+from bot.database.database import init_db, delete_expired_subscriptions
 from config import BOT_TOKEN
 
 # Инициализация бота
@@ -36,17 +34,27 @@ async def main():
             'WARNING': 'yellow',
             'ERROR': 'red',
             'CRITICAL': 'red,bg_white',
-        }
+        },
+        style='%'
     ))
 
+    # Настройка корневого логгера
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.INFO)
+    root_logger.addHandler(handler)
+    
+    # Настройка логгера бота
     logger = colorlog.getLogger('bot')
     logger.addHandler(handler)
     logger.setLevel(logging.INFO)
     
-    # Отключаем лишние логи
-    logging.getLogger('aiosqlite').setLevel(logging.WARNING)
-    logging.getLogger('aiogram').setLevel(logging.WARNING)
-    logging.getLogger('apscheduler').setLevel(logging.WARNING)
+    # Настраиваем логи внешних библиотек
+    for log_name in ['aiosqlite', 'aiogram', 'apscheduler']:
+        external_logger = logging.getLogger(log_name)
+        external_logger.setLevel(logging.INFO)
+        external_logger.addHandler(handler)
+    
+    # Добавляем свои логи
 
     # Подключение роутеров
     for router in [user_router, business_router, admin_router]:
@@ -54,7 +62,6 @@ async def main():
 
     # Инициализация базы данных
     await init_db()
-    await migrate_db() # Added migration call
 
     # Запуск планировщика для удаления истёкших подписок
     scheduler = AsyncIOScheduler()
