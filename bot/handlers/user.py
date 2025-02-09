@@ -74,5 +74,43 @@ async def close_keyboard(callback: CallbackQuery):
     """Обработка кнопки закрытия"""
     await callback.message.delete()
 
+@user_router.message(F.text == "💳 Купить подписку")
+async def buy_subscription(message: Message):
+    """Обработка кнопки покупки подписки"""
+    try:
+        from bot.services.payments import create_payment
+        payment_url, invoice_id = await create_payment(message.from_user.id)
+        await message.answer(
+            "Выберите удобный способ оплаты:",
+            reply_markup=kb.get_payment_keyboard(payment_url, invoice_id)
+        )
+    except Exception as e:
+        logger.error(f"Ошибка при создании платежа: {e}")
+        await message.answer("Произошла ошибка при создании платежа. Попробуйте позже.")
+
+@user_router.callback_query(F.data.startswith("toggle_module_"))
+async def toggle_module(callback: CallbackQuery):
+    """Обработка включения/выключения модулей"""
+    try:
+        module = callback.data.split("_")[-1]
+        user = await db.get_user(callback.from_user.id)
+        
+        if module == "calc":
+            new_state = not user.calc_enabled
+            await db.update_user(callback.from_user.id, calc_enabled=new_state)
+            status = "включен ✅" if new_state else "выключен ❌"
+            await callback.answer(f"Калькулятор {status}")
+            
+        elif module == "love":
+            new_state = not user.love_enabled
+            await db.update_user(callback.from_user.id, love_enabled=new_state)
+            status = "включен ✅" if new_state else "выключен ❌"
+            await callback.answer(f"Модуль Love {status}")
+            
+        await callback.message.edit_reply_markup(reply_markup=kb.modules_keyboard)
+    except Exception as e:
+        logger.error(f"Ошибка при переключении модуля: {e}")
+        await callback.answer("Произошла ошибка. Попробуйте позже.")
+
 
 
