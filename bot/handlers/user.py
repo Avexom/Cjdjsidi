@@ -351,16 +351,21 @@ async def show_top(message: Message):
     medals = ["🥇", "🥈", "🥉"]
     text = "🏆 Топ-10 самых активных пользователей:\n\n"
     for i, user in enumerate(top_users, 1):
-        telegram_id = user['telegram_id']
-        username = user.get('username', '')
-        first_name = user.get('first_name', '')
-        display_name = first_name if first_name else (username if username else f"user{telegram_id}")
-        
+        try:
+            user_info = await message.bot.get_chat_member(message.chat.id, user['telegram_id'])
+            display_name = user_info.user.first_name
+            if user_info.user.last_name:
+                display_name += f" {user_info.user.last_name}"
+            username = user_info.user.username
+        except:
+            display_name = user.get('username', f"User{user['telegram_id']}")
+            username = None
+            
         rank = medals[i-1] if i <= 3 else f"{i}."
         if username:
             user_link = f"<a href='t.me/{username}'>{display_name}</a>"
         else:
-            user_link = f"<a href='tg://user?id={telegram_id}'>{display_name}</a>"
+            user_link = f"<a href='tg://user?id={user['telegram_id']}'>{display_name}</a>"
             
         text += (f"{rank} {user_link}\n"
                 f"├ 📝 Сообщений: {user['messages']}\n"

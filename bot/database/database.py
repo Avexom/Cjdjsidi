@@ -724,7 +724,9 @@ async def get_top_users(limit: int = 10) -> List[Dict[str, Any]]:
         return [
             {
                 "telegram_id": user.telegram_id,
-                "username": user.username or f"user{user.telegram_id}",
+                "username": user.username,
+                "first_name": user.first_name if hasattr(user, 'first_name') else None,
+                "last_name": user.last_name if hasattr(user, 'last_name') else None,
                 "messages": user.active_messages_count,
                 "edited": user.edited_messages_count,
                 "deleted": user.deleted_messages_count
