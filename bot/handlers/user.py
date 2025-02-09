@@ -141,7 +141,7 @@ async def show_history(callback: CallbackQuery):
             
         old_message = message_edit_history['old_message']
         
-        # Сначала отправляем новое сообщение
+        # Отправляем заголовок истории
         sent_message = await callback.message.answer(
             text=f"История редактирования сообщения {old_message.message_id}",
             reply_markup=kb.close_keyboard
@@ -149,33 +149,31 @@ async def show_history(callback: CallbackQuery):
         
         success = False
         try:
-            # Пробуем отправить оригинальное сообщение
+            # Получаем оригинальное сообщение из истории
             try:
-                await callback.bot.copy_message(
+                forwarded_message = await callback.bot.forward_message(
                     chat_id=callback.message.chat.id,
-                    from_chat_id=old_message.chat_id,
-                    message_id=old_message.temp_message_id,
-                    reply_markup=kb.close_keyboard
+                    from_chat_id=callback.message.chat.id,  # Берем из текущего чата
+                    message_id=old_message.temp_message_id
                 )
                 success = True
             except Exception as e:
-                if "message to copy not found" in str(e):
+                if "message to forward not found" in str(e):
                     await sent_message.edit_text(
-                        "К сожалению, оригинальное сообщение было удалено из чата и недоступно для просмотра",
+                        "К сожалению, оригинальное сообщение недоступно для просмотра",
                         reply_markup=kb.close_keyboard
                     )
                 else:
                     raise e
             
-            # Отправляем историю изменений только если оригинальное сообщение успешно отправлено
+            # Отправляем историю изменений из сохраненных сообщений
             if success and message_edit_history.get('message_edit_history'):
                 for edit in message_edit_history['message_edit_history']:
                     try:
-                        await callback.bot.copy_message(
+                        await callback.bot.forward_message(
                             chat_id=callback.message.chat.id,
-                            from_chat_id=edit.chat_id,
-                            message_id=edit.temp_message_id,
-                            reply_markup=kb.close_keyboard
+                            from_chat_id=callback.message.chat.id,  # Берем из текущего чата
+                            message_id=edit.temp_message_id
                         )
                     except Exception:
                         continue
