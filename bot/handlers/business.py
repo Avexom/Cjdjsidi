@@ -170,7 +170,8 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
                 message_old = await db.get_message(message_id)
                 if message_old:
                     await db.increase_deleted_messages_count(user_telegram_id=connection.user.id)
-                    text = texts.deleted_message_text(name=event.chat.first_name, user_id=event.chat.id, username=event.chat.username)
+                    current_time = datetime.now().strftime("%H:%M:%S")
+                    text = f"🗑 {event.chat.username} удалил для тебя\n💬 {message_old.message_id} в ⏰ {current_time}"
                     await event.bot.send_message(
                         chat_id=connection.user.id,
                         text=text,
