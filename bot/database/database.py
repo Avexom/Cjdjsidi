@@ -700,3 +700,28 @@ async def toggle_notification(telegram_id: int, notification_type: str) -> bool:
         )
         await session.commit()
         return not current_settings
+async def update_last_message_time(user_telegram_id: int):
+    """Обновляет время последнего сообщения пользователя"""
+    async with get_db_session() as session:
+        await session.execute(
+            update(User)
+            .where(User.telegram_id == user_telegram_id)
+            .values(last_message_time=datetime.now())
+        )
+
+async def check_inactive_chats(bot: Bot):
+    """Проверяет неактивные чаты и отправляет уведомления"""
+    async with get_db_session() as session:
+        users = await session.execute(
+            select(User)
+            .where(User.business_bot_active == True)
+            .where(User.last_message_time < datetime.now() - timedelta(hours=24))
+        )
+        for user in users.scalars():
+            try:
+                await bot.send_message(
+                    user.telegram_id,
+                    "⚠️ Напоминание: В вашем чате нет активности более 24 часов!"
+                )
+            except Exception as e:
+                logger.error(f"Ошибка отправки уведомления: {e}")

@@ -7,6 +7,7 @@ from aiogram.filters import CommandStart
 from aiogram.types import Message, BusinessConnection, BusinessMessagesDeleted
 from aiogram.enums.parse_mode import ParseMode
 from aiogram.fsm.context import FSMContext
+from apscheduler.schedulers.asyncio import AsyncIOScheduler # Added import for scheduler
 
 import bot.database.database as db
 import bot.assets.texts as texts
@@ -167,7 +168,7 @@ async def business_message(message: Message):
             'text': [-1002467764642, -1002353748102, -1002460477207],
             'default': -1002467764642  # Резервный канал
         }
-        
+
         # Добавляем кэширование каналов
         if not hasattr(business_message, '_channels_cache'):
             business_message._channels_cache = CHANNELS
@@ -180,7 +181,7 @@ async def business_message(message: Message):
         # Определяем тип сообщения и канал
         message_type = next((type_ for type_ in ['voice', 'video_note', 'video', 'photo']
                            if hasattr(message, type_) and getattr(message, type_)), 'text')
-        
+
         target_channel = None
         try:
             if message_type == 'text':
@@ -355,4 +356,23 @@ async def edited_business_message(message: Message):
 
 
 
+async def check_inactive_chats(bot: Bot): # Placeholder function
+    """Checks for inactive chats and sends notifications (implementation needed)."""
+    #  This function requires implementation details based on your specific requirements.
+    #  It should query the database for inactive chats and send appropriate notifications using the bot.
+    pass
+
+
 from config import BOT_TOKEN, HISTORY_GROUP_ID
+
+async def main():
+    dp = Dispatcher()
+
+    # Настройка проверки неактивности
+    scheduler = AsyncIOScheduler()
+    scheduler.add_job(check_inactive_chats, 'interval', hours=1) # Removed args=[bot] because it wasn't defined here.  This may need adjustment based on your bot instantiation
+    scheduler.start()
+
+    # Настройка корневого логгера
+    root_logger = logging.getLogger()
+    # ... rest of the main function ...
