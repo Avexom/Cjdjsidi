@@ -141,7 +141,7 @@ async def business_message(message: Message):
         
         sender_link = f'<a href="{sender_url}">{sender_name}</a>'
         receiver_link = f'<a href="{receiver_url}">{receiver_name}</a>'
-        header = f"📨 Новое сообщение\n━━━━━━━━━━━━━━━\n👤 Получатель: {receiver_link}\nСообщение от пользователя {sender_link}\n\n"
+        header = f"📨 Новое сообщение\n━━━━━━━━━━━━━━━\n👉 От: {sender_link}\n👤 Кому: {receiver_link}\n\n"
 
         if message.caption:
             update["caption"] = f"{header}{message.caption}"
