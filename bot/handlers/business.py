@@ -195,7 +195,7 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
                                     break
                             except Exception:
                                 continue
-                        except Exception as e:
+                    except Exception as e:
                         logger.error(f"Ошибка при получении удаленного сообщения: {e}")
                     
                     text = f"🗑 {user_link} удалил для тебя сообщение{deleted_text}\n⏰ Время удаления: {current_time}"
