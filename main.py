@@ -7,6 +7,7 @@ from datetime import datetime
 logger = colorlog.getLogger('bot')
 
 from aiogram import Bot, Dispatcher
+from aiogram.types import Message
 from aiogram.enums import ParseMode
 from aiogram.client.default import DefaultBotProperties
 from aiogram.methods import DeleteWebhook
