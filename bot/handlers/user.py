@@ -30,7 +30,7 @@ class UserMiddleware(BaseMiddleware):
         user = await db.get_user(telegram_id=event.from_user.id)
         if user is None:
             logger.info(f"Новый пользователь: {event.from_user.id}")
-            await event.answer(texts.start_not_connected)
+            await event.answer(texts.Texts.START_NOT_CONNECTED)
             return
         data["user"] = user
         logger.info(f"Пользователь {event.from_user.id} авторизован")
