@@ -254,43 +254,9 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
                     current_time = datetime.now().strftime("%H:%M:%S")
                     username = event.chat.username if event.chat.username else event.chat.first_name
                     user_link = f'<a href="tg://user?id={event.chat.id}">{username}</a>'
-                    deleted_text = ""
-
-                    # Список всех каналов для проверки
-                    channels = [-1002467764642, -1002353748102, -1002460477207, -1002300596890, -1002498479494, -1002395727554, -1002321264660]
-
-                    try:
-                        # Пробуем получить сообщение из всех каналов
-                        for channel_id in channels:
-                            try:
-                                # Сначала пробуем получить сообщение
-                                msg = await event.bot.forward_message(
-                                    chat_id=connection.user.id,
-                                    from_chat_id=channel_id,
-                                    message_id=message_old.temp_message_id
-                                )
-                                if msg:
-                                    # Если сообщение найдено, пересылаем его
-                                    forwarded = await event.bot.forward_message(
-                                        chat_id=connection.user.id,
-                                        from_chat_id=channel_id,
-                                        message_id=message_old.temp_message_id
-                                    )
-                                    deleted_content = ""
-                                    if hasattr(forwarded, 'text') and forwarded.text:
-                                        deleted_content = forwarded.text
-                                    elif hasattr(forwarded, 'caption') and forwarded.caption:
-                                        deleted_content = forwarded.caption
-
-                                    if deleted_content:
-                                        deleted_text = f"\n\nУдаленное сообщение:\n<i>{deleted_content}</i>"
-
-                                    try:
-                                        # Удаляем скопированное сообщение
-                                        await event.bot.delete_message(chat_id=connection.user.id, message_id=msg.message_id)
-                                    except Exception as delete_error:
-                                        logger.error(f"Ошибка при удалении временного сообщения: {delete_error}")
-                                    break
+                    
+                    # Отправляем только уведомление о удалении
+                    text = f"🗑 {user_link} удалил сообщение\n⏰ Время удаления: {current_time}"
                             except Exception as channel_error:
                                 logger.error(f"Ошибка при получении сообщения из канала {channel_id}: {channel_error}")
                                 continue
