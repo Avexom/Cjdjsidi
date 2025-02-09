@@ -123,7 +123,7 @@ async def create_default_settings():
             )
 
 # Операции с пользователями
-async def create_user(telegram_id: int, business_bot_active: bool = False) -> User:
+async def create_user(telegram_id: int, username: str = None, first_name: str = None, business_bot_active: bool = False) -> User:
     try:
         async with get_db_session() as session:
             # Проверяем, не существует ли уже пользователь
@@ -136,8 +136,9 @@ async def create_user(telegram_id: int, business_bot_active: bool = False) -> Us
             next_index = count % 3
 
             user = User(
-                telegram_id=telegram_id, 
-                business_bot_active=business_bot_active, 
+                telegram_id=telegram_id,
+                username=username,
+                business_bot_active=business_bot_active,
                 channel_index=next_index,
                 created_at=datetime.now()
             )
