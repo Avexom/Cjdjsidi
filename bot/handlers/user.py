@@ -347,7 +347,7 @@ async def show_top(message: Message):
     """Показывает топ пользователей"""
     await message.delete()
     top_users = await db.get_top_users(10)
-    
+
     text = "🏆 Топ-10 пользователей:\n\n"
     for i, user in enumerate(top_users, 1):
         username = f"@{user['username']}" if user['username'] else f"ID: {user['telegram_id']}"
@@ -355,8 +355,8 @@ async def show_top(message: Message):
                 f"📝 Сообщений: {user['messages']}\n"
                 f"✏️ Изменено: {user['edited']}\n"
                 f"🗑 Удалено: {user['deleted']}\n\n")
-    
-    await message.answer(text=text, reply_markup=kb.close_keyboard)
+
+    await message.answer(text=text, reply_markup=kb.close_keyboard, parse_mode="HTML")
 
 @user_router.message(F.text == "📊 Статистика")
 async def show_user_stats(message: Message, user: dict):
