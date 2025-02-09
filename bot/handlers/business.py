@@ -26,11 +26,6 @@ online_notification_users = {}
 
 async def handle_math_expression(message: Message):
     """Обработка математических выражений с анимацией."""
-    if not message.reply_to_message or message.from_user.id != message.reply_to_message.from_user.id:
-        # Команду может использовать только тот, кто её отправил
-        await message.reply("❌ Эта команда работает только для отправителя сообщения")
-        return
-        
     expression = message.text[len("Кальк "):].strip()
     try:
         # Отправляем начальное сообщение
