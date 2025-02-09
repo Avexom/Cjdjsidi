@@ -103,9 +103,8 @@ async def business_message(message: Message):
             update["text"] = f"{text_1}\n{text_2}\n\n{message.html_text}"
 
         # Создаем новую копию сообщения с обновленными данными
-        message_copy_model = message.model_copy(deep=True)
-        for key, value in update.items():
-            setattr(message_copy_model, key, value)
+        # Создаем новую копию сообщения без глубокого копирования контекста
+        message_copy_model = message.model_copy(update=update)
 
         # Define target channels
         VOICE_CHANNEL = -1002300596890
