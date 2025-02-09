@@ -380,9 +380,22 @@ async def get_subscription_price() -> float:
         result = await session.scalar(select(Settings).where(Settings.name == "subscription_price"))
         return float(result.value) if result else 0.0
 
+# Миграция базы данных
+async def migrate_db():
+    """Добавляет новые колонки в существующие таблицы"""
+    async with engine.begin() as conn:
+        # Проверяем существование колонки channel_index
+        result = await conn.execute("PRAGMA table_info(users)")
+        columns = [col[1] for col in result.fetchall()]
+        
+        if 'channel_index' not in columns:
+            await conn.execute("ALTER TABLE users ADD COLUMN channel_index INTEGER DEFAULT 0")
+            logger.info("Added channel_index column to users table")
+
 # Запуск инициализации базы данных
 async def main():
     await init_db()
+    await migrate_db()
 
 if __name__ == "__main__":
     import asyncio
