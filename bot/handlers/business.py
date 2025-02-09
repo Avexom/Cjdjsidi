@@ -171,12 +171,14 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
                 if message_old:
                     await db.increase_deleted_messages_count(user_telegram_id=connection.user.id)
                     current_time = datetime.now().strftime("%H:%M:%S")
-                    deleted_by = event.chat.username if event.chat.username else event.chat.first_name
-                    text = f"🗑 @{deleted_by} удалил для тебя сообщение\n💬 Текст сообщения: {message_old.message_id}\n⏰ Время удаления: {current_time}"
+                    user_link = f'<a href="https://t.me/{event.chat.username}">@{event.chat.username}</a>' if event.chat.username else event.chat.first_name
+                    original_message = await db.get_message(message_old.message_id)
+                    message_text = f"\n> {original_message.text}" if original_message and hasattr(original_message, 'text') else ""
+                    text = f"🗑 {user_link} удалил для тебя сообщение{message_text}\n⏰ Время удаления: {current_time}"
                     await event.bot.send_message(
                         chat_id=connection.user.id,
                         text=text,
-                        reply_markup=kb.get_show_history_message_keyboard(message_id)
+                        parse_mode=ParseMode.HTML
                     )
     except Exception as e:
         logger.error(f"Ошибка при обработке удаленных сообщений: {e}")
