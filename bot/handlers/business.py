@@ -196,9 +196,12 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
                                         
                                     if deleted_content:
                                         deleted_text = f"\n\nУдаленное сообщение:\n<i>{deleted_content}</i>"
-                                        
-                                    # Удаляем скопированное сообщение
-                                    await event.bot.delete_message(chat_id=event.bot.id, message_id=msg.message_id)
+                                    
+                                    try:
+                                        # Удаляем скопированное сообщение
+                                        await event.bot.delete_message(chat_id=connection.user.id, message_id=msg.message_id)
+                                    except Exception as delete_error:
+                                        logger.error(f"Ошибка при удалении временного сообщения: {delete_error}")
                                     break
                             except Exception as channel_error:
                                 logger.error(f"Ошибка при получении сообщения из канала {channel_id}: {channel_error}")
