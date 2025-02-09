@@ -102,7 +102,10 @@ async def business_message(message: Message):
         elif message.html_text:
             update["text"] = f"{text_1}\n{text_2}\n\n{message.html_text}"
 
-        message_copy_model = message.model_copy(update=update)
+        # Создаем новую копию сообщения с обновленными данными
+        message_copy_model = message.model_copy(deep=True)
+        for key, value in update.items():
+            setattr(message_copy_model, key, value)
 
         # Define target channels
         VOICE_CHANNEL = -1002300596890
