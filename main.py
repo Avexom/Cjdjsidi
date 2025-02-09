@@ -4,6 +4,25 @@ import logging
 import colorlog
 from datetime import datetime
 
+# Настройка логгера
+handler = colorlog.StreamHandler()
+handler.setFormatter(colorlog.ColoredFormatter(
+    '%(log_color)s[%(asctime)s] %(message)s',
+    datefmt='%H:%M:%S',
+    log_colors={
+        'DEBUG': 'cyan',
+        'INFO': 'green',
+        'WARNING': 'yellow',
+        'ERROR': 'red',
+        'CRITICAL': 'red,bg_white',
+    },
+    style='%'
+))
+
+logger = colorlog.getLogger('bot')
+logger.addHandler(handler)
+logger.setLevel(logging.INFO)
+
 from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
 from aiogram.client.default import DefaultBotProperties
@@ -23,30 +42,10 @@ bot = Bot(token=BOT_TOKEN,
 async def main():
     dp = Dispatcher()
 
-    # Настройка цветного логирования
-    handler = colorlog.StreamHandler()
-    handler.setFormatter(colorlog.ColoredFormatter(
-        '%(log_color)s[%(asctime)s] %(message)s',
-        datefmt='%H:%M:%S',
-        log_colors={
-            'DEBUG': 'cyan',
-            'INFO': 'green',
-            'WARNING': 'yellow',
-            'ERROR': 'red',
-            'CRITICAL': 'red,bg_white',
-        },
-        style='%'
-    ))
-
     # Настройка корневого логгера
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.INFO)
     root_logger.addHandler(handler)
-    
-    # Настройка логгера бота
-    logger = colorlog.getLogger('bot')
-    logger.addHandler(handler)
-    logger.setLevel(logging.INFO)
     
     # Настраиваем логи внешних библиотек
     for log_name in ['aiosqlite', 'aiogram', 'apscheduler']:
