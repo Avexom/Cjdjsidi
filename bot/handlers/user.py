@@ -135,19 +135,19 @@ async def show_history(callback: CallbackQuery):
 
         message_id = callback.data.split("_")[-1]
         message_edit_history = await db.get_message_edit_history(message_id)
-        
+
         if not message_edit_history or not message_edit_history.get('old_message'):
             await callback.answer("История сообщения не найдена", show_alert=True)
             return
-            
+
         old_message = message_edit_history['old_message']
-        
+
         # Отправляем заголовок истории
         sent_message = await callback.message.answer(
             text=f"История редактирования сообщения {old_message.message_id}",
             reply_markup=kb.close_keyboard
         )
-        
+
         success = False
         try:
             # Получаем оригинальное сообщение из истории
@@ -155,7 +155,7 @@ async def show_history(callback: CallbackQuery):
                 # Пробуем получить сообщение из разных каналов
                 channels = [-1002467764642, -1002353748102, -1002460477207, -1002300596890, -1002498479494, -1002395727554, -1002321264660]
                 message_found = False
-                
+
                 for channel in channels:
                     try:
                         forwarded_message = await callback.bot.copy_message(
@@ -167,7 +167,7 @@ async def show_history(callback: CallbackQuery):
                         break
                     except Exception:
                         continue
-                
+
                 if message_found:
                     success = True
                 else:
@@ -183,7 +183,7 @@ async def show_history(callback: CallbackQuery):
                     success = True  # Позволяем показать историю изменений
                 else:
                     raise e
-            
+
             # Отправляем историю изменений из сохраненных сообщений
             if success and message_edit_history.get('message_edit_history'):
                 for edit in message_edit_history['message_edit_history']:
@@ -211,10 +211,10 @@ async def show_history(callback: CallbackQuery):
                     "К сожалению, оригинальное сообщение недоступно",
                     reply_markup=kb.close_keyboard
                 )
-        
+
         # Удаляем оригинальное сообщение только после успешной отправки новых
         await callback.message.delete()
-        
+
     except Exception as e:
         logger.error(f"Ошибка при показе истории: {e}")
         await callback.answer(text="Произошла ошибка при показе истории", show_alert=True)
@@ -238,7 +238,7 @@ async def functions_menu(message: Message, user: dict):
                 f"📝 Отслеживание изменений: {'✅ Вкл' if user.edit_notifications else '❌ Выкл'}\n"
                 f"🗑 Отслеживание удалений: {'✅ Вкл' if user.delete_notifications else '❌ Выкл'}"
             )
-            
+
             # Проверяем, изменился ли текст
             try:
                 current_text = functions_menu.menu_message.text
@@ -253,29 +253,29 @@ async def functions_menu(message: Message, user: dict):
 async def toggle_module_handler(callback: CallbackQuery):
     module = callback.data.replace("toggle_module_", "")
     new_state = await db.toggle_module(callback.from_user.id, module)
-    
+
     # Получаем обновленные данные пользователя после изменения
     updated_user = await db.get_user(telegram_id=callback.from_user.id)
-    
+
     text = (
         "📱 Управление модулями:\n\n"
         f"🔢 Калькулятор: {'✅ Вкл' if updated_user.calc_enabled else '❌ Выкл'}\n"
         f"❤️ Love: {'✅ Вкл' if updated_user.love_enabled else '❌ Выкл'}"
     )
-    
+
     try:
         await callback.message.edit_text(text=text, reply_markup=kb.modules_keyboard)
     except TelegramBadRequest as e:
         if "message is not modified" not in str(e):
             raise
-    
+
     await callback.answer(f"Модуль {'включен ✅' if new_state else 'выключен ❌'}")
 
 @user_router.callback_query(F.data.startswith("toggle_"))
 async def toggle_function(callback: CallbackQuery):
     function = callback.data.split("_", 1)[1]
     user = await db.get_user(telegram_id=callback.from_user.id)
-    
+
     if function == "all_notifications":
         new_state = not user.notifications_enabled
         await db.toggle_notification(user.telegram_id, "notifications")
@@ -288,19 +288,19 @@ async def toggle_function(callback: CallbackQuery):
     else:
         await callback.answer("Неизвестная функция")
         return
-    
+
     await callback.answer(f"Функция {'включена ✅' if new_state else 'выключена ❌'}")
-    
+
     # Получаем обновленные данные пользователя
     updated_user = await db.get_user(telegram_id=callback.from_user.id)
-    
+
     new_text = (
         "⚙️ Управление функциями:\n\n"
         f"🔔 Уведомления: {'✅ Вкл' if updated_user.notifications_enabled else '❌ Выкл'}\n"
         f"📝 Отслеживание изменений: {'✅ Вкл' if updated_user.edit_notifications else '❌ Выкл'}\n"
         f"🗑 Отслеживание удалений: {'✅ Вкл' if updated_user.delete_notifications else '❌ Выкл'}"
     )
-    
+
     if callback.message.text != new_text:
         await callback.message.edit_text(text=new_text, reply_markup=kb.functions_keyboard)
 
@@ -405,3 +405,10 @@ async def toggle_notification(callback: CallbackQuery):
     current_state = await db.toggle_notification(callback.from_user.id, notification_type)
     await callback.answer(f"Уведомления {'включены' if current_state else 'выключены'}")
     await notification_settings(callback)
+
+@user_router.message(F.text.startswith("Кальк"))
+async def calculator(message: Message, user: dict):
+    """Обработчик калькулятора"""
+    if not user.calc_enabled:
+        await message.answer("❌ Модуль калькулятора отключен. Включите его в настройках модулей.")
+        return
