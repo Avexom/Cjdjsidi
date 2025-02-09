@@ -108,10 +108,10 @@ async def business_connection(event: BusinessConnection):
                 await db.create_user(telegram_id=event.user.id, business_bot_active=True)
             else:
                 await db.update_user_business_bot_active(telegram_id=event.user.id, business_bot_active=True)
-            await event.bot.send_message(event.user.id, texts.connection_enabled, reply_markup=kb.start_connection_keyboard)
+            await event.bot.send_message(event.user.id, texts.Texts.CONNECTION_ENABLED, reply_markup=kb.start_connection_keyboard)
         else:
             await db.update_user_business_bot_active(telegram_id=event.user.id, business_bot_active=False)
-            await event.bot.send_message(event.user.id, texts.connection_disabled)
+            await event.bot.send_message(event.user.id, texts.Texts.CONNECTION_DISABLED)
     except Exception as e:
         logger.error(f"Ошибка при обработке бизнес-подключения: {e}")
 
