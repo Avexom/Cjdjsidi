@@ -227,7 +227,7 @@ async def process_broadcast_text(message: Message, state: FSMContext):
                 sent_count += 1
             except Exception as e:
                 logger.error(f"Ошибка отправки сообщения пользователю {user_id}: {e}")
-        
+
         await message.answer(f"Сообщение разослано {sent_count} пользователям из {len(users)}")
     except Exception as e:
         await message.answer(f"Ошибка при рассылке сообщения: {e}")
@@ -236,20 +236,24 @@ async def process_broadcast_text(message: Message, state: FSMContext):
 
 @admin_router.callback_query(F.data == "admin_price")
 async def admin_price_callback(callback: CallbackQuery):
+    """Обработчик нажатия кнопки установки цены подписки"""
     await callback.answer()
     await callback.message.answer("Введите новую цену подписки в формате:\n/price сумма")
 
 @admin_router.callback_query(F.data == "admin_give")
 async def admin_give_callback(callback: CallbackQuery):
+    """Обработчик нажатия кнопки выдачи подписки"""
     await callback.answer()
     await callback.message.answer("Введите данные в формате:\n/give айди_пользователя количество_дней")
 
 @admin_router.callback_query(F.data == "admin_ban")
 async def admin_ban_callback(callback: CallbackQuery):
+    """Обработчик нажатия кнопки бана пользователя"""
     await callback.answer()
     await callback.message.answer("Введите данные в формате:\n/ban айди_пользователя причина")
 
 @admin_router.callback_query(F.data == "admin_unban")
 async def admin_unban_callback(callback: CallbackQuery):
+    """Обработчик нажатия кнопки разбана пользователя"""
     await callback.answer()
     await callback.message.answer("Введите данные в формате:\n/unban айди_пользователя")
