@@ -219,8 +219,16 @@ async def admin_broadcast_callback(callback: CallbackQuery, state: FSMContext):
 @admin_router.message(AdminStates.waiting_for_broadcast)
 async def process_broadcast_text(message: Message, state: FSMContext):
     try:
-        await db.broadcast_message(message.text)
-        await message.answer("Сообщение успешно разослано всем пользователям.")
+        users = await db.broadcast_message(message.text)
+        sent_count = 0
+        for user_id in users:
+            try:
+                await message.bot.send_message(chat_id=user_id, text=message.text)
+                sent_count += 1
+            except Exception as e:
+                logger.error(f"Ошибка отправки сообщения пользователю {user_id}: {e}")
+        
+        await message.answer(f"Сообщение разослано {sent_count} пользователям из {len(users)}")
     except Exception as e:
         await message.answer(f"Ошибка при рассылке сообщения: {e}")
     finally:
