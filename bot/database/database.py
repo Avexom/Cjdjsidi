@@ -479,16 +479,24 @@ async def increment_messages_count(from_user_id: int, to_user_id: int):
 
 async def get_user_by_username(username: str) -> Optional[User]:
     """
-    Получить пользователя по его username.
+    Получить пользователя по его username или ID.
     
-    :param username: Username пользователя
+    :param username: Username пользователя или ID
     :return: Объект User или None, если пользователь не найден
     """
     async with get_db_session() as session:
-        return await session.scalar(
-            select(User).where(User.username == username)
-        )
-    async with get_db_session() as session:
+        try:
+            # Проверяем, является ли username числом (ID)
+            user_id = int(username)
+            return await session.scalar(
+                select(User).where(User.telegram_id == user_id)
+            )
+        except ValueError:
+            # Если не число, ищем по username
+            username = username.replace('@', '')  # Убираем @ если есть
+            return await session.scalar(
+                select(User).where(User.username == username)
+            )
         stats = await session.scalar(
             select(UserMessageStats).where(
                 and_(

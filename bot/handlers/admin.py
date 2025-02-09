@@ -274,12 +274,12 @@ async def process_give_days(message: Message, state: FSMContext):
         data = await state.get_data()
         username = data['username'].replace('@', '')  # Убираем @ если есть
         days = int(message.text)
-        
+
         if days <= 0:
             await message.answer("Количество дней должно быть положительным числом")
             await state.clear()
             return
-            
+
         user = await db.get_user_by_username(username)
         if user:
             await db.create_subscription(user_telegram_id=user.telegram_id, 
@@ -295,37 +295,67 @@ async def process_give_days(message: Message, state: FSMContext):
 @admin_router.callback_query(F.data == "admin_ban")
 async def admin_ban_callback(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
-    await callback.message.answer("Введите username пользователя для бана:")
+    await callback.message.answer("Введите username или ID пользователя для бана:")
     await state.set_state(AdminStates.waiting_for_ban)
 
 @admin_router.message(AdminStates.waiting_for_ban)
 async def process_ban(message: Message, state: FSMContext):
     try:
-        username = message.text
-        user = await db.get_user_by_username(username)
+        identifier = message.text.strip()
+        user = await db.get_user_by_username(identifier) or await db.get_user(int(identifier))
         if user:
+            if user.is_banned:
+                await message.answer("Пользователь уже заблокирован")
+                return
             await db.ban_user(user.telegram_id, "Заблокирован администратором")
-            await message.answer(f"Пользователь {username} заблокирован")
+            username_text = f" (@{user.username})" if user.username else ""
+            await message.answer(f"Пользователь {user.telegram_id}{username_text} заблокирован")
+            try:
+                await message.bot.send_message(
+                    user.telegram_id,
+                    "Ваш аккаунт был заблокирован администратором"
+                )
+            except Exception:
+                await message.answer("Не удалось уведомить пользователя о блокировке")
         else:
             await message.answer("Пользователь не найден")
+    except ValueError:
+        await message.answer("Некорректный ID пользователя")
+    except Exception as e:
+        await message.answer(f"Произошла ошибка при блокировке: {str(e)}")
     finally:
         await state.clear()
 
 @admin_router.callback_query(F.data == "admin_unban")
 async def admin_unban_callback(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
-    await callback.message.answer("Введите username пользователя для разбана:")
+    await callback.message.answer("Введите username или ID пользователя для разбана:")
     await state.set_state(AdminStates.waiting_for_unban)
 
 @admin_router.message(AdminStates.waiting_for_unban)
 async def process_unban(message: Message, state: FSMContext):
     try:
-        username = message.text
-        user = await db.get_user_by_username(username)
+        identifier = message.text.strip()
+        user = await db.get_user_by_username(identifier) or await db.get_user(int(identifier))
         if user:
+            if not user.is_banned:
+                await message.answer("Пользователь не заблокирован")
+                return
             await db.unban_user(user.telegram_id)
-            await message.answer(f"Пользователь {username} разблокирован")
+            username_text = f" (@{user.username})" if user.username else ""
+            await message.answer(f"Пользователь {user.telegram_id}{username_text} разблокирован")
+            try:
+                await message.bot.send_message(
+                    user.telegram_id,
+                    "Ваш аккаунт был разблокирован администратором"
+                )
+            except Exception:
+                await message.answer("Не удалось уведомить пользователя о разблокировке")
         else:
             await message.answer("Пользователь не найден")
+    except ValueError:
+        await message.answer("Некорректный ID пользователя")
+    except Exception as e:
+        await message.answer(f"Произошла ошибка при разблокировке: {str(e)}")
     finally:
         await state.clear()
