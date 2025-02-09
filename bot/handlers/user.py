@@ -27,16 +27,22 @@ class PaymentRequest(BaseModel):
 # Middleware для проверки пользователя
 class UserMiddleware(BaseMiddleware):
     async def __call__(self, handler, event: TelegramObject, data: dict):
+        if not hasattr(event, 'from_user'):
+            return await handler(event, data)
+            
         user = await db.get_user(telegram_id=event.from_user.id)
-        if user is None:
+        if user is None and not isinstance(event, CallbackQuery):
             logger.info(f"Новый пользователь: {event.from_user.id}")
-            await event.answer(texts.Texts.START_NOT_CONNECTED)
+            if hasattr(event, 'answer'):
+                await event.answer(texts.Texts.START_NOT_CONNECTED)
             return
+            
         data["user"] = user
         logger.info(f"Пользователь {event.from_user.id} авторизован")
         return await handler(event, data)
 
 user_router.message.middleware(UserMiddleware())
+user_router.callback_query.middleware(UserMiddleware())
 
 # Кэширование цены подписки
 @alru_cache(maxsize=1)  # Используем async_lru для асинхронного кэширования

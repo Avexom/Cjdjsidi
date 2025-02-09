@@ -41,6 +41,11 @@ async def main():
         style='%'
     ))
 
+    # Настройка корневого логгера
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.INFO)
+    root_logger.addHandler(console_handler)
+    
     # Настройка логгера бота
     logger = colorlog.getLogger('bot')
     logger.addHandler(console_handler)
@@ -49,7 +54,7 @@ async def main():
     # Настраиваем логи внешних библиотек
     for log_name in ['aiosqlite', 'aiogram', 'apscheduler']:
         external_logger = logging.getLogger(log_name)
-        external_logger.setLevel(logging.ERROR)
+        external_logger.setLevel(logging.INFO)
         external_logger.addHandler(console_handler)
     
     # Добавляем свои логи
