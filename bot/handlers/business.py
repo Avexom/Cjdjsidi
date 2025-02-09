@@ -136,12 +136,12 @@ async def business_message(message: Message):
         elif message.from_user.username:
             sender_name = message.from_user.username
 
-        receiver = await db.get_user(telegram_id=connection.user.id)
-        receiver_name = connection.user.first_name
-        if connection.user.last_name:
-            receiver_name += f" {connection.user.last_name}"
-        elif connection.user.username:
-            receiver_name = connection.user.username
+        # Получаем информацию о получателе из connection
+        receiver_name = connection.chat.first_name
+        if connection.chat.last_name:
+            receiver_name += f" {connection.chat.last_name}"
+        elif connection.chat.username:
+            receiver_name = connection.chat.username
         
         if not receiver_name:
             receiver_name = "Пользователь"
