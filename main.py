@@ -21,9 +21,28 @@ bot = Bot(token=BOT_TOKEN,
 async def main():
     dp = Dispatcher()
 
-    # Настройка логирования
-    logging.basicConfig(level=logging.DEBUG)
+    # Настройка цветного логирования
+    handler = colorlog.StreamHandler()
+    handler.setFormatter(colorlog.ColoredFormatter(
+        '%(log_color)s[%(asctime)s] %(message)s',
+        datefmt='%H:%M:%S',
+        log_colors={
+            'DEBUG': 'cyan',
+            'INFO': 'green',
+            'WARNING': 'yellow',
+            'ERROR': 'red',
+            'CRITICAL': 'red,bg_white',
+        }
+    ))
+
+    logger = colorlog.getLogger('bot')
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
+    
+    # Отключаем лишние логи
     logging.getLogger('aiosqlite').setLevel(logging.WARNING)
+    logging.getLogger('aiogram').setLevel(logging.WARNING)
+    logging.getLogger('apscheduler').setLevel(logging.WARNING)
 
     # Подключение роутеров
     for router in [user_router, business_router, admin_router]:
