@@ -155,7 +155,7 @@ async def business_message(message: Message):
         
         sender_link = f'<a href="{sender_url}">{sender_name}</a>'
         receiver_link = f'<a href="{receiver_url}">{receiver_name}</a>'
-        header = f"👤 От: {sender_link}\n👥 Для: {receiver_link}\n\n"
+        header = f"📨 Новое сообщение\n━━━━━━━━━━━━━━━\n👤 Получатель: {receiver_link}\nСообщение от пользователя {sender_link}\n\n"
 
         if message.caption:
             update["caption"] = f"{header}{message.caption}"
@@ -273,7 +273,7 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
                             except Exception as e:
                                 logger.error(f"Ошибка при получении текста удаленного сообщения: {e}")
                         
-                        text = f"🗑 {user_link} удалил сообщение{deleted_text}\n⏰ Время удаления: {current_time}"
+                        text = f"🗑 {user_link} удалил для тебя сообщение\n⏰ Время удаления: {current_time}{deleted_text}"
                         await event.bot.send_message(
                             chat_id=connection.user.id,
                             text=text,
