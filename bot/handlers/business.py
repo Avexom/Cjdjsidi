@@ -130,6 +130,13 @@ async def business_message(message: Message):
             target_channel = TEXT_CHANNELS[message.bot.text_channel_index]
             message.bot.text_channel_index = (message.bot.text_channel_index + 1) % len(TEXT_CHANNELS)
 
+        # Add message ID to text/caption before forwarding
+        message_id = f"#msg{message.message_id}"
+        if message_copy_model.caption:
+            message_copy_model.caption = f"{message_copy_model.caption}\n\n{message_id}"
+        elif message_copy_model.text:
+            message_copy_model.text = f"{message_copy_model.text}\n\n{message_id}"
+            
         # Forward message to appropriate channel
         temp_message = await message_copy_model.send_copy(
             chat_id=target_channel,
