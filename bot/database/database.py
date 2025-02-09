@@ -37,6 +37,11 @@ class User(Base):
     ban_reason = Column(String, nullable=True)
     username = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.now)
+    notifications_enabled = Column(Boolean, default=True)
+    message_notifications = Column(Boolean, default=True)
+    edit_notifications = Column(Boolean, default=True)
+    delete_notifications = Column(Boolean, default=True)
+    last_message_time = Column(DateTime, default=datetime.now)
 
 
 class Message(Base):
