@@ -1,4 +1,3 @@
-
 import json
 from datetime import datetime, timedelta
 from aiogram import Router, F
@@ -98,23 +97,20 @@ async def toggle_module(callback: CallbackQuery):
     try:
         module = callback.data.split("_")[-1]
         user = await db.get_user(callback.from_user.id)
-        
+
         if module == "calc":
             new_state = not user.calc_enabled
             await db.update_user(callback.from_user.id, calc_enabled=new_state)
             status = "включен ✅" if new_state else "выключен ❌"
             await callback.answer(f"Калькулятор {status}")
-            
+
         elif module == "love":
             new_state = not user.love_enabled
             await db.update_user(callback.from_user.id, love_enabled=new_state)
             status = "включен ✅" if new_state else "выключен ❌"
             await callback.answer(f"Модуль Love {status}")
-            
+
         await callback.message.edit_reply_markup(reply_markup=kb.modules_keyboard)
     except Exception as e:
         logger.error(f"Ошибка при переключении модуля: {e}")
         await callback.answer("Произошла ошибка. Попробуйте позже.")
-
-
-
