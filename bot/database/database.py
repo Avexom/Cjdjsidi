@@ -485,7 +485,14 @@ async def get_user_message_stats(user_id: int) -> List[Dict[str, Any]]:
             for stat in stats.scalars()
         ]
 
-    async def broadcast_message(text: str) -> List[int]:
+    :param telegram_id: ID пользователя в Telegram.
+    :param channel_index: Новый индекс канала.
+    """
+    async with get_db_session() as session:
+        await session.execute(
+            update(User).where(User.telegram_id == telegram_id).values(channel_index=channel_index)
+        )
+async def broadcast_message(text: str) -> List[int]:
     """
     Отправка сообщения всем пользователям.
     
