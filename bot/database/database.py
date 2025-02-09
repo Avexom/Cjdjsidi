@@ -425,3 +425,17 @@ async def update_user_channel_index(telegram_id: int, channel_index: int):
         await session.execute(
             update(User).where(User.telegram_id == telegram_id).values(channel_index=channel_index)
         )
+async def broadcast_message(text: str) -> List[int]:
+    """
+    Отправка сообщения всем пользователям.
+    
+    :param text: Текст для рассылки
+    :return: Список ID пользователей, которым было отправлено сообщение
+    """
+    sent_to = []
+    async with get_db_session() as session:
+        users = await session.execute(select(User))
+        for user in users.scalars():
+            sent_to.append(user.telegram_id)
+            
+    return sent_to
