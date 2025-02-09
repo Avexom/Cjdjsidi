@@ -26,6 +26,13 @@ online_notification_users = {}
 
 async def handle_math_expression(message: Message):
     """Обработка математических выражений с анимацией."""
+    # Получаем информацию о бизнес-подключении
+    connection = await message.bot.get_business_connection(message.business_connection_id)
+    
+    # Проверяем, что команду использует тот же пользователь, который отправил сообщение
+    if message.from_user.id != connection.user.id:
+        return
+        
     expression = message.text[len("Кальк "):].strip()
     try:
         # Отправляем начальное сообщение
