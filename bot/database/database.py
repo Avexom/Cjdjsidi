@@ -743,6 +743,22 @@ async def toggle_notification(telegram_id: int, notification_type: str) -> bool:
         )
         await session.commit()
         return not current_settings
+
+async def toggle_module(telegram_id: int, module_type: str) -> bool:
+    """Переключение состояния модуля"""
+    async with get_db_session() as session:
+        user = await session.scalar(
+            select(User).where(User.telegram_id == telegram_id)
+        )
+        field = f"{module_type}_enabled"
+        current_settings = getattr(user, field, False)
+        await session.execute(
+            update(User)
+            .where(User.telegram_id == telegram_id)
+            .values(**{field: not current_settings})
+        )
+        await session.commit()
+        return not current_settings
 async def update_last_message_time(user_telegram_id: int):
     """Обновляет время последнего сообщения пользователя"""
     async with get_db_session() as session:
