@@ -235,10 +235,10 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
                                 )
                                 if msg:
                                     # Если сообщение найдено, пересылаем его
-                                    forwarded = await event.bot.forward_messages(
+                                    forwarded = await event.bot.forward_message(
                                         chat_id=connection.user.id,
                                         from_chat_id=channel_id,
-                                        message_ids=message_old.temp_message_id
+                                        message_id=message_old.temp_message_id
                                     )
                                     deleted_content = ""
                                     if hasattr(forwarded, 'text') and forwarded.text:
