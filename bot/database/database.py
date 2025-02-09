@@ -720,11 +720,16 @@ async def toggle_notification(telegram_id: int, notification_type: str) -> bool:
         user = await session.scalar(
             select(User).where(User.telegram_id == telegram_id)
         )
-        current_settings = getattr(user, f"{notification_type}_notifications", False)
+        if notification_type == "notifications":
+            field = "notifications_enabled"
+        else:
+            field = f"{notification_type}_notifications"
+            
+        current_settings = getattr(user, field, False)
         await session.execute(
             update(User)
             .where(User.telegram_id == telegram_id)
-            .values(**{f"{notification_type}_notifications": not current_settings})
+            .values(**{field: not current_settings})
         )
         await session.commit()
         return not current_settings
