@@ -25,14 +25,40 @@ math_expression_pattern = re.compile(r'^Кальк [\d+\-*/(). ]+$')
 online_notification_users = {}
 
 async def handle_math_expression(message: Message):
-    """Обработка математических выражений."""
+    """Обработка математических выражений с анимацией."""
+    original_sender = message.from_user.id
     expression = message.text[len("Кальк "):].strip()
     try:
+        # Отправляем начальное сообщение
+        calc_message = await message.answer("🔄 Считаю...")
+        
+        # Анимация вычисления
+        animations = [
+            "🧮 Анализирую выражение...",
+            "📊 Выполняю вычисления...",
+            "⚡️ Почти готово..."
+        ]
+        
+        for anim in animations:
+            await asyncio.sleep(0.5)
+            await calc_message.edit_text(anim)
+        
+        # Вычисляем результат
         result = eval(expression)
-        await message.answer(f"Результат: {result}")
+        
+        # Форматируем результат
+        if isinstance(result, (int, float)):
+            formatted_result = f"{result:,}".replace(",", " ")
+        else:
+            formatted_result = str(result)
+            
+        # Отправляем финальное сообщение
+        final_text = f"✨ Выражение: {expression}\n💫 Результат: {formatted_result}"
+        await calc_message.edit_text(final_text, reply_to_message_id=message.message_id)
+        
     except Exception as e:
         logger.error(f"Ошибка при вычислении выражения: {e}")
-        await message.answer("Ошибка при вычислении выражения.")
+        await calc_message.edit_text("❌ Ошибка при вычислении выражения")
 
 async def handle_love_command(message: Message):
     """Обработка команды 'love'."""
