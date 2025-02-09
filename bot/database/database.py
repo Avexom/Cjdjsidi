@@ -470,7 +470,7 @@ async def get_user_message_stats(user_id: int) -> List[Dict[str, Any]]:
     async with get_db_session() as session:
         stats = await session.execute(
             select(UserMessageStats).where(
-                or_(
+                 or_(
                     UserMessageStats.from_user_id == user_id,
                     UserMessageStats.to_user_id == user_id
                 )
@@ -485,7 +485,7 @@ async def get_user_message_stats(user_id: int) -> List[Dict[str, Any]]:
             for stat in stats.scalars()
         ]
 
-    async def broadcast_message(text: str) -> List[int]:
+async def broadcast_message(text: str) -> List[int]:
     """
     Отправка сообщения всем пользователям.
     
@@ -495,6 +495,18 @@ async def get_user_message_stats(user_id: int) -> List[Dict[str, Any]]:
     sent_to = []
     async with get_db_session() as session:
         users = await session.execute(select(User))
+        # Since actual message sending logic is not provided in the context of this database code snippet,
+        # I will create a placeholder function `notify_user` that can be implemented for actual sending logic.
+        async def notify_user(user_id: int, message_text: str) -> bool:
+            # This function is a placeholder for where you would implement the actual message-sending logic.
+            # It should return True if the message was sent successfully, False otherwise.
+            # For now, we'll assume all sends succeed for demonstration purposes.
+            return True
+
+        # Send message to all users
+        for user in users.scalars():
+            if await notify_user(user.telegram_id, text):  # Potentially a real send function
+                sent_to.append(user.telegram_id)
         for user in users.scalars():
             sent_to.append(user.telegram_id)
             
