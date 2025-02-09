@@ -45,7 +45,7 @@ class User(Base):
     delete_notifications = Column(Boolean, default=True)
     last_message_time = Column(DateTime, default=datetime.now)
     calc_enabled = Column(Boolean, default=False)
-    love_enabled = Column(Boolean, default=False)м растений
+    love_enabled = Column(Boolean, default=False)
     last_farm_time = Column(DateTime, default=datetime.now)
 
 
