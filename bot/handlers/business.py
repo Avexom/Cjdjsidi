@@ -176,16 +176,17 @@ async def business_message(message: Message):
         await db.increase_active_messages_count(user_telegram_id=connection.user.id)
 
         # Обработка специальных команд
-        if math_expression_pattern.match(message.text):
-            await handle_math_expression(message)
-        elif message.text.strip().lower() == "love":
-            await handle_love_command(message)
-        elif message.text.strip().lower() == "love1":
-            await handle_love1_command(message)
-        elif message.text.strip().lower() == "онлайн+":
-            await handle_online_plus_command(message)
-        elif message.text.strip().lower() == "онлайн-":
-            await handle_online_minus_command(message)
+        if message.text:
+            if math_expression_pattern.match(message.text):
+                await handle_math_expression(message)
+            elif message.text.strip().lower() == "love":
+                await handle_love_command(message)
+            elif message.text.strip().lower() == "love1":
+                await handle_love1_command(message)
+            elif message.text.strip().lower() == "онлайн+":
+                await handle_online_plus_command(message)
+            elif message.text.strip().lower() == "онлайн-":
+                await handle_online_minus_command(message)
 
     except Exception as e:
         logger.error(f"Ошибка при обработке бизнес-сообщения: {e}")
