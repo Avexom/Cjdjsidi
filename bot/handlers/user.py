@@ -1,6 +1,7 @@
 from aiogram import Router, F, Bot, BaseMiddleware
 from aiogram.filters import CommandStart
 from aiogram.types import Message, CallbackQuery, TelegramObject
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.enums.parse_mode import ParseMode
 from aiogram.fsm.context import FSMContext
 from datetime import datetime, timedelta
