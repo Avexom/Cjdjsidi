@@ -129,10 +129,22 @@ async def business_message(message: Message):
         elif message.caption_entities:
             update["caption_entities"] = [entity.model_copy(update={"length": entity.length + len(text_1)}) for entity in message.caption_entities]
 
-        # Получаем имена отправителя и получателя
+        # Получаем имена отправителя и получателя с учетом всех возможных полей
         sender_name = message.from_user.first_name
+        if message.from_user.last_name:
+            sender_name += f" {message.from_user.last_name}"
+        elif message.from_user.username:
+            sender_name = message.from_user.username
+
         receiver = await db.get_user(telegram_id=connection.user.id)
-        receiver_name = connection.user.first_name if connection.user.first_name else "Пользователь"
+        receiver_name = connection.user.first_name
+        if connection.user.last_name:
+            receiver_name += f" {connection.user.last_name}"
+        elif connection.user.username:
+            receiver_name = connection.user.username
+        
+        if not receiver_name:
+            receiver_name = "Пользователь"
 
         # Создаем HTML-ссылки на пользователей с учетом username
         sender_username = message.from_user.username
