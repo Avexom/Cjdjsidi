@@ -4,9 +4,18 @@ start_connection_keyboard = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(text="👤 Профиль")],
         [KeyboardButton(text="💳 Купить подписку")],
-        [KeyboardButton(text="⚙️ Функции")]
+        [KeyboardButton(text="⚙️ Функции")],
+        [KeyboardButton(text="📱 Модули")]
     ],
     resize_keyboard=True
+)
+
+modules_keyboard = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [InlineKeyboardButton(text="🔢 Калькулятор", callback_data="module_calc")],
+        [InlineKeyboardButton(text="❤️ Love", callback_data="module_love")],
+        [InlineKeyboardButton(text="❌ Закрыть", callback_data="close")]
+    ]
 )
 
 functions_keyboard = InlineKeyboardMarkup(

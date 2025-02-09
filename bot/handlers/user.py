@@ -283,6 +283,30 @@ async def close(callback: CallbackQuery):
     await callback.answer()
     await callback.message.delete()
 
+@user_router.message(F.text == "📱 Модули")
+async def modules_menu(message: Message):
+    """Показывает меню модулей"""
+    await message.delete()
+    await message.answer("📱 Доступные модули:", reply_markup=kb.modules_keyboard)
+
+@user_router.callback_query(F.data == "module_calc")
+async def calculator_module(callback: CallbackQuery):
+    """Открывает калькулятор"""
+    await callback.answer()
+    await callback.message.edit_text(
+        "🔢 Калькулятор\n\nДля использования напишите:\nКальк <выражение>\n\nПример: Кальк 2 + 2",
+        reply_markup=kb.close_keyboard
+    )
+
+@user_router.callback_query(F.data == "module_love")
+async def love_module(callback: CallbackQuery):
+    """Открывает модуль Love"""
+    await callback.answer()
+    await callback.message.edit_text(
+        "❤️ Love\n\nДля использования напишите:\nLove <имя1> <имя2>\n\nПример: Love Иван Мария",
+        reply_markup=kb.close_keyboard
+    )
+
 @user_router.message(F.text == "тест")
 async def test(message: Message):
     await db.create_subscription(user_telegram_id=message.from_user.id, end_date=datetime.now() + timedelta(days=30))
