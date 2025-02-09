@@ -477,6 +477,10 @@ async def migrate_db():
             await conn.execute(text("UPDATE users SET last_message_time = CURRENT_TIMESTAMP"))
             logger.info("Added last_message_time column to users table")
 
+        if 'last_farm_time' not in columns:
+            await conn.execute(text("ALTER TABLE users ADD COLUMN last_farm_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP"))
+            logger.info("Added last_farm_time column to users table")
+
 
 # Запуск инициализации базы данных
 async def main():
