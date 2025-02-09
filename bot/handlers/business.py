@@ -11,7 +11,6 @@ from aiogram.fsm.context import FSMContext
 import bot.database.database as db
 import bot.assets.texts as texts
 import bot.keyboards.user as kb
-from config import HISTORY_GROUP_ID
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
