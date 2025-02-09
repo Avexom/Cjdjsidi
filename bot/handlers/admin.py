@@ -50,10 +50,15 @@ async def generate_admin_panel_text(stats):
 <b>Панель администратора</b>
 
 <b>Стоимость подписки:</b> {stats['subscription_price']}$
-    
+
 <b>Команды администратора:</b>
 - /give айди_пользователя количество_дней - выдать подписку пользователю
 - /price цена - установить цену подписки
+- /ban айди_пользователя причина - заблокировать пользователя
+- /unban айди_пользователя - разблокировать пользователя
+- /broadcast текст - отправить сообщение всем пользователям
+- /stats - подробная статистика использования
+- /logs - последние ошибки бота
 
 📊 <b>Статистика бота</b>
 - Всего пользователей: {stats['total_users']}
@@ -120,3 +125,68 @@ async def reset_channels(message: Message):
         await message.answer("Индексы каналов успешно сброшены для всех пользователей.")
     except Exception as e:
         await message.answer(f"Произошла ошибка при сбросе индексов: {e}")
+
+# New admin commands
+@admin_router.message(F.text.startswith("/ban"))
+async def ban_user(message: Message):
+    try:
+        args = message.text.split()
+        if len(args) < 3:
+            await message.answer("Используйте формат: /ban айди_пользователя причина")
+            return
+        user_id = int(args[1])
+        reason = " ".join(args[2:])
+        await db.ban_user(user_id, reason)
+        await message.answer(f"Пользователь {user_id} заблокирован. Причина: {reason}")
+    except Exception as e:
+        await message.answer(f"Ошибка при блокировке пользователя: {e}")
+
+@admin_router.message(F.text.startswith("/unban"))
+async def unban_user(message: Message):
+    try:
+        args = message.text.split()
+        if len(args) != 2:
+            await message.answer("Используйте формат: /unban айди_пользователя")
+            return
+        user_id = int(args[1])
+        await db.unban_user(user_id)
+        await message.answer(f"Пользователь {user_id} разблокирован.")
+    except Exception as e:
+        await message.answer(f"Ошибка при разблокировке пользователя: {e}")
+
+@admin_router.message(F.text.startswith("/broadcast"))
+async def broadcast_message(message: Message):
+    try:
+        text = message.text[len("/broadcast "):]
+        await db.broadcast_message(text)
+        await message.answer("Сообщение успешно разослано всем пользователям.")
+    except Exception as e:
+        await message.answer(f"Ошибка при рассылке сообщения: {e}")
+
+
+@admin_router.message(Command("stats"))
+async def detailed_stats(message: Message):
+    try:
+        stats = await get_cached_statistics()
+        detailed_stats_text = f"""
+        Подробная статистика:
+        - Всего пользователей: {stats['total_users']}
+        - Пользователей с подпиской: {stats['total_subscriptions']}
+        - Пользователей с активным бизнес-ботом: {stats['total_users_with_active_business_bot']}
+        - Всего сообщений: {stats['total_messages']}
+        - Отредактированных сообщений: {stats['total_edited_messages']}
+        - Удаленных сообщений: {stats['total_deleted_messages']}
+        """
+        await message.answer(detailed_stats_text)
+    except Exception as e:
+        await message.answer(f"Ошибка при получении статистики: {e}")
+
+
+@admin_router.message(Command("logs"))
+async def show_logs(message: Message):
+    try:
+        logs = await db.get_recent_logs() # Assumed function in db.py
+        log_message = "\n".join(logs) or "Нет записей в логах."
+        await message.answer(f"Последние ошибки бота:\n{log_message}")
+    except Exception as e:
+        await message.answer(f"Ошибка при получении логов: {e}")
