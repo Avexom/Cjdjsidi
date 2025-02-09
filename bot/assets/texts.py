@@ -99,14 +99,15 @@ def new_message_text_2(name: str, user_id: int, username: str | None) -> str:
     Возвращает альтернативный текст для нового сообщения.
     """
     user_link = generate_user_link(name, user_id, username)
-    return f"👇 Сообщение для пользователя {user_link} 👇"
+    return f"📨 Новое сообщение\n━━━━━━━━━━━━━━━\n👤 Получатель: {user_link}"
 
 def deleted_message_text(name: str, user_id: int, username: str | None) -> str:
     """
     Возвращает текст для удаленного сообщения.
     """
     user_link = generate_user_link(name, user_id, username)
-    return f"Пользователь {user_link} удалил сообщение"
+    current_time = datetime.now().strftime("%H:%M:%S")
+    return f"🗑 Удаленное сообщение\n━━━━━━━━━━━━━━━\n👤 Отправитель: {user_link}\n⏰ Время удаления: {current_time}"
 
 def edited_message_text(name: str, user_id: int, username: str | None) -> str:
     """
