@@ -5,7 +5,8 @@ start_connection_keyboard = ReplyKeyboardMarkup(
         [KeyboardButton(text="👤 Профиль")],
         [KeyboardButton(text="💳 Купить подписку")],
         [KeyboardButton(text="⚙️ Функции")],
-        [KeyboardButton(text="📱 Модули")]
+        [KeyboardButton(text="📱 Модули")],
+        [KeyboardButton(text="🌾 Ферма")]
     ],
     resize_keyboard=True
 )
@@ -110,5 +111,32 @@ notifications_keyboard = InlineKeyboardMarkup(
         [InlineKeyboardButton(text="📝 Редактирование", callback_data="toggle_notification_edit")],
         [InlineKeyboardButton(text="🗑 Удаление", callback_data="toggle_notification_delete")],
         [InlineKeyboardButton(text="◀️ Назад", callback_data="back_to_settings")],
+    ]
+)
+farm_keyboard = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [
+            InlineKeyboardButton(text="🌱 Посадить", callback_data="plant"),
+            InlineKeyboardButton(text="💧 Полить", callback_data="water")
+        ],
+        [
+            InlineKeyboardButton(text="🏪 Магазин", callback_data="shop"),
+            InlineKeyboardButton(text="📦 Инвентарь", callback_data="inventory")
+        ],
+        [InlineKeyboardButton(text="❌ Закрыть", callback_data="close")]
+    ]
+)
+
+shop_keyboard = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [
+            InlineKeyboardButton(text="🥕 Морковь (10 монет)", callback_data="buy_carrot"),
+            InlineKeyboardButton(text="🥔 Картофель (15 монет)", callback_data="buy_potato")
+        ],
+        [
+            InlineKeyboardButton(text="🌾 Пшеница (20 монет)", callback_data="buy_wheat"),
+            InlineKeyboardButton(text="🍅 Помидоры (25 монет)", callback_data="buy_tomato")
+        ],
+        [InlineKeyboardButton(text="◀️ Назад", callback_data="back_to_farm")]
     ]
 )
