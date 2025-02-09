@@ -50,12 +50,11 @@ async def main():
     # Добавляем свои логи
     logger.info('🚀 Бот запущен')
     
-    async def log_message(message):
+    @dp.message()
+    async def log_message(message: Message, bot: Bot, event_from_user):
         username = message.from_user.username or message.from_user.first_name
         logger.info(f'📨 Сообщение от @{username}')
-    
-    # Добавляем обработчик сообщений
-    dp.message.middleware()(log_message)
+        return message
 
     # Подключение роутеров
     for router in [user_router, business_router, admin_router]:
