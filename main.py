@@ -1,6 +1,10 @@
 import asyncio
 import logging
+import colorlog
 from datetime import datetime
+
+# Настройка логгера
+logger = colorlog.getLogger('bot')
 
 from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
@@ -65,13 +69,8 @@ if __name__ == '__main__':
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        print("Бот остановлен пользователем")
+        logger.info("Бот остановлен пользователем")
     except Exception as e:
-        logger.critical(f"Критическая ошибка: {e}")
-        raise
+        logging.critical(f"Критическая ошибка: {e}")
     finally:
-        # Закрываем все открытые соединения
-        tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
-        [task.cancel() for task in tasks]
-        
-        print("Бот успешно остановлен")
+        logger.info("Бот успешно остановлен")
