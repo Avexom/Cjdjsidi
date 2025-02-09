@@ -266,11 +266,22 @@ async def help_command(message: Message):
 async def notification_settings(callback: CallbackQuery):
     """Настройки уведомлений"""
     await callback.answer()
+    user = await db.get_user(telegram_id=callback.from_user.id)
     text = (
         "🔔 Настройки уведомлений:\n\n"
-        "Выберите, какие уведомления хотите получать:"
+        f"Все уведомления: {'✅' if user.notifications_enabled else '❌'}\n"
+        f"Новые сообщения: {'✅' if user.message_notifications else '❌'}\n"
+        f"Редактирование: {'✅' if user.edit_notifications else '❌'}\n"
+        f"Удаление: {'✅' if user.delete_notifications else '❌'}"
     )
     await callback.message.edit_text(text=text, reply_markup=kb.notifications_keyboard)
+
+@user_router.callback_query(F.data == "back_to_settings")
+async def back_to_settings(callback: CallbackQuery):
+    """Возврат в основные настройки"""
+    await callback.answer()
+    text = "⚙️ Настройки:\n\nВыберите, что хотите настроить:"
+    await callback.message.edit_text(text=text, reply_markup=kb.settings_keyboard)
 
 @user_router.callback_query(F.data.startswith("toggle_notification_"))
 async def toggle_notification(callback: CallbackQuery):

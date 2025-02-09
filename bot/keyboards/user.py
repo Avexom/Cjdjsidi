@@ -1,4 +1,3 @@
-
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
 
 start_connection_keyboard = ReplyKeyboardMarkup(
@@ -77,3 +76,20 @@ def get_unban_keyboard(user_id: int):
             ]
         ]
     )
+
+settings_keyboard = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [InlineKeyboardButton(text="🔔 Настройки уведомлений", callback_data="notifications_settings")],
+        [InlineKeyboardButton(text="❌ Закрыть", callback_data="close")]
+    ]
+)
+
+notifications_keyboard = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [InlineKeyboardButton(text="✉️ Все уведомления", callback_data="toggle_notification_notifications")],
+        [InlineKeyboardButton(text="📨 Новые сообщения", callback_data="toggle_notification_message")],
+        [InlineKeyboardButton(text="📝 Редактирование", callback_data="toggle_notification_edit")],
+        [InlineKeyboardButton(text="🗑 Удаление", callback_data="toggle_notification_delete")],
+        [InlineKeyboardButton(text="◀️ Назад", callback_data="back_to_settings")],
+    ]
+)
