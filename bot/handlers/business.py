@@ -270,7 +270,7 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
                                     continue
 
                             if not message_found:
-                                # Если сообщение не найдено, отправляем только уведомление об удалении
+                                # Отправляем только одно уведомление, если сообщение не найдено
                                 text = f"🗑 {user_link} удалил для тебя сообщение\n⏰ Время удаления: {current_time}\n⚠️ Оригинальное сообщение недоступно"
                                 await event.bot.send_message(
                                     chat_id=connection.user.id,
@@ -280,7 +280,7 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
 
                         except Exception as e:
                             logger.error(f"Не удалось переслать удаленное сообщение: {e}")
-                            # В случае ошибки отправляем базовое уведомление
+                            # Отправляем уведомление об ошибке только если не удалось отправить сообщение
                             text = f"🗑 {user_link} удалил для тебя сообщение\n⏰ Время удаления: {current_time}"
                             await event.bot.send_message(
                                 chat_id=connection.user.id,
@@ -294,13 +294,21 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
 async def edited_business_message(message: Message):
     """Обработка измененных бизнес-сообщений."""
     try:
+        # Получаем информацию о подключении
         connection = await message.bot.get_business_connection(message.business_connection_id)
+        if not connection:
+            logger.error("Не удалось получить информацию о подключении")
+            return
+
+        # Проверяем подписку
         subscription = await db.get_subscription(user_telegram_id=connection.user.id)
         if subscription is None:
             await message.bot.send_message(
                 chat_id=connection.user.id,
-                text="🔔 Сообщение было изменено, но ваша подписка неактивна. Приобретите подписку, чтобы следить за изменениями! ✏️"
+                text="🔔 Сообщение было изменено, но ваша подписка неактивна. Приобретите подписку, чтобы следить за изменениями! ✏️",
+                disable_notification=True
             )
+            return
 
         message_old = await db.get_message(message.message_id)
         if message_old:

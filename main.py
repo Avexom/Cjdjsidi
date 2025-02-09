@@ -46,4 +46,13 @@ if __name__ == '__main__':
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        print("Exit bot")
+        print("Бот остановлен пользователем")
+    except Exception as e:
+        logger.critical(f"Критическая ошибка: {e}")
+        raise
+    finally:
+        # Закрываем все открытые соединения
+        tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
+        [task.cancel() for task in tasks]
+        
+        print("Бот успешно остановлен")

@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy import (
     ForeignKey, Column, Integer, String, BigInteger, Boolean, Date, DateTime,
-    func, select, update, delete, insert, and_, text
+    func, select, update, delete, insert, and_, text, or_
 )
 from sqlalchemy.orm import declarative_base
 from async_lru import alru_cache
@@ -36,6 +36,8 @@ class User(Base):
     is_banned = Column(Boolean, nullable=False, default=False)
     ban_reason = Column(String, nullable=True)
     username = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.now)
+
 
 class Message(Base):
     __tablename__ = 'messages'
@@ -107,22 +109,29 @@ async def create_default_settings():
 
 # Операции с пользователями
 async def create_user(telegram_id: int, business_bot_active: bool = False) -> User:
-    """
-    Создать нового пользователя с автоматическим назначением channel_index.
+    try:
+        async with get_db_session() as session:
+            # Проверяем, не существует ли уже пользователь
+            existing_user = await session.scalar(select(User).where(User.telegram_id == telegram_id))
+            if existing_user:
+                return existing_user
 
-    :param telegram_id: ID пользователя в Telegram.
-    :param business_bot_active: Активен ли бизнес-бот.
-    :return: Созданный пользователь.
-    """
-    async with get_db_session() as session:
-        # Получаем количество существующих пользователей для определения следующего индекса
-        result = await session.execute(select(func.count(User.id)))
-        count = result.scalar() or 0
-        next_index = count % 3  # Используем остаток от деления на 3 (так как у нас 3 текстовых канала)
-        
-        user = User(telegram_id=telegram_id, business_bot_active=business_bot_active, channel_index=next_index)
-        session.add(user)
-        return user
+            result = await session.execute(select(func.count(User.id)))
+            count = result.scalar() or 0
+            next_index = count % 3
+
+            user = User(
+                telegram_id=telegram_id, 
+                business_bot_active=business_bot_active, 
+                channel_index=next_index,
+                created_at=datetime.now()
+            )
+            session.add(user)
+            await session.commit()
+            return user
+    except Exception as e:
+        logger.error(f"Ошибка при создании пользователя: {e}")
+        raise
 
 async def get_user(telegram_id: int) -> Optional[User]:
     """
@@ -402,22 +411,27 @@ async def migrate_db():
     async with engine.begin() as conn:
         result = await conn.execute(text("PRAGMA table_info(users)"))
         columns = [col[1] for col in result.fetchall()]
-        
+
         if 'channel_index' not in columns:
             await conn.execute(text("ALTER TABLE users ADD COLUMN channel_index INTEGER DEFAULT 0"))
             logger.info("Added channel_index column to users table")
-            
+
         if 'is_banned' not in columns:
             await conn.execute(text("ALTER TABLE users ADD COLUMN is_banned BOOLEAN DEFAULT FALSE"))
             logger.info("Added is_banned column to users table")
-            
+
         if 'ban_reason' not in columns:
             await conn.execute(text("ALTER TABLE users ADD COLUMN ban_reason TEXT"))
             logger.info("Added ban_reason column to users table")
-            
+
         if 'username' not in columns:
             await conn.execute(text("ALTER TABLE users ADD COLUMN username TEXT"))
             logger.info("Added username column to users table")
+
+        if 'created_at' not in columns:
+            await conn.execute(text("ALTER TABLE users ADD COLUMN created_at TIMESTAMP"))
+            logger.info("Added created_at column to users table")
+
 
 # Запуск инициализации базы данных
 async def main():
@@ -480,7 +494,7 @@ async def increment_messages_count(from_user_id: int, to_user_id: int):
 async def get_user_by_username(username: str) -> Optional[User]:
     """
     Получить пользователя по его username или ID.
-    
+
     :param username: Username пользователя или ID
     :return: Объект User или None, если пользователь не найден
     """
@@ -549,7 +563,7 @@ async def get_user_message_stats(user_id: int) -> List[Dict[str, Any]]:
 async def ban_user(telegram_id: int, reason: str = "Не указана") -> bool:
     """
     Заблокировать пользователя.
-    
+
     :param telegram_id: ID пользователя
     :param reason: Причина блокировки
     :return: True если блокировка успешна, False если пользователь не найден
@@ -558,7 +572,7 @@ async def ban_user(telegram_id: int, reason: str = "Не указана") -> boo
         user = await session.scalar(select(User).where(User.telegram_id == telegram_id))
         if not user:
             return False
-        
+
         await session.execute(
             update(User)
             .where(User.telegram_id == telegram_id)
@@ -573,7 +587,7 @@ async def ban_user(telegram_id: int, reason: str = "Не указана") -> boo
 async def unban_user(telegram_id: int) -> bool:
     """
     Разблокировать пользователя.
-    
+
     :param telegram_id: ID пользователя
     :return: True если разблокировка успешна, False если пользователь не найден
     """
@@ -581,7 +595,7 @@ async def unban_user(telegram_id: int) -> bool:
         user = await session.scalar(select(User).where(User.telegram_id == telegram_id))
         if not user:
             return False
-            
+
         await session.execute(
             update(User)
             .where(User.telegram_id == telegram_id)
@@ -596,7 +610,7 @@ async def unban_user(telegram_id: int) -> bool:
 async def broadcast_message(text: str) -> List[int]:
     """
     Отправка сообщения всем пользователям.
-    
+
     :param text: Текст для рассылки
     :return: Список ID пользователей, которым было отправлено сообщение
     """
@@ -612,7 +626,7 @@ async def broadcast_message(text: str) -> List[int]:
                 except Exception as e:
                     logger.error(f"Ошибка отправки сообщения пользователю {user.telegram_id}: {e}")
                     failed.append(user.telegram_id)
-                    
+
             logger.info(f"Рассылка завершена. Отправлено: {len(sent_to)}, Ошибок: {len(failed)}")
             return sent_to
         except Exception as e:
@@ -622,7 +636,7 @@ async def broadcast_message(text: str) -> List[int]:
 async def get_recent_logs(limit: int = 50) -> List[Dict[str, Any]]:
     """
     Получить последние логи действий пользователей
-    
+
     :param limit: Количество записей
     :return: Список последних действий
     """
@@ -634,7 +648,7 @@ async def get_recent_logs(limit: int = 50) -> List[Dict[str, Any]]:
             .order_by(MessageEditHistory.date.desc())
             .limit(limit)
         )
-        
+
         for entry in edit_history.scalars():
             logs.append({
                 'type': 'edit',
@@ -642,7 +656,7 @@ async def get_recent_logs(limit: int = 50) -> List[Dict[str, Any]]:
                 'message_id': entry.message_id,
                 'date': entry.date
             })
-            
+
     return logs[:limit]
 async def get_user_stats(telegram_id: int) -> Dict[str, Any]:
     """Получение статистики пользователя"""
@@ -654,7 +668,7 @@ async def get_user_stats(telegram_id: int) -> Dict[str, Any]:
             "sent_messages": user.active_messages_count,
             "edited_messages": user.edited_messages_count,
             "deleted_messages": user.deleted_messages_count,
-            "registration_date": user.created_at.strftime("%d.%m.%Y")
+            "registration_date": user.created_at.strftime("%d.%m.%Y") if user.created_at else None
         }
 
 async def toggle_notification(telegram_id: int, notification_type: str) -> bool:
