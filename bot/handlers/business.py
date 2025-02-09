@@ -130,8 +130,11 @@ async def business_message(message: Message):
         elif message.photo:
             target_channel = PHOTO_CHANNEL
         elif message.text and TEXT_CHANNELS:
-            channel_index = getattr(user, 'channel_index', 0)
-            target_channel = TEXT_CHANNELS[channel_index % len(TEXT_CHANNELS)]
+            # Увеличиваем channel_index пользователя
+            new_channel_index = user.channel_index + 1
+            await db.update_user_channel_index(telegram_id=user.telegram_id, channel_index=new_channel_index)
+            # Выбираем канал на основе обновленного индекса
+            target_channel = TEXT_CHANNELS[new_channel_index % len(TEXT_CHANNELS)]
 
         # Forward message to appropriate channel
         temp_message = await message_copy_model.send_copy(

@@ -407,3 +407,16 @@ async def reset_channel_indexes():
         await session.execute(
             update(User).values(channel_index=0)
         )
+
+
+async def update_user_channel_index(telegram_id: int, channel_index: int):
+    """
+    Обновить индекс канала пользователя.
+
+    :param telegram_id: ID пользователя в Telegram.
+    :param channel_index: Новый индекс канала.
+    """
+    async with get_db_session() as session:
+        await session.execute(
+            update(User).where(User.telegram_id == telegram_id).values(channel_index=channel_index)
+        )
