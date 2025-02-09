@@ -255,22 +255,16 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
                     username = event.chat.username if event.chat.username else event.chat.first_name
                     user_link = f'<a href="tg://user?id={event.chat.id}">{username}</a>'
                     
-                    # Отправляем только уведомление о удалении
-                    text = f"🗑 {user_link} удалил сообщение\n⏰ Время удаления: {current_time}"
-                    await event.bot.send_message(
-                        chat_id=connection.user.id,
-                        text=text,
-                        parse_mode=ParseMode.HTML
-                    )
+                    try:
+                        # Отправляем только уведомление о удалении
+                        text = f"🗑 {user_link} удалил сообщение\n⏰ Время удаления: {current_time}"
+                        await event.bot.send_message(
+                            chat_id=connection.user.id,
+                            text=text,
+                            parse_mode=ParseMode.HTML
+                        )
                     except Exception as e:
                         logger.error(f"Общая ошибка при получении удаленного сообщения: {e}")
-
-                    text = f"🗑 {user_link} удалил для тебя сообщение{deleted_text}\n⏰ Время удаления: {current_time}"
-                    await event.bot.send_message(
-                        chat_id=connection.user.id,
-                        text=text,
-                        parse_mode=ParseMode.HTML
-                    )
     except Exception as e:
         logger.error(f"Ошибка при обработке удаленных сообщений: {e}")
 
