@@ -183,7 +183,7 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
                         for channel_id in channels:
                             try:
                                 msg = await event.bot.copy_message(
-                                    chat_id=event.bot.id,
+                                    chat_id=connection.user.id,
                                     from_chat_id=channel_id,
                                     message_id=message_old.temp_message_id
                                 )
