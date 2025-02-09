@@ -426,6 +426,14 @@ async def migrate_db():
         result = await conn.execute(text("PRAGMA table_info(users)"))
         columns = [col[1] for col in result.fetchall()]
 
+        if 'calc_enabled' not in columns:
+            await conn.execute(text("ALTER TABLE users ADD COLUMN calc_enabled BOOLEAN DEFAULT FALSE"))
+            logger.info("Added calc_enabled column to users table")
+
+        if 'love_enabled' not in columns:
+            await conn.execute(text("ALTER TABLE users ADD COLUMN love_enabled BOOLEAN DEFAULT FALSE"))
+            logger.info("Added love_enabled column to users table")
+
         if 'channel_index' not in columns:
             await conn.execute(text("ALTER TABLE users ADD COLUMN channel_index INTEGER DEFAULT 0"))
             logger.info("Added channel_index column to users table")
