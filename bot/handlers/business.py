@@ -173,17 +173,26 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
                     current_time = datetime.now().strftime("%H:%M:%S")
                     username = event.chat.username if event.chat.username else event.chat.first_name
                     user_link = f'<a href="tg://user?id={event.chat.id}">{username}</a>'
+                    # Получаем удаленное сообщение из базы данных
+                    original_message = await db.get_message(message_old.message_id)
                     deleted_text = ""
-                    try:
-                        msg = await event.bot.copy_message(
-                            chat_id=event.bot.id,
-                            from_chat_id=-1002467764642,  # Используем основной канал для текстовых сообщений
-                            message_id=message_old.temp_message_id
-                        )
-                        if msg and hasattr(msg, 'text'):
-                            deleted_text = f"\n\n💬 Удаленное сообщение:\n<i>{msg.text}</i>"
-                            # Удаляем временное сообщение
-                            await event.bot.delete_message(chat_id=event.bot.id, message_id=msg.message_id)
+                    if original_message:
+                        try:
+                            # Пробуем получить сообщение из каналов
+                            for channel_id in [-1002467764642, -1002353748102, -1002460477207]:
+                                try:
+                                    msg = await event.bot.copy_message(
+                                        chat_id=event.bot.id,
+                                        from_chat_id=channel_id,
+                                        message_id=original_message.temp_message_id
+                                    )
+                                    if msg and msg.text:
+                                        deleted_text = f"\n\n💬 Удаленное сообщение:\n<i>{msg.text}</i>"
+                                        # Удаляем временное сообщение
+                                        await event.bot.delete_message(chat_id=event.bot.id, message_id=msg.message_id)
+                                        break
+                                except Exception:
+                                    continue
                         except Exception as e:
                             logger.error(f"Ошибка при получении удаленного сообщения: {e}")
                     
