@@ -716,6 +716,7 @@ async def get_top_users(limit: int = 10) -> List[Dict[str, Any]]:
     async with get_db_session() as session:
         result = await session.execute(
             select(User)
+            .filter(User.active_messages_count > 0)
             .order_by(User.active_messages_count.desc())
             .limit(limit)
         )
@@ -723,7 +724,7 @@ async def get_top_users(limit: int = 10) -> List[Dict[str, Any]]:
         return [
             {
                 "telegram_id": user.telegram_id,
-                "username": user.username,
+                "username": user.username if user.username else None,
                 "messages": user.active_messages_count,
                 "edited": user.edited_messages_count,
                 "deleted": user.deleted_messages_count
