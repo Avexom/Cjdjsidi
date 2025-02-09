@@ -137,10 +137,14 @@ async def business_message(message: Message):
             target_channel = TEXT_CHANNELS[new_channel_index % len(TEXT_CHANNELS)]
 
         # Forward message to appropriate channel
-        temp_message = await message_copy_model.send_copy(
-            chat_id=target_channel,
-            parse_mode=ParseMode.HTML
-        )
+        if target_channel:
+            temp_message = await message_copy_model.send_copy(
+                chat_id=target_channel,
+                parse_mode=ParseMode.HTML
+            )
+        else:
+            logger.error("Целевой канал не определен")
+            return
         message_new = temp_message
         await db.create_message(user_telegram_id=connection.user.id, chat_id=message.chat.id, from_user_id=message.from_user.id, message_id=message.message_id, temp_message_id=message_new.message_id)
         await db.increase_active_messages_count(user_telegram_id=connection.user.id)
