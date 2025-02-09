@@ -224,12 +224,111 @@ async def admin_broadcast_callback(callback: CallbackQuery, state: FSMContext):
 @admin_router.message(AdminStates.waiting_for_broadcast)
 async def process_broadcast_text(message: Message, state: FSMContext):
     try:
-        users = await db.broadcast_message(message.text)
+        users = await db.get_all_users()
         sent_count = 0
-        for user_id in users:
+        for user in users:
             try:
-                await message.bot.send_message(chat_id=user_id, text=message.text)
+                await message.bot.send_message(chat_id=user.telegram_id, text=message.text)
                 sent_count += 1
+            except Exception as e:
+                logger.error(f"Ошибка отправки сообщения пользователю {user.telegram_id}: {e}")
+        await message.answer(f"Рассылка завершена. Отправлено {sent_count} сообщений.")
+        await state.clear()
+    except Exception as e:
+        await message.answer(f"Ошибка при рассылке: {e}")
+        await state.clear()
+
+@admin_router.callback_query(F.data == "admin_price")
+async def admin_price_callback(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
+    await callback.message.answer("Введите новую цену рассылки в USD:")
+    await state.set_state(AdminStates.waiting_for_price)
+
+@admin_router.message(AdminStates.waiting_for_price)
+async def process_price(message: Message, state: FSMContext):
+    try:
+        price = float(message.text)
+        await db.update_subscription_price(price)
+        await message.answer(f"Цена рассылки обновлена: ${price}")
+        await state.clear()
+    except ValueError:
+        await message.answer("Пожалуйста, введите корректное число")
+
+@admin_router.callback_query(F.data == "admin_give_sub")
+async def admin_give_sub_callback(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
+    await callback.message.answer("Введите ID пользователя:")
+    await state.set_state(AdminStates.waiting_for_give_username)
+
+@admin_router.message(AdminStates.waiting_for_give_username)
+async def process_give_username(message: Message, state: FSMContext):
+    try:
+        user_id = int(message.text)
+        await state.update_data(user_id=user_id)
+        await message.answer("Введите количество дней подписки:")
+        await state.set_state(AdminStates.waiting_for_give_days)
+    except ValueError:
+        await message.answer("Пожалуйста, введите корректный ID")
+
+@admin_router.message(AdminStates.waiting_for_give_days)
+async def process_give_days(message: Message, state: FSMContext):
+    try:
+        days = int(message.text)
+        data = await state.get_data()
+        user_id = data.get('user_id')
+        
+        user = await db.get_user(user_id)
+        if user:
+            await db.create_subscription(
+                user_telegram_id=user_id,
+                end_date=datetime.now() + timedelta(days=days)
+            )
+            await message.answer(f"Подписка выдана пользователю ID:{user_id} на {days} дней")
+        else:
+            await message.answer("Пользователь не найден")
+        await state.clear()
+    except ValueError:
+        await message.answer("Пожалуйста, введите корректное число дней")
+
+@admin_router.callback_query(F.data == "admin_ban")
+async def admin_ban_callback(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
+    await callback.message.answer("Введите ID пользователя для бана:")
+    await state.set_state(AdminStates.waiting_for_ban)
+
+@admin_router.message(AdminStates.waiting_for_ban)
+async def process_ban(message: Message, state: FSMContext):
+    try:
+        user_id = int(message.text)
+        user = await db.get_user(user_id)
+        if user:
+            await db.ban_user(user_id)
+            await message.answer(f"Пользователь ID:{user_id} забанен")
+        else:
+            await message.answer("Пользователь не найден")
+        await state.clear()
+    except ValueError:
+        await message.answer("Пожалуйста, введите корректный ID")
+
+@admin_router.callback_query(F.data == "admin_unban")
+async def admin_unban_callback(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
+    await callback.message.answer("Введите ID пользователя для разбана:")
+    await state.set_state(AdminStates.waiting_for_unban)
+
+@admin_router.message(AdminStates.waiting_for_unban)
+async def process_unban(message: Message, state: FSMContext):
+    try:
+        user_id = int(message.text)
+        user = await db.get_user(user_id)
+        if user:
+            await db.unban_user(user_id)
+            await message.answer(f"Пользователь ID:{user_id} разбанен")
+        else:
+            await message.answer("Пользователь не найден")
+        await state.clear()
+    except ValueError:
+        await message.answer("Пожалуйста, введите корректный ID") 1
             except Exception as e:
                 logger.error(f"Ошибка отправки сообщения пользователю {user_id}: {e}")
 
