@@ -252,7 +252,7 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
     """Обработка удаленных бизнес-сообщений."""
     try:
         connection = await event.bot.get_business_connection(event.business_connection_id)
-            for message_id in event.message_ids:
+        for message_id in event.message_ids:
                 message_old = await db.get_message(message_id)
                 if message_old:
                     await db.increase_deleted_messages_count(user_telegram_id=connection.user.id)
