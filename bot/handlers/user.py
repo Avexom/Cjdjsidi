@@ -27,22 +27,16 @@ class PaymentRequest(BaseModel):
 # Middleware для проверки пользователя
 class UserMiddleware(BaseMiddleware):
     async def __call__(self, handler, event: TelegramObject, data: dict):
-        if not hasattr(event, 'from_user'):
-            return await handler(event, data)
-            
         user = await db.get_user(telegram_id=event.from_user.id)
-        if user is None and not isinstance(event, CallbackQuery):
+        if user is None:
             logger.info(f"Новый пользователь: {event.from_user.id}")
-            if hasattr(event, 'answer'):
-                await event.answer(texts.Texts.START_NOT_CONNECTED)
+            await event.answer(texts.Texts.START_NOT_CONNECTED)
             return
-            
         data["user"] = user
         logger.info(f"Пользователь {event.from_user.id} авторизован")
         return await handler(event, data)
 
 user_router.message.middleware(UserMiddleware())
-user_router.callback_query.middleware(UserMiddleware())
 
 # Кэширование цены подписки
 @alru_cache(maxsize=1)  # Используем async_lru для асинхронного кэширования
@@ -63,19 +57,14 @@ async def get_user_profile_text(user, subscription, message):
 # Хэндлеры
 @user_router.message(CommandStart())
 async def start(message: Message, state: FSMContext):
-    try:
-        await state.clear()
-        user = await db.get_user(telegram_id=message.from_user.id)
-        if user is None:
-            await db.create_user(telegram_id=message.from_user.id)
-            await message.answer("Добро пожаловать! Бот успешно запущен.", reply_markup=kb.start_connection_keyboard)
-            logger.info(f"Новый пользователь: {message.from_user.id}")
-        else:
-            await message.answer("Привет! Бот готов к работе.", reply_markup=kb.start_connection_keyboard)
-        logger.info(f"Команда /start выполнена пользователем {message.from_user.id}")
-    except Exception as e:
-        logger.error(f"Ошибка в команде start: {e}")
-        await message.answer("Произошла ошибка при выполнении команды. Попробуйте позже.")
+    await state.clear()  # Сброс состояния, если это необходимо
+    user = await db.get_user(telegram_id=message.from_user.id)
+    if user is None:
+        await message.answer(texts.about_bot, parse_mode=ParseMode.HTML)
+    elif user.business_bot_active:
+        await message.answer(texts.Texts.START_CONNECTED, reply_markup=kb.start_connection_keyboard)
+    else:
+        await message.answer(texts.start_not_connected)
 
 @user_router.message(F.text == "👤 Профиль")
 async def profile(message: Message, user: dict):

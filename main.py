@@ -7,7 +7,6 @@ from datetime import datetime
 logger = colorlog.getLogger('bot')
 
 from aiogram import Bot, Dispatcher
-from aiogram.types import Message
 from aiogram.enums import ParseMode
 from aiogram.client.default import DefaultBotProperties
 from aiogram.methods import DeleteWebhook
@@ -26,44 +25,28 @@ bot = Bot(token=BOT_TOKEN,
 async def main():
     dp = Dispatcher()
 
-    # Настройка цветного вывода в консоль
-    console_handler = colorlog.StreamHandler()
-    console_handler.setFormatter(colorlog.ColoredFormatter(
-        '%(asctime)s %(log_color)s%(levelname)-8s%(reset)s %(message)s',
+    # Настройка цветного логирования
+    handler = colorlog.StreamHandler()
+    handler.setFormatter(colorlog.ColoredFormatter(
+        '%(log_color)s[%(asctime)s] %(message)s',
+        datefmt='%H:%M:%S',
         log_colors={
             'DEBUG': 'cyan',
             'INFO': 'green',
             'WARNING': 'yellow',
             'ERROR': 'red',
             'CRITICAL': 'red,bg_white',
-        },
-        secondary_log_colors={},
-        style='%'
+        }
     ))
 
-    # Настройка корневого логгера
-    root_logger = logging.getLogger()
-    root_logger.setLevel(logging.INFO)
-    root_logger.addHandler(console_handler)
-    
-    # Настройка логгера бота
     logger = colorlog.getLogger('bot')
-    logger.addHandler(console_handler)
+    logger.addHandler(handler)
     logger.setLevel(logging.INFO)
     
-    # Настраиваем логи внешних библиотек
-    for log_name in ['aiosqlite', 'aiogram', 'apscheduler']:
-        external_logger = logging.getLogger(log_name)
-        external_logger.setLevel(logging.INFO)
-        external_logger.addHandler(console_handler)
-    
-    # Добавляем свои логи
-    logger.info('🚀 Бот запущен')
-    
-    @dp.message()
-    async def log_message(message: Message, *args):
-        username = message.from_user.username or message.from_user.first_name
-        logger.info(f'📨 Сообщение от @{username}')
+    # Отключаем лишние логи
+    logging.getLogger('aiosqlite').setLevel(logging.WARNING)
+    logging.getLogger('aiogram').setLevel(logging.WARNING)
+    logging.getLogger('apscheduler').setLevel(logging.WARNING)
 
     # Подключение роутеров
     for router in [user_router, business_router, admin_router]:
@@ -88,7 +71,6 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         logger.info("Бот остановлен пользователем")
     except Exception as e:
-        logger.critical(f"Критическая ошибка: {e}", exc_info=True)
-        logger.critical(f"Детали ошибки: {str(e)}")
+        logging.critical(f"Критическая ошибка: {e}")
     finally:
         logger.info("Бот успешно остановлен")
