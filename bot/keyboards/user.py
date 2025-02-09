@@ -3,9 +3,19 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeybo
 start_connection_keyboard = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(text="👤 Профиль")],
-        [KeyboardButton(text="💳 Купить подписку")]
+        [KeyboardButton(text="💳 Купить подписку")],
+        [KeyboardButton(text="⚙️ Функции")]
     ],
     resize_keyboard=True
+)
+
+functions_keyboard = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [InlineKeyboardButton(text="🔔 Уведомления", callback_data="toggle_all_notifications")],
+        [InlineKeyboardButton(text="📝 Отслеживание изменений", callback_data="toggle_edit_tracking")],
+        [InlineKeyboardButton(text="🗑 Отслеживание удалений", callback_data="toggle_delete_tracking")],
+        [InlineKeyboardButton(text="❌ Закрыть", callback_data="close")]
+    ]
 )
 
 profile_keyboard = InlineKeyboardMarkup(

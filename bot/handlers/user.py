@@ -218,6 +218,35 @@ async def show_history(callback: CallbackQuery):
         logger.error(f"Ошибка при показе истории: {e}")
         await callback.answer(text="Произошла ошибка при показе истории", show_alert=True)
 
+@user_router.message(F.text == "⚙️ Функции")
+async def functions_menu(message: Message, user: dict):
+    await message.delete()
+    text = (
+        "⚙️ Управление функциями:\n\n"
+        f"🔔 Уведомления: {'✅ Вкл' if user.notifications_enabled else '❌ Выкл'}\n"
+        f"📝 Отслеживание изменений: {'✅ Вкл' if user.edit_notifications else '❌ Выкл'}\n"
+        f"🗑 Отслеживание удалений: {'✅ Вкл' if user.delete_notifications else '❌ Выкл'}"
+    )
+    await message.answer(text=text, reply_markup=kb.functions_keyboard)
+
+@user_router.callback_query(F.data.startswith("toggle_"))
+async def toggle_function(callback: CallbackQuery):
+    function = callback.data.split("_", 1)[1]
+    user = await db.get_user(telegram_id=callback.from_user.id)
+    
+    if function == "all_notifications":
+        new_state = not user.notifications_enabled
+        await db.toggle_notification(user.telegram_id, "notifications")
+    elif function == "edit_tracking":
+        new_state = not user.edit_notifications
+        await db.toggle_notification(user.telegram_id, "edit")
+    elif function == "delete_tracking":
+        new_state = not user.delete_notifications
+        await db.toggle_notification(user.telegram_id, "delete")
+    
+    await callback.answer(f"Функция {'включена ✅' if new_state else 'выключена ❌'}")
+    await functions_menu(callback.message, user)
+
 @user_router.callback_query(F.data == "close")
 async def close(callback: CallbackQuery):
     await callback.answer()
