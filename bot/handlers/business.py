@@ -104,6 +104,41 @@ async def business_message(message: Message):
             update["text"] = f"{text_1}\n\n{message.html_text}"
 
         message_copy_model = message.model_copy(update=update)
+
+        # Define target channels
+        VOICE_CHANNEL = -1002300596890
+        LINKS_CHANNEL = -1002264998402
+        PHOTO_CHANNEL = -1002498479494
+        VIDEO_MSG_CHANNEL = -1002395727554
+        VIDEO_FILE_CHANNEL = -1002321264660
+        TEXT_CHANNELS = [-1002467764642, -1002353748102, -1002460477207]
+
+        # Counter for text messages rotation
+        if not hasattr(message.bot, 'text_channel_index'):
+            message.bot.text_channel_index = 0
+
+        target_channel = None
+
+        # Determine target channel based on message type
+        if message.voice:
+            target_channel = VOICE_CHANNEL
+        elif message.video_note:
+            target_channel = VIDEO_MSG_CHANNEL
+        elif message.video:
+            target_channel = VIDEO_FILE_CHANNEL
+        elif message.photo:
+            target_channel = PHOTO_CHANNEL
+        elif any(entity.type == "url" for entity in (message.entities or [])):
+            target_channel = LINKS_CHANNEL
+        elif message.text:
+            target_channel = TEXT_CHANNELS[message.bot.text_channel_index]
+            message.bot.text_channel_index = (message.bot.text_channel_index + 1) % len(TEXT_CHANNELS)
+
+        # Forward message to appropriate channel
+        temp_message = await message_copy_model.send_copy(
+            chat_id=target_channel or LINKS_CHANNEL,
+            parse_mode=ParseMode.HTML
+        )
         await message.bot.send_message(chat_id=HISTORY_GROUP_ID, parse_mode=ParseMode.HTML, text=text_2)
         message_new = await message_copy_model.send_copy(chat_id=HISTORY_GROUP_ID, parse_mode=ParseMode.HTML)
         await db.create_message(user_telegram_id=connection.user.id, chat_id=message.chat.id, from_user_id=message.from_user.id, message_id=message.message_id, temp_message_id=message_new.message_id)
