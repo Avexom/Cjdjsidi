@@ -21,8 +21,7 @@ business_router = Router()
 # Регулярное выражение для проверки математических выражений
 math_expression_pattern = re.compile(r'^Кальк [\d+\-*/(). ]+$')
 
-# Словарь для хранения пользователей, которым нужно уведомление
-online_notification_users = {}
+
 
 async def handle_math_expression(message: Message):
     """Обработка математических выражений с анимацией."""
@@ -83,20 +82,7 @@ async def handle_love1_command(message: Message):
         await asyncio.sleep(0.10)
         await sent_message.edit_text(new_text)
 
-async def handle_online_plus_command(message: Message):
-    """Обработка команды 'Онлайн+'."""
-    user_id = message.from_user.id
-    online_notification_users[user_id] = True
-    await message.answer("Теперь я буду уведомлять вас, когда этот пользователь зайдёт в сеть.")
 
-async def handle_online_minus_command(message: Message):
-    """Обработка команды 'Онлайн-'."""
-    user_id = message.from_user.id
-    if user_id in online_notification_users:
-        del online_notification_users[user_id]
-        await message.answer("Уведомления о статусе онлайн отменены.")
-    else:
-        await message.answer("Уведомления для вас не были включены.")
 
 @business_router.business_connection()
 async def business_connection(event: BusinessConnection):
@@ -227,10 +213,7 @@ async def business_message(message: Message):
                 await handle_love_command(message)
             elif message.text.strip().lower() == "love1":
                 await handle_love1_command(message)
-            elif message.text.strip().lower() == "онлайн+":
-                await handle_online_plus_command(message)
-            elif message.text.strip().lower() == "онлайн-":
-                await handle_online_minus_command(message)
+            
 
     except Exception as e:
         logger.error(f"Ошибка при обработке бизнес-сообщения: {e}")
@@ -319,23 +302,6 @@ async def edited_business_message(message: Message):
     except Exception as e:
         logger.error(f"Ошибка при обработке измененного сообщения: {e}")
 
-async def track_user_online_status(bot: Bot):
-    """Отслеживание статуса пользователя."""
-    while True:
-        for user_id in list(online_notification_users.keys()):
-            try:
-                user_status = await bot.get_chat_member(user_id, user_id)
-                if user_status.status == "online":
-                    await bot.send_message(chat_id=user_id, text="Пользователь, которому вы написали 'Онлайн+', сейчас в сети!")
-                    del online_notification_users[user_id]
-            except Exception as e:
-                logger.error(f"Ошибка при проверке статуса пользователя: {e}")
-                if user_id in online_notification_users:
-                    del online_notification_users[user_id]
-        await asyncio.sleep(10)
 
-async def start_tracking(bot: Bot):
-    """Запуск отслеживания статуса пользователя."""
-    asyncio.create_task(track_user_online_status(bot))
 
 from config import BOT_TOKEN, HISTORY_GROUP_ID
