@@ -257,9 +257,11 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
                     
                     # Отправляем только уведомление о удалении
                     text = f"🗑 {user_link} удалил сообщение\n⏰ Время удаления: {current_time}"
-                            except Exception as channel_error:
-                                logger.error(f"Ошибка при получении сообщения из канала {channel_id}: {channel_error}")
-                                continue
+                    await event.bot.send_message(
+                        chat_id=connection.user.id,
+                        text=text,
+                        parse_mode=ParseMode.HTML
+                    )
                     except Exception as e:
                         logger.error(f"Общая ошибка при получении удаленного сообщения: {e}")
 
