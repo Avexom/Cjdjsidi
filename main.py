@@ -26,14 +26,6 @@ bot = Bot(token=BOT_TOKEN,
 async def main():
     dp = Dispatcher()
 
-    # Настройка цветного логирования
-    # Создаем файловый обработчик для ошибок
-    error_file_handler = logging.FileHandler('errors.log')
-    error_file_handler.setLevel(logging.ERROR)
-    error_file_handler.setFormatter(logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    ))
-
     # Настройка цветного вывода в консоль
     console_handler = colorlog.StreamHandler()
     console_handler.setFormatter(colorlog.ColoredFormatter(
@@ -52,14 +44,13 @@ async def main():
     # Настройка логгера бота
     logger = colorlog.getLogger('bot')
     logger.addHandler(console_handler)
-    logger.addHandler(error_file_handler)
     logger.setLevel(logging.INFO)
     
-    # Отключаем все сторонние логи, но сохраняем их ошибки
+    # Настраиваем логи внешних библиотек
     for log_name in ['aiosqlite', 'aiogram', 'apscheduler']:
         external_logger = logging.getLogger(log_name)
         external_logger.setLevel(logging.ERROR)
-        external_logger.addHandler(error_file_handler)
+        external_logger.addHandler(console_handler)
     
     # Добавляем свои логи
     logger.info('🚀 Бот запущен')
