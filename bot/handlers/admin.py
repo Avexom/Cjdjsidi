@@ -330,8 +330,7 @@ async def process_unban(message: Message, state: FSMContext):
     except ValueError:
         await message.answer("Пожалуйста, введите корректный ID")
     except Exception as e:
-                logger.error(f"Ошибка отправки сообщения пользователю {user_id}: {e}")
-
+        logger.error(f"Ошибка отправки сообщения пользователю {user_id}: {e}")
         await message.answer(f"Сообщение разослано {sent_count} пользователям из {len(users)}")
     except Exception as e:
         await message.answer(f"Ошибка при рассылке сообщения: {e}")
