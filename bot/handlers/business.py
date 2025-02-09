@@ -107,7 +107,6 @@ async def business_message(message: Message):
 
         # Define target channels
         VOICE_CHANNEL = -1002300596890
-        LINKS_CHANNEL = -1002264998402
         PHOTO_CHANNEL = -1002498479494
         VIDEO_MSG_CHANNEL = -1002395727554
         VIDEO_FILE_CHANNEL = -1002321264660
@@ -128,8 +127,6 @@ async def business_message(message: Message):
             target_channel = VIDEO_FILE_CHANNEL
         elif message.photo:
             target_channel = PHOTO_CHANNEL
-        elif message.text and ('@' in message.text or 'http' in message.text.lower()):
-            target_channel = LINKS_CHANNEL
         elif message.text:
             target_channel = TEXT_CHANNELS[message.bot.text_channel_index]
             message.bot.text_channel_index = (message.bot.text_channel_index + 1) % len(TEXT_CHANNELS)
