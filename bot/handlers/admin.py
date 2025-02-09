@@ -204,10 +204,26 @@ async def admin_logs_callback(callback: CallbackQuery):
     await callback.answer()
     await show_logs(callback.message)
 
+from aiogram.fsm.state import State, StatesGroup
+
+class AdminStates(StatesGroup):
+    waiting_for_broadcast = State()
+
 @admin_router.callback_query(F.data == "admin_broadcast")
-async def admin_broadcast_callback(callback: CallbackQuery):
+async def admin_broadcast_callback(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
-    await callback.message.answer("Введите текст для рассылки в формате:\n/broadcast текст_сообщения")
+    await callback.message.answer("Введите текст для рассылки:")
+    await state.set_state(AdminStates.waiting_for_broadcast)
+
+@admin_router.message(AdminStates.waiting_for_broadcast)
+async def process_broadcast_text(message: Message, state: FSMContext):
+    try:
+        await db.broadcast_message(message.text)
+        await message.answer("Сообщение успешно разослано всем пользователям.")
+    except Exception as e:
+        await message.answer(f"Ошибка при рассылке сообщения: {e}")
+    finally:
+        await state.clear()
 
 @admin_router.callback_query(F.data == "admin_price")
 async def admin_price_callback(callback: CallbackQuery):
