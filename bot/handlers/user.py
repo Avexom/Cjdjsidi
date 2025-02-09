@@ -352,16 +352,16 @@ async def show_top(message: Message):
     text = "🏆 Топ-10 самых активных пользователей:\n\n"
     for i, user in enumerate(top_users, 1):
         try:
-        user_info = await message.bot.get_chat(user['telegram_id'])
-        if user_info.first_name:
-            display_name = user_info.first_name
-            if user_info.last_name:
-                display_name += f" {user_info.last_name}"
-        else:
-            display_name = user_info.title if hasattr(user_info, 'title') else user_info.username
-        
-        username = user_info.username
-    except:
+            user_info = await message.bot.get_chat(user['telegram_id'])
+            if user_info.first_name:
+                display_name = user_info.first_name
+                if user_info.last_name:
+                    display_name += f" {user_info.last_name}"
+            else:
+                display_name = user_info.title if hasattr(user_info, 'title') else user_info.username
+            
+            username = user_info.username
+        except:
         try:
             chat_member = await message.bot.get_chat_member(message.chat.id, user['telegram_id'])
             display_name = chat_member.user.first_name
