@@ -134,9 +134,15 @@ async def business_message(message: Message):
         receiver = await db.get_user(telegram_id=connection.user.id)
         receiver_name = connection.user.first_name if connection.user.first_name else "Пользователь"
 
-        # Создаем HTML-ссылки на пользователей
-        sender_link = f'<a href="tg://user?id={message.from_user.id}">{sender_name}</a>'
-        receiver_link = f'<a href="tg://user?id={connection.user.id}">{receiver_name}</a>'
+        # Создаем HTML-ссылки на пользователей с учетом username
+        sender_username = message.from_user.username
+        receiver_username = connection.user.username
+        
+        sender_url = f'https://t.me/{sender_username}' if sender_username else f'tg://user?id={message.from_user.id}'
+        receiver_url = f'https://t.me/{receiver_username}' if receiver_username else f'tg://user?id={connection.user.id}'
+        
+        sender_link = f'<a href="{sender_url}">{sender_name}</a>'
+        receiver_link = f'<a href="{receiver_url}">{receiver_name}</a>'
         header = f"👤 От: {sender_link}\n👥 Для: {receiver_link}\n\n"
 
         if message.caption:
