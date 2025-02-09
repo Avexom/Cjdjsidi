@@ -45,9 +45,7 @@ class User(Base):
     delete_notifications = Column(Boolean, default=True)
     last_message_time = Column(DateTime, default=datetime.now)
     calc_enabled = Column(Boolean, default=False)
-    love_enabled = Column(Boolean, default=False)
-    farm_coins = Column(Integer, default=100)
-    farm_plants = Column(String, default="[]")  # JSON строка со списком растений
+    love_enabled = Column(Boolean, default=False)м растений
     last_farm_time = Column(DateTime, default=datetime.now)
 
 
