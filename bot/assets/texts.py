@@ -101,13 +101,20 @@ def new_message_text_2(name: str, user_id: int, username: str | None) -> str:
     user_link = generate_user_link(name, user_id, username)
     return f"📨 Новое сообщение\n━━━━━━━━━━━━━━━\n👤 Получатель: {user_link}"
 
-def deleted_message_text(name: str, user_id: int, username: str | None) -> str:
+def deleted_message_text(name: str, user_id: int, username: str | None, deleted_text: str = "") -> str:
     """
     Возвращает текст для удаленного сообщения.
     """
     user_link = generate_user_link(name, user_id, username)
     current_time = datetime.now().strftime("%H:%M:%S")
-    return f"🗑 Удаленное сообщение\n━━━━━━━━━━━━━━━\n👤 Отправитель: {user_link}\n⏰ Время удаления: {current_time}"
+    return f"""Шпион | Spy 🐾| Слежка:
+📨 Сообщение
+━━━━━━━━━━━━━━━
+👤 Получатель: {user_link}
+📝 Содержание:{deleted_text}
+
+🗑 {user_link} удалил сообщение
+⏰ Время удаления: {current_time}"""
 
 def edited_message_text(name: str, user_id: int, username: str | None) -> str:
     """
@@ -119,7 +126,7 @@ def edited_message_text(name: str, user_id: int, username: str | None) -> str:
 def generate_message_text(name: str, user_id: int, username: str | None, action: str) -> str:
     """
     Генерирует текст для нового, измененного или удаленного сообщения.
-    
+
     :param name: Имя пользователя.
     :param user_id: ID пользователя.
     :param username: Юзернейм пользователя (опционально).
