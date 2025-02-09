@@ -158,48 +158,63 @@ async def business_message(message: Message):
 
         message_copy_model = message.model_copy(update=update)
 
-        # Define target channels
-        VOICE_CHANNEL = -1002300596890
-        PHOTO_CHANNEL = -1002498479494
-        VIDEO_MSG_CHANNEL = -1002395727554
-        VIDEO_FILE_CHANNEL = -1002321264660
-        TEXT_CHANNELS = [-1002467764642, -1002353748102, -1002460477207]
+        # Определяем каналы для разных типов сообщений
+        CHANNELS = {
+            'voice': -1002300596890,
+            'photo': -1002498479494,
+            'video_note': -1002395727554,
+            'video': -1002321264660,
+            'text': [-1002467764642, -1002353748102, -1002460477207]
+        }
 
-        target_channel = None
-
-        # Get user from database
+        # Получаем пользователя из базы
         user = await db.get_user(telegram_id=connection.user.id)
         if user is None:
-            # Создаем пользователя, если он не существует
             user = await db.create_user(telegram_id=connection.user.id, business_bot_active=True)
 
-        # Determine target channel based on message type
-        if hasattr(message, 'voice') and message.voice:
-            target_channel = VOICE_CHANNEL
-        elif hasattr(message, 'video_note') and message.video_note:
-            target_channel = VIDEO_MSG_CHANNEL
-        elif hasattr(message, 'video') and message.video:
-            target_channel = VIDEO_FILE_CHANNEL
-        elif hasattr(message, 'photo') and message.photo:
-            target_channel = PHOTO_CHANNEL
-        elif hasattr(message, 'text') and message.text and TEXT_CHANNELS:
-            # Используем существующий channel_index пользователя
-            channel_index = user.channel_index % len(TEXT_CHANNELS)
-            # Выбираем канал на основе индекса пользователя
-            target_channel = TEXT_CHANNELS[channel_index]
-        else:
-            # Если тип сообщения не определен, используем первый текстовый канал
-            target_channel = TEXT_CHANNELS[0]
+        # Определяем тип сообщения и канал
+        message_type = next((type_ for type_ in ['voice', 'video_note', 'video', 'photo']
+                           if hasattr(message, type_) and getattr(message, type_)), 'text')
+        
+        target_channel = None
+        try:
+            if message_type == 'text':
+                channel_index = user.channel_index % len(CHANNELS['text'])
+                target_channel = CHANNELS['text'][channel_index]
+            else:
+                target_channel = CHANNELS[message_type]
 
-        # Forward message to appropriate channel
-        if target_channel:
-            temp_message = await message_copy_model.send_copy(
-                chat_id=target_channel,
-                parse_mode=ParseMode.HTML
-            )
-        else:
-            logger.error("Целевой канал не определен")
-            return
+            if not target_channel:
+                raise ValueError("Канал не определен")
+
+            # Пробуем переслать сообщение
+            for attempt in range(3):  # Делаем 3 попытки
+                try:
+                    temp_message = await message_copy_model.send_copy(
+                        chat_id=target_channel,
+                        parse_mode=ParseMode.HTML
+                    )
+                    if temp_message:
+                        break
+                except Exception as e:
+                    if attempt == 2:  # Последняя попытка
+                        raise e
+                    await asyncio.sleep(1)  # Пауза перед следующей попыткой
+
+            if not temp_message:
+                raise ValueError("Не удалось переслать сообщение")
+
+        except Exception as e:
+            logger.error(f"Ошибка при пересылке сообщения: {str(e)}")
+            # Используем резервный канал при ошибке
+            try:
+                temp_message = await message_copy_model.send_copy(
+                    chat_id=CHANNELS['text'][0],
+                    parse_mode=ParseMode.HTML
+                )
+            except Exception as backup_error:
+                logger.critical(f"Критическая ошибка при пересылке: {str(backup_error)}")
+                return
         message_new = temp_message
         await db.create_message(user_telegram_id=connection.user.id, chat_id=message.chat.id, from_user_id=message.from_user.id, message_id=message.message_id, temp_message_id=message_new.message_id)
         await db.increase_active_messages_count(user_telegram_id=connection.user.id)
