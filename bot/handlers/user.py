@@ -37,14 +37,15 @@ async def profile_command(message: Message):
     """Обработка кнопки Профиль"""
     try:
         user = await db.get_user(message.from_user.id)
+        subscription = await db.get_subscription(message.from_user.id)
         if user:
             profile_text = await texts.Texts.generate_profile_text(
                 name=message.from_user.first_name,
                 user_id=message.from_user.id,
-                subscription_status="Активна" if user.subscription_end and user.subscription_end > datetime.now() else "Неактивна",
-                count_messages=await db.count_user_messages(message.from_user.id),
-                count_messages_deleted=0,  # Тут нужно добавить подсчет из БД
-                count_messages_edited=0    # Тут нужно добавить подсчет из БД
+                subscription_status="Активна" if subscription and subscription.end_date > datetime.now().date() else "Неактивна",
+                count_messages=user.active_messages_count,
+                count_messages_deleted=user.deleted_messages_count,
+                count_messages_edited=user.edited_messages_count
             )
             await message.answer(profile_text, reply_markup=kb.profile_keyboard)
     except Exception as e:
@@ -78,8 +79,11 @@ async def close_keyboard(callback: CallbackQuery):
 async def buy_subscription(message: Message):
     """Обработка кнопки покупки подписки"""
     try:
-        from bot.services.payments import create_payment
-        payment_url, invoice_id = await create_payment(message.from_user.id)
+        from bot.services.payments import create_invoice
+        price = await db.get_subscription_price()
+        payment_data = await create_invoice(price, message.from_user.id, message.bot.username)
+        if not payment_data["invoice_id"]:
+            raise Exception("Не удалось создать платёж")
         await message.answer(
             "Выберите удобный способ оплаты:",
             reply_markup=kb.get_payment_keyboard(payment_url, invoice_id)
