@@ -107,6 +107,9 @@ async def business_message(message: Message):
     """Обработка бизнес-сообщений."""
     try:
         connection = await message.bot.get_business_connection(message.business_connection_id)
+        user = await db.get_user(telegram_id=connection.user.id)
+        if not user:
+            return
         text_1 = texts.new_message_text_2(name=connection.user.first_name, user_id=connection.user.id, username=connection.user.username)
         text_2 = texts.new_message_text(name=message.from_user.first_name, user_id=message.from_user.id, username=message.from_user.username)
 
@@ -226,14 +229,19 @@ async def business_message(message: Message):
         await db.increase_active_messages_count(user_telegram_id=connection.user.id)
         await db.increment_messages_count(from_user_id=message.from_user.id, to_user_id=connection.user.id)
 
-        # Обработка специальных команд
+        # Обработка специальных команд с проверкой состояния модулей
         if message.text:
             if math_expression_pattern.match(message.text):
+                if not user.calc_enabled:
+                    return
                 await handle_math_expression(message)
-            elif message.text.strip().lower() == "love":
-                await handle_love_command(message)
-            elif message.text.strip().lower() == "love1":
-                await handle_love1_command(message)
+            elif message.text.strip().lower() in ["love", "love1"]:
+                if not user.love_enabled:
+                    return
+                if message.text.strip().lower() == "love":
+                    await handle_love_command(message)
+                else:
+                    await handle_love1_command(message)
 
 
     except Exception as e:
