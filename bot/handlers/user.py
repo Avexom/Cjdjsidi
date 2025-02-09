@@ -133,26 +133,33 @@ async def show_history(callback: CallbackQuery):
             return
 
         message_id = callback.data.split("_")[-1]
-        await callback.answer()
-        await callback.message.delete()
         message_edit_history = await db.get_message_edit_history(message_id)
         
-        if not message_edit_history or 'old_message' not in message_edit_history:
+        if not message_edit_history or not message_edit_history.get('old_message'):
             await callback.answer("История сообщения не найдена", show_alert=True)
             return
             
         old_message = message_edit_history['old_message']
+        
+        # Сначала отправляем новое сообщение
+        sent_message = await callback.message.answer(
+            text=f"История редактирования сообщения {old_message.message_id}",
+            reply_markup=kb.close_keyboard
+        )
+        
+        success = False
         try:
-            await callback.message.answer(text=f"История редактирования сообщения {old_message.message_id}", reply_markup=kb.close_keyboard)
-            
+            # Пробуем отправить оригинальное сообщение
             await callback.bot.copy_message(
                 chat_id=callback.message.chat.id,
                 from_chat_id=old_message.chat_id,
                 message_id=old_message.temp_message_id,
                 reply_markup=kb.close_keyboard
             )
+            success = True
             
-            if 'message_edit_history' in message_edit_history:
+            # Отправляем историю изменений
+            if message_edit_history.get('message_edit_history'):
                 for edit in message_edit_history['message_edit_history']:
                     try:
                         await callback.bot.copy_message(
@@ -164,10 +171,19 @@ async def show_history(callback: CallbackQuery):
                     except Exception:
                         continue
         except Exception as e:
-            await callback.answer("Не удалось загрузить некоторые сообщения из истории", show_alert=True)
+            logger.error(f"Ошибка при копировании сообщения: {e}")
+            if not success:
+                await sent_message.edit_text(
+                    "К сожалению, оригинальное сообщение недоступно",
+                    reply_markup=kb.close_keyboard
+                )
+        
+        # Удаляем оригинальное сообщение только после успешной отправки новых
+        await callback.message.delete()
+        
     except Exception as e:
         logger.error(f"Ошибка при показе истории: {e}")
-        await callback.answer(text="Произошла ошибка при показе истории.")
+        await callback.answer(text="Произошла ошибка при показе истории", show_alert=True)
 
 @user_router.callback_query(F.data == "close")
 async def close(callback: CallbackQuery):
