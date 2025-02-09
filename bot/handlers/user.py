@@ -221,13 +221,25 @@ async def show_history(callback: CallbackQuery):
 @user_router.message(F.text == "⚙️ Функции")
 async def functions_menu(message: Message, user: dict):
     await message.delete()
-    text = (
-        "⚙️ Управление функциями:\n\n"
-        f"🔔 Уведомления: {'✅ Вкл' if user.notifications_enabled else '❌ Выкл'}\n"
-        f"📝 Отслеживание изменений: {'✅ Вкл' if user.edit_notifications else '❌ Выкл'}\n"
-        f"🗑 Отслеживание удалений: {'✅ Вкл' if user.delete_notifications else '❌ Выкл'}"
-    )
-    await message.answer(text=text, reply_markup=kb.functions_keyboard)
+    if not hasattr(functions_menu, 'menu_message'):
+        text = (
+            "⚙️ Управление функциями:\n\n"
+            f"🔔 Уведомления: {'✅ Вкл' if user.notifications_enabled else '❌ Выкл'}\n"
+            f"📝 Отслеживание изменений: {'✅ Вкл' if user.edit_notifications else '❌ Выкл'}\n"
+            f"🗑 Отслеживание удалений: {'✅ Вкл' if user.delete_notifications else '❌ Выкл'}"
+        )
+        functions_menu.menu_message = await message.answer(text=text, reply_markup=kb.functions_keyboard)
+    else:
+        try:
+            text = (
+                "⚙️ Управление функциями:\n\n"
+                f"🔔 Уведомления: {'✅ Вкл' if user.notifications_enabled else '❌ Выкл'}\n"
+                f"📝 Отслеживание изменений: {'✅ Вкл' if user.edit_notifications else '❌ Выкл'}\n"
+                f"🗑 Отслеживание удалений: {'✅ Вкл' if user.delete_notifications else '❌ Выкл'}"
+            )
+            await functions_menu.menu_message.edit_text(text=text, reply_markup=kb.functions_keyboard)
+        except:
+            functions_menu.menu_message = await message.answer(text=text, reply_markup=kb.functions_keyboard)
 
 @user_router.callback_query(F.data.startswith("toggle_"))
 async def toggle_function(callback: CallbackQuery):
@@ -245,7 +257,14 @@ async def toggle_function(callback: CallbackQuery):
         await db.toggle_notification(user.telegram_id, "delete")
     
     await callback.answer(f"Функция {'включена ✅' if new_state else 'выключена ❌'}")
-    await functions_menu(callback.message, user)
+    
+    text = (
+        "⚙️ Управление функциями:\n\n"
+        f"🔔 Уведомления: {'✅ Вкл' if user.notifications_enabled else '❌ Выкл'}\n"
+        f"📝 Отслеживание изменений: {'✅ Вкл' if user.edit_notifications else '❌ Выкл'}\n"
+        f"🗑 Отслеживание удалений: {'✅ Вкл' if user.delete_notifications else '❌ Выкл'}"
+    )
+    await callback.message.edit_text(text=text, reply_markup=kb.functions_keyboard)
 
 @user_router.callback_query(F.data == "close")
 async def close(callback: CallbackQuery):
