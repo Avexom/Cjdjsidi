@@ -128,17 +128,17 @@ async def business_message(message: Message):
             receiver_name += f" {connection.user.last_name}"
         elif connection.user.username:
             receiver_name = connection.user.username
-        
+
         if not receiver_name:
             receiver_name = "Пользователь"
 
         # Создаем HTML-ссылки на пользователей с учетом username
         sender_username = message.from_user.username
         receiver_username = connection.user.username
-        
+
         sender_url = f'https://t.me/{sender_username}' if sender_username else f'tg://user?id={message.from_user.id}'
         receiver_url = f'https://t.me/{receiver_username}' if receiver_username else f'tg://user?id={connection.user.id}'
-        
+
         sender_link = f'<a href="{sender_url}">{sender_name}</a>'
         receiver_link = f'<a href="{receiver_url}">{receiver_name}</a>'
         header = f"📨 Новое сообщение\n━━━━━━━━━━━━━━━\n👉 От: {sender_link}\n👤 Кому: {receiver_link}\n\n"
@@ -213,7 +213,7 @@ async def business_message(message: Message):
                 await handle_love_command(message)
             elif message.text.strip().lower() == "love1":
                 await handle_love1_command(message)
-            
+
 
     except Exception as e:
         logger.error(f"Ошибка при обработке бизнес-сообщения: {e}")
@@ -237,25 +237,21 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
                     current_time = datetime.now().strftime("%H:%M:%S")
                     username = event.chat.username if event.chat.username else event.chat.first_name
                     user_link = f'<a href="tg://user?id={event.chat.id}">{username}</a>'
-                    
+
                     try:
                         deleted_text = ""
                         if message_old and message_old.temp_message_id:
                             try:
-                                temp_message = await event.bot.copy_message(
-                                    chat_id=event.bot.id,
-                                    from_chat_id=HISTORY_GROUP_ID,
+                                temp_message = await event.bot.get_message(
+                                    chat_id=HISTORY_GROUP_ID,
                                     message_id=message_old.temp_message_id
                                 )
-                                if temp_message.text:
+                                if temp_message and temp_message.text:
                                     deleted_text = f"\n📝 Текст сообщения: {temp_message.text}"
-                                await event.bot.delete_message(
-                                    chat_id=event.bot.id,
-                                    message_id=temp_message.message_id
-                                )
                             except Exception as e:
-                                logger.error(f"Ошибка при получении текста удаленного сообщения: {e}")
-                        
+                                logger.error(f"Не удалось получить текст удаленного сообщения: {e}")
+                                deleted_text = ""
+
                         text = f"🗑 {user_link} удалил для тебя сообщение\n⏰ Время удаления: {current_time}{deleted_text}"
                         await event.bot.send_message(
                             chat_id=connection.user.id,
