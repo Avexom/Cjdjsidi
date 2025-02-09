@@ -171,10 +171,26 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
                 if message_old:
                     await db.increase_deleted_messages_count(user_telegram_id=connection.user.id)
                     current_time = datetime.now().strftime("%H:%M:%S")
-                    user_link = f'<a href="https://t.me/{event.chat.username}">@{event.chat.username}</a>' if event.chat.username else event.chat.first_name
-                    original_message = await db.get_message(message_old.message_id)
-                    message_text = f"\n> {original_message.text}" if original_message and hasattr(original_message, 'text') else ""
-                    text = f"🗑 {user_link} удалил для тебя сообщение{message_text}\n⏰ Время удаления: {current_time}"
+                    username = event.chat.username if event.chat.username else event.chat.first_name
+                    user_link = f'<a href="tg://user?id={event.chat.id}">{username}</a>'
+                    # Получаем удаленное сообщение из базы данных
+                    original_message = await db.get_message(message_old.temp_message_id)
+                    deleted_text = ""
+                    if original_message:
+                        try:
+                            # Пробуем получить сообщение из каналов
+                            for channel_id in [-1002467764642, -1002353748102, -1002460477207]:
+                                try:
+                                    msg = await event.bot.forward_message(channel_id, from_chat_id=channel_id, message_id=original_message.temp_message_id)
+                                    if msg and msg.text:
+                                        deleted_text = f"\n\n📝 Удаленное сообщение:\n<i>{msg.text}</i>"
+                                        break
+                                except Exception:
+                                    continue
+                        except Exception as e:
+                            logger.error(f"Ошибка при получении удаленного сообщения: {e}")
+                    
+                    text = f"🗑 {user_link} удалил для тебя сообщение{deleted_text}\n⏰ Время удаления: {current_time}"
                     await event.bot.send_message(
                         chat_id=connection.user.id,
                         text=text,
