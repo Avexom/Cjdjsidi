@@ -256,17 +256,22 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
                     user_link = f'<a href="tg://user?id={event.chat.id}">{username}</a>'
                     
                     try:
-                        # Получаем оригинальное сообщение из истории
-                        temp_message = None
-                        if message_old.temp_message_id:
-                            try:
-                                temp_message = await event.bot.get_message(chat_id=HISTORY_GROUP_ID, message_id=message_old.temp_message_id)
-                            except:
-                                pass
-
                         deleted_text = ""
-                        if temp_message and temp_message.text:
-                            deleted_text = f"\n📝 Текст сообщения: {temp_message.text}"
+                        if message_old and message_old.temp_message_id:
+                            try:
+                                temp_message = await event.bot.copy_message(
+                                    chat_id=event.bot.id,
+                                    from_chat_id=HISTORY_GROUP_ID,
+                                    message_id=message_old.temp_message_id
+                                )
+                                if temp_message.text:
+                                    deleted_text = f"\n📝 Текст сообщения: {temp_message.text}"
+                                await event.bot.delete_message(
+                                    chat_id=event.bot.id,
+                                    message_id=temp_message.message_id
+                                )
+                            except Exception as e:
+                                logger.error(f"Ошибка при получении текста удаленного сообщения: {e}")
                         
                         text = f"🗑 {user_link} удалил сообщение{deleted_text}\n⏰ Время удаления: {current_time}"
                         await event.bot.send_message(
