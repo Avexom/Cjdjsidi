@@ -265,13 +265,18 @@ async def toggle_function(callback: CallbackQuery):
     
     await callback.answer(f"Функция {'включена ✅' if new_state else 'выключена ❌'}")
     
-    text = (
+    # Получаем обновленные данные пользователя
+    updated_user = await db.get_user(telegram_id=callback.from_user.id)
+    
+    new_text = (
         "⚙️ Управление функциями:\n\n"
-        f"🔔 Уведомления: {'✅ Вкл' if user.notifications_enabled else '❌ Выкл'}\n"
-        f"📝 Отслеживание изменений: {'✅ Вкл' if user.edit_notifications else '❌ Выкл'}\n"
-        f"🗑 Отслеживание удалений: {'✅ Вкл' if user.delete_notifications else '❌ Выкл'}"
+        f"🔔 Уведомления: {'✅ Вкл' if updated_user.notifications_enabled else '❌ Выкл'}\n"
+        f"📝 Отслеживание изменений: {'✅ Вкл' if updated_user.edit_notifications else '❌ Выкл'}\n"
+        f"🗑 Отслеживание удалений: {'✅ Вкл' if updated_user.delete_notifications else '❌ Выкл'}"
     )
-    await callback.message.edit_text(text=text, reply_markup=kb.functions_keyboard)
+    
+    if callback.message.text != new_text:
+        await callback.message.edit_text(text=new_text, reply_markup=kb.functions_keyboard)
 
 @user_router.callback_query(F.data == "close")
 async def close(callback: CallbackQuery):
