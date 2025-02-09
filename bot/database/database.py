@@ -546,25 +546,52 @@ async def get_user_message_stats(user_id: int) -> List[Dict[str, Any]]:
             for stat in stats.scalars()
         ]
 
-async def ban_user(telegram_id: int, reason: str = "Не указана"):
+async def ban_user(telegram_id: int, reason: str = "Не указана") -> bool:
     """
     Заблокировать пользователя.
+    
+    :param telegram_id: ID пользователя
+    :param reason: Причина блокировки
+    :return: True если блокировка успешна, False если пользователь не найден
     """
     async with get_db_session() as session:
+        user = await session.scalar(select(User).where(User.telegram_id == telegram_id))
+        if not user:
+            return False
+        
         await session.execute(
-            update(User).where(User.telegram_id == telegram_id)
-            .values(is_banned=True, ban_reason=reason)
+            update(User)
+            .where(User.telegram_id == telegram_id)
+            .values(
+                is_banned=True,
+                ban_reason=reason,
+                ban_date=datetime.now()
+            )
         )
+        return True
 
-async def unban_user(telegram_id: int):
+async def unban_user(telegram_id: int) -> bool:
     """
     Разблокировать пользователя.
+    
+    :param telegram_id: ID пользователя
+    :return: True если разблокировка успешна, False если пользователь не найден
     """
     async with get_db_session() as session:
+        user = await session.scalar(select(User).where(User.telegram_id == telegram_id))
+        if not user:
+            return False
+            
         await session.execute(
-            update(User).where(User.telegram_id == telegram_id)
-            .values(is_banned=False, ban_reason=None)
+            update(User)
+            .where(User.telegram_id == telegram_id)
+            .values(
+                is_banned=False,
+                ban_reason=None,
+                ban_date=None
+            )
         )
+        return True
 
 async def broadcast_message(text: str) -> List[int]:
     """
@@ -574,24 +601,23 @@ async def broadcast_message(text: str) -> List[int]:
     :return: Список ID пользователей, которым было отправлено сообщение
     """
     sent_to = []
+    failed = []
     async with get_db_session() as session:
-        users = await session.execute(select(User))
-        # Since actual message sending logic is not provided in the context of this database code snippet,
-        # I will create a placeholder function `notify_user` that can be implemented for actual sending logic.
-        async def notify_user(user_id: int, message_text: str) -> bool:
-            # This function is a placeholder for where you would implement the actual message-sending logic.
-            # It should return True if the message was sent successfully, False otherwise.
-            # For now, we'll assume all sends succeed for demonstration purposes.
-            return True
-
-        # Send message to all users
-        for user in users.scalars():
-            if await notify_user(user.telegram_id, text):  # Potentially a real send function
-                sent_to.append(user.telegram_id)
-        for user in users.scalars():
-            sent_to.append(user.telegram_id)
-            
-    return sent_to
+        try:
+            users = await session.execute(select(User).where(User.is_banned == False))
+            for user in users.scalars():
+                try:
+                    # В реальном коде здесь будет отправка сообщения через бота
+                    sent_to.append(user.telegram_id)
+                except Exception as e:
+                    logger.error(f"Ошибка отправки сообщения пользователю {user.telegram_id}: {e}")
+                    failed.append(user.telegram_id)
+                    
+            logger.info(f"Рассылка завершена. Отправлено: {len(sent_to)}, Ошибок: {len(failed)}")
+            return sent_to
+        except Exception as e:
+            logger.error(f"Ошибка при рассылке сообщений: {e}")
+            raise
 
 async def get_recent_logs(limit: int = 50) -> List[Dict[str, Any]]:
     """

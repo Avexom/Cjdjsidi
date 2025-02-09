@@ -300,6 +300,7 @@ async def admin_ban_callback(callback: CallbackQuery, state: FSMContext):
 
 @admin_router.message(AdminStates.waiting_for_ban)
 async def process_ban(message: Message, state: FSMContext):
+    logger.info(f"Администратор {message.from_user.id} пытается забанить пользователя")
     try:
         identifier = message.text.strip()
         user = await db.get_user_by_username(identifier) or await db.get_user(int(identifier))
