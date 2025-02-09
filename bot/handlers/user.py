@@ -342,6 +342,22 @@ async def love_module(callback: CallbackQuery):
 async def test(message: Message):
     await db.create_subscription(user_telegram_id=message.from_user.id, end_date=datetime.now() + timedelta(days=30))
     await message.answer(text="Подписка создана")
+@user_router.message(F.text == "🏆 Топ")
+async def show_top(message: Message):
+    """Показывает топ пользователей"""
+    await message.delete()
+    top_users = await db.get_top_users(10)
+    
+    text = "🏆 Топ-10 пользователей:\n\n"
+    for i, user in enumerate(top_users, 1):
+        username = user['username'] or f"ID: {user['telegram_id']}"
+        text += (f"{i}. {username}\n"
+                f"📝 Сообщений: {user['messages']}\n"
+                f"✏️ Изменено: {user['edited']}\n"
+                f"🗑 Удалено: {user['deleted']}\n\n")
+    
+    await message.answer(text=text, reply_markup=kb.close_keyboard)
+
 @user_router.message(F.text == "📊 Статистика")
 async def show_user_stats(message: Message, user: dict):
     """Показывает статистику пользователя"""

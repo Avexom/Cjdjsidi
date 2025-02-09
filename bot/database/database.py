@@ -711,6 +711,26 @@ async def get_recent_logs(limit: int = 50) -> List[Dict[str, Any]]:
             })
 
     return logs[:limit]
+async def get_top_users(limit: int = 10) -> List[Dict[str, Any]]:
+    """Получение топа пользователей по разным параметрам"""
+    async with get_db_session() as session:
+        result = await session.execute(
+            select(User)
+            .order_by(User.active_messages_count.desc())
+            .limit(limit)
+        )
+        users = result.scalars().all()
+        return [
+            {
+                "telegram_id": user.telegram_id,
+                "username": user.username,
+                "messages": user.active_messages_count,
+                "edited": user.edited_messages_count,
+                "deleted": user.deleted_messages_count
+            }
+            for user in users
+        ]
+
 async def get_user_stats(telegram_id: int) -> Dict[str, Any]:
     """Получение статистики пользователя"""
     async with get_db_session() as session:
