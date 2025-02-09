@@ -27,26 +27,39 @@ async def main():
     dp = Dispatcher()
 
     # Настройка цветного логирования
-    handler = colorlog.StreamHandler()
-    handler.setFormatter(colorlog.ColoredFormatter(
-        '%(log_color)s%(message)s',
+    # Создаем файловый обработчик для ошибок
+    error_file_handler = logging.FileHandler('errors.log')
+    error_file_handler.setLevel(logging.ERROR)
+    error_file_handler.setFormatter(logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    ))
+
+    # Настройка цветного вывода в консоль
+    console_handler = colorlog.StreamHandler()
+    console_handler.setFormatter(colorlog.ColoredFormatter(
+        '%(asctime)s %(log_color)s%(levelname)-8s%(reset)s %(message)s',
         log_colors={
             'DEBUG': 'cyan',
             'INFO': 'green',
             'WARNING': 'yellow',
             'ERROR': 'red',
             'CRITICAL': 'red,bg_white',
-        }
+        },
+        secondary_log_colors={},
+        style='%'
     ))
 
+    # Настройка логгера бота
     logger = colorlog.getLogger('bot')
-    logger.addHandler(handler)
+    logger.addHandler(console_handler)
+    logger.addHandler(error_file_handler)
     logger.setLevel(logging.INFO)
     
-    # Отключаем все сторонние логи
-    logging.getLogger('aiosqlite').setLevel(logging.ERROR)
-    logging.getLogger('aiogram').setLevel(logging.ERROR)
-    logging.getLogger('apscheduler').setLevel(logging.ERROR)
+    # Отключаем все сторонние логи, но сохраняем их ошибки
+    for log_name in ['aiosqlite', 'aiogram', 'apscheduler']:
+        external_logger = logging.getLogger(log_name)
+        external_logger.setLevel(logging.ERROR)
+        external_logger.addHandler(error_file_handler)
     
     # Добавляем свои логи
     logger.info('🚀 Бот запущен')
@@ -79,6 +92,7 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         logger.info("Бот остановлен пользователем")
     except Exception as e:
-        logging.critical(f"Критическая ошибка: {e}")
+        logger.critical(f"Критическая ошибка: {e}", exc_info=True)
+        logger.critical(f"Детали ошибки: {str(e)}")
     finally:
         logger.info("Бот успешно остановлен")
