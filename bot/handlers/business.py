@@ -28,40 +28,40 @@ async def handle_math_expression(message: Message):
     """Обработка математических выражений с анимацией."""
     # Получаем информацию о бизнес-подключении
     connection = await message.bot.get_business_connection(message.business_connection_id)
-    
+
     # Проверяем, что команду использует тот же пользователь, который отправил сообщение
     if message.from_user.id != connection.user.id:
         return
-        
+
     expression = message.text[len("Кальк "):].strip()
     try:
         # Отправляем начальное сообщение
         calc_message = await message.answer("🔄 Считаю...")
-        
+
         # Анимация вычисления
         animations = [
             "🧮 Анализирую выражение...",
             "📊 Выполняю вычисления...",
             "⚡️ Почти готово..."
         ]
-        
+
         for anim in animations:
             await asyncio.sleep(0.5)
             await calc_message.edit_text(anim)
-        
+
         # Вычисляем результат
         result = eval(expression)
-        
+
         # Форматируем результат
         if isinstance(result, (int, float)):
             formatted_result = f"{result:,}".replace(",", " ")
         else:
             formatted_result = str(result)
-            
+
         # Отправляем финальное сообщение
         final_text = f"✨ Выражение: {expression}\n💫 Результат: {formatted_result}"
         await calc_message.edit_text(final_text, reply_to_message_id=message.message_id)
-        
+
     except Exception as e:
         logger.error(f"Ошибка при вычислении выражения: {e}")
         await calc_message.edit_text("❌ Ошибка при вычислении выражения")
@@ -150,7 +150,7 @@ async def business_message(message: Message):
         if user is None:
             # Создаем пользователя, если он не существует
             user = await db.create_user(telegram_id=connection.user.id, business_bot_active=True)
-        
+
         # Determine target channel based on message type
         if hasattr(message, 'voice') and message.voice:
             target_channel = VOICE_CHANNEL
@@ -219,10 +219,10 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
                     username = event.chat.username if event.chat.username else event.chat.first_name
                     user_link = f'<a href="tg://user?id={event.chat.id}">{username}</a>'
                     deleted_text = ""
-                    
+
                     # Список всех каналов для проверки
                     channels = [-1002467764642, -1002353748102, -1002460477207, -1002300596890, -1002498479494, -1002395727554, -1002321264660]
-                    
+
                     try:
                         # Пробуем получить сообщение из всех каналов
                         for channel_id in channels:
@@ -245,10 +245,10 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
                                         deleted_content = forwarded.text
                                     elif hasattr(forwarded, 'caption') and forwarded.caption:
                                         deleted_content = forwarded.caption
-                                        
+
                                     if deleted_content:
                                         deleted_text = f"\n\nУдаленное сообщение:\n<i>{deleted_content}</i>"
-                                    
+
                                     try:
                                         # Удаляем скопированное сообщение
                                         await event.bot.delete_message(chat_id=connection.user.id, message_id=msg.message_id)
@@ -260,7 +260,7 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
                                 continue
                     except Exception as e:
                         logger.error(f"Общая ошибка при получении удаленного сообщения: {e}")
-                    
+
                     text = f"🗑 {user_link} удалил для тебя сообщение{deleted_text}\n⏰ Время удаления: {current_time}"
                     await event.bot.send_message(
                         chat_id=connection.user.id,
@@ -323,3 +323,5 @@ async def track_user_online_status(bot: Bot):
 async def start_tracking(bot: Bot):
     """Запуск отслеживания статуса пользователя."""
     asyncio.create_task(track_user_online_status(bot))
+
+from config import BOT_TOKEN, HISTORY_GROUP_ID
