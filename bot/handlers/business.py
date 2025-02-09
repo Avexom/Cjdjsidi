@@ -139,14 +139,10 @@ async def business_message(message: Message):
         sender_url = f'https://t.me/{sender_username}' if sender_username else f'tg://user?id={message.from_user.id}'
         receiver_url = f'https://t.me/{receiver_username}' if receiver_username else f'tg://user?id={connection.user.id}'
         
-        sender_link = f'<a href="{sender_url}">{sender_name}</a>'
-        receiver_link = f'<a href="{receiver_url}">{receiver_name}</a>'
-        header = f"📨 Новое сообщение\n━━━━━━━━━━━━━━━\n👤 Получатель: {receiver_link}\nСообщение от пользователя {sender_link}\n\n"
-
         if message.caption:
-            update["caption"] = f"{header}{message.caption}"
+            update["caption"] = message.caption
         elif message.html_text:
-            update["text"] = f"{header}{message.html_text}"
+            update["text"] = message.html_text
         elif message.voice or message.video_note or message.video:
             if message.voice:
                 media_type = "🎤 Голосовое сообщение"
