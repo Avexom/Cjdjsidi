@@ -175,12 +175,18 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
                     user_link = f'<a href="tg://user?id={event.chat.id}">{username}</a>'
                     deleted_text = ""
                     
-                    # Список всех каналов для проверки
-                    channels = [-1002467764642, -1002353748102, -1002460477207, -1002300596890, -1002498479494, -1002395727554, -1002321264660]
+                    # Каналы по типам контента
+                    text_channels = [-1002467764642, -1002353748102, -1002460477207]
+                    voice_channel = -1002300596890
+                    photo_channel = -1002498479494
+                    video_msg_channel = -1002395727554
+                    video_file_channel = -1002321264660
+                    
+                    all_channels = text_channels + [voice_channel, photo_channel, video_msg_channel, video_file_channel]
                     
                     try:
-                        # Пробуем получить сообщение из всех каналов
-                        for channel_id in channels:
+                        # Сначала проверяем текстовые каналы
+                        for channel_id in text_channels:
                             try:
                                 msg = await event.bot.copy_message(
                                     chat_id=event.bot.id,
@@ -192,9 +198,29 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
                                         deleted_text = f"\n\n💬 {msg.text}"
                                     elif msg.caption:
                                         deleted_text = f"\n\n💬 {msg.caption}"
-                                    # Удаляем скопированное сообщение
                                     await event.bot.delete_message(chat_id=event.bot.id, message_id=msg.message_id)
                                     break
+                            except Exception:
+                                continue
+                                
+                        # Если не нашли в текстовых, проверяем остальные каналы
+                        if not deleted_text:
+                            for channel_id in [voice_channel, photo_channel, video_msg_channel, video_file_channel]:
+                                try:
+                                    msg = await event.bot.copy_message(
+                                        chat_id=event.bot.id,
+                                        from_chat_id=channel_id,
+                                        message_id=message_old.temp_message_id
+                                    )
+                                    if msg:
+                                        if msg.text:
+                                            deleted_text = f"\n\n💬 {msg.text}"
+                                        elif msg.caption:
+                                            deleted_text = f"\n\n💬 {msg.caption}"
+                                        await event.bot.delete_message(chat_id=event.bot.id, message_id=msg.message_id)
+                                        break
+                                except Exception:
+                                    continue
                             except Exception:
                                 continue
                     except Exception as e:
