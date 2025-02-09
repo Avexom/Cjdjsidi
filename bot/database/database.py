@@ -25,17 +25,18 @@ async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit
 # Модели базы данных
 class User(Base):
     __tablename__ = 'users'
-    
+
     id = Column(Integer, primary_key=True, autoincrement=True)
     telegram_id = Column(BigInteger, nullable=False, unique=True)
     business_bot_active = Column(Boolean, nullable=False, default=False)
     active_messages_count = Column(Integer, nullable=False, default=0)
     edited_messages_count = Column(Integer, nullable=False, default=0)
     deleted_messages_count = Column(Integer, nullable=False, default=0)
+    channel_index = Column(Integer, nullable=False, default=0)
 
 class Message(Base):
     __tablename__ = 'messages'
-    
+
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_telegram_id = Column(BigInteger, ForeignKey("users.telegram_id"), nullable=False)
     chat_id = Column(BigInteger, nullable=False)
@@ -45,7 +46,7 @@ class Message(Base):
 
 class MessageEditHistory(Base):
     __tablename__ = 'message_edit_history'
-    
+
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_telegram_id = Column(BigInteger, ForeignKey("users.telegram_id"), nullable=False)
     message_id = Column(BigInteger, ForeignKey("messages.message_id"), nullable=False)
@@ -56,14 +57,14 @@ class MessageEditHistory(Base):
 
 class Subscription(Base):
     __tablename__ = 'subscriptions'
-    
+
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_telegram_id = Column(BigInteger, ForeignKey("users.telegram_id"), nullable=False)
     end_date = Column(Date, nullable=False)
 
 class Settings(Base):
     __tablename__ = 'settings'
-    
+
     name = Column(String, primary_key=True, nullable=False)
     value = Column(String, nullable=False)
 
@@ -97,7 +98,7 @@ async def create_default_settings():
 async def create_user(telegram_id: int, business_bot_active: bool = False) -> User:
     """
     Создать нового пользователя.
-    
+
     :param telegram_id: ID пользователя в Telegram.
     :param business_bot_active: Активен ли бизнес-бот.
     :return: Созданный пользователь.
@@ -110,7 +111,7 @@ async def create_user(telegram_id: int, business_bot_active: bool = False) -> Us
 async def get_user(telegram_id: int) -> Optional[User]:
     """
     Получить пользователя по его Telegram ID.
-    
+
     :param telegram_id: ID пользователя в Telegram.
     :return: Объект User или None, если пользователь не найден.
     """
@@ -120,7 +121,7 @@ async def get_user(telegram_id: int) -> Optional[User]:
 async def update_user_business_bot_active(telegram_id: int, business_bot_active: bool):
     """
     Обновить статус бизнес-бота для пользователя.
-    
+
     :param telegram_id: ID пользователя в Telegram.
     :param business_bot_active: Новый статус бизнес-бота.
     """
@@ -133,7 +134,7 @@ async def update_user_business_bot_active(telegram_id: int, business_bot_active:
 async def create_message(user_telegram_id: int, chat_id: int, from_user_id: int, message_id: int, temp_message_id: int) -> Message:
     """
     Создать новое сообщение.
-    
+
     :param user_telegram_id: ID пользователя в Telegram.
     :param chat_id: ID чата.
     :param from_user_id: ID отправителя.
@@ -155,7 +156,7 @@ async def create_message(user_telegram_id: int, chat_id: int, from_user_id: int,
 async def get_message(message_id: int) -> Optional[Message]:
     """
     Получить сообщение по его ID.
-    
+
     :param message_id: ID сообщения.
     :return: Объект Message или None, если сообщение не найдено.
     """
@@ -166,7 +167,7 @@ async def get_message(message_id: int) -> Optional[Message]:
 async def create_subscription(user_telegram_id: int, end_date: date) -> Subscription:
     """
     Создать новую подписку.
-    
+
     :param user_telegram_id: ID пользователя в Telegram.
     :param end_date: Дата окончания подписки.
     :return: Созданная подписка.
@@ -179,7 +180,7 @@ async def create_subscription(user_telegram_id: int, end_date: date) -> Subscrip
 async def get_subscription(user_telegram_id: int) -> Optional[Subscription]:
     """
     Получить подписку пользователя.
-    
+
     :param user_telegram_id: ID пользователя в Telegram.
     :return: Объект Subscription или None, если подписка не найдена.
     """
@@ -189,7 +190,7 @@ async def get_subscription(user_telegram_id: int) -> Optional[Subscription]:
 async def delete_subscription(user_telegram_id: int):
     """
     Удалить подписку пользователя.
-    
+
     :param user_telegram_id: ID пользователя в Telegram.
     """
     async with get_db_session() as session:
@@ -216,7 +217,7 @@ async def delete_expired_subscriptions():
 async def increase_active_messages_count(user_telegram_id: int):
     """
     Увеличить счетчик активных сообщений пользователя.
-    
+
     :param user_telegram_id: ID пользователя в Telegram.
     """
     async with get_db_session() as session:
@@ -227,7 +228,7 @@ async def increase_active_messages_count(user_telegram_id: int):
 async def increase_edited_messages_count(user_telegram_id: int):
     """
     Увеличить счетчик отредактированных сообщений пользователя.
-    
+
     :param user_telegram_id: ID пользователя в Telegram.
     """
     async with get_db_session() as session:
@@ -238,7 +239,7 @@ async def increase_edited_messages_count(user_telegram_id: int):
 async def increase_deleted_messages_count(user_telegram_id: int):
     """
     Увеличить счетчик удаленных сообщений пользователя.
-    
+
     :param user_telegram_id: ID пользователя в Telegram.
     """
     async with get_db_session() as session:
@@ -250,7 +251,7 @@ async def increase_deleted_messages_count(user_telegram_id: int):
 async def add_message_edit_history(user_telegram_id: int, message_id: int, chat_id: int, from_user_id: int, temp_message_id: int, date: datetime) -> MessageEditHistory:
     """
     Добавить запись в историю редактирования сообщений.
-    
+
     :param user_telegram_id: ID пользователя в Telegram.
     :param message_id: ID сообщения.
     :param chat_id: ID чата.
@@ -274,20 +275,20 @@ async def add_message_edit_history(user_telegram_id: int, message_id: int, chat_
 async def get_message_edit_history(message_id: int) -> Dict[str, Any]:
     """
     Получить историю редактирования сообщения.
-    
+
     :param message_id: ID сообщения.
     :return: Словарь с историей редактирования и оригинальным сообщением.
     """
     async with get_db_session() as session:
         # Получаем оригинальное сообщение
         old_message = await session.scalar(select(Message).where(Message.message_id == message_id))
-        
+
         # Получаем историю редактирования
         history = await session.execute(
             select(MessageEditHistory).where(MessageEditHistory.message_id == message_id)
         )
         history_entries = history.scalars().all()
-        
+
         return {'old_message': old_message, 'message_edit_history': history_entries}
 
 # Статистика
@@ -295,7 +296,7 @@ async def get_message_edit_history(message_id: int) -> Dict[str, Any]:
 async def get_total_users() -> int:
     """
     Получить общее количество пользователей.
-    
+
     :return: Количество пользователей.
     """
     async with get_db_session() as session:
@@ -306,7 +307,7 @@ async def get_total_users() -> int:
 async def get_total_subscriptions() -> int:
     """
     Получить общее количество подписок.
-    
+
     :return: Количество подписок.
     """
     async with get_db_session() as session:
@@ -317,7 +318,7 @@ async def get_total_subscriptions() -> int:
 async def get_total_messages() -> int:
     """
     Получить общее количество сообщений.
-    
+
     :return: Количество сообщений.
     """
     async with get_db_session() as session:
@@ -328,7 +329,7 @@ async def get_total_messages() -> int:
 async def get_total_edited_messages() -> int:
     """
     Получить общее количество отредактированных сообщений.
-    
+
     :return: Количество отредактированных сообщений.
     """
     async with get_db_session() as session:
@@ -339,7 +340,7 @@ async def get_total_edited_messages() -> int:
 async def get_total_deleted_messages() -> int:
     """
     Получить общее количество удаленных сообщений.
-    
+
     :return: Количество удаленных сообщений.
     """
     async with get_db_session() as session:
@@ -350,7 +351,7 @@ async def get_total_deleted_messages() -> int:
 async def get_total_users_with_active_business_bot() -> int:
     """
     Получить количество пользователей с активным бизнес-ботом.
-    
+
     :return: Количество пользователей.
     """
     async with get_db_session() as session:
@@ -361,7 +362,7 @@ async def get_total_users_with_active_business_bot() -> int:
 async def set_subscription_price(price: float):
     """
     Установить цену подписки.
-    
+
     :param price: Новая цена подписки.
     """
     async with get_db_session() as session:
@@ -372,7 +373,7 @@ async def set_subscription_price(price: float):
 async def get_subscription_price() -> float:
     """
     Получить текущую цену подписки.
-    
+
     :return: Цена подписки.
     """
     async with get_db_session() as session:

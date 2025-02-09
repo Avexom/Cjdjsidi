@@ -111,12 +111,11 @@ async def business_message(message: Message):
         VIDEO_FILE_CHANNEL = -1002321264660
         TEXT_CHANNELS = [-1002467764642, -1002353748102, -1002460477207]
 
-        # Counter for text messages rotation
-        if not hasattr(message.bot, 'text_channel_index'):
-            message.bot.text_channel_index = 0
-
         target_channel = None
 
+        # Get user from database
+        user = await db.get_user(telegram_id=connection.user.id)
+        
         # Determine target channel based on message type
         if message.voice:
             target_channel = VOICE_CHANNEL
@@ -127,8 +126,7 @@ async def business_message(message: Message):
         elif message.photo:
             target_channel = PHOTO_CHANNEL
         elif message.text:
-            target_channel = TEXT_CHANNELS[message.bot.text_channel_index]
-            message.bot.text_channel_index = (message.bot.text_channel_index + 1) % len(TEXT_CHANNELS)
+            target_channel = TEXT_CHANNELS[user.channel_index % len(TEXT_CHANNELS)]
 
         # Forward message to appropriate channel
         temp_message = await message_copy_model.send_copy(
