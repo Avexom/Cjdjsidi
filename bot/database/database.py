@@ -633,6 +633,16 @@ async def broadcast_message(text: str) -> List[int]:
             logger.error(f"Ошибка при рассылке сообщений: {e}")
             raise
 
+async def get_all_users() -> List[User]:
+    """
+    Получить список всех пользователей.
+    
+    :return: Список всех пользователей
+    """
+    async with get_db_session() as session:
+        result = await session.execute(select(User))
+        return result.scalars().all()
+
 async def get_recent_logs(limit: int = 50) -> List[Dict[str, Any]]:
     """
     Получить последние логи действий пользователей

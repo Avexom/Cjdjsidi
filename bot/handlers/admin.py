@@ -225,17 +225,38 @@ async def admin_broadcast_callback(callback: CallbackQuery, state: FSMContext):
 async def process_broadcast_text(message: Message, state: FSMContext):
     try:
         users = await db.get_all_users()
+        if not users:
+            await message.answer("Нет пользователей для рассылки.")
+            await state.clear()
+            return
+
         sent_count = 0
+        failed_count = 0
+        
         for user in users:
+            if user.is_banned:  # Пропускаем заблокированных пользователей
+                continue
             try:
-                await message.bot.send_message(chat_id=user.telegram_id, text=message.text)
+                await message.bot.send_message(
+                    chat_id=user.telegram_id,
+                    text=message.text,
+                    disable_web_page_preview=True
+                )
                 sent_count += 1
+                await asyncio.sleep(0.05)  # Небольшая задержка между отправками
             except Exception as e:
-                logger.error(f"Ошибка отправки сообщения пользователю {user.telegram_id}: {e}")
-        await message.answer(f"Рассылка завершена. Отправлено {sent_count} сообщений.")
-        await state.clear()
+                failed_count += 1
+                logger.error(f"Ошибка отправки пользователю {user.telegram_id}: {str(e)}")
+        
+        await message.answer(
+            f"Рассылка завершена\n"
+            f"✅ Успешно: {sent_count}\n"
+            f"❌ Ошибок: {failed_count}"
+        )
     except Exception as e:
-        await message.answer(f"Ошибка при рассылке: {e}")
+        logger.error(f"Ошибка при рассылке: {str(e)}")
+        await message.answer(f"Произошла ошибка при рассылке: {str(e)}")
+    finally:
         await state.clear()
 
 @admin_router.callback_query(F.data == "admin_price")
