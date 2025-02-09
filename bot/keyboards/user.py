@@ -1,3 +1,4 @@
+
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
 
 start_connection_keyboard = ReplyKeyboardMarkup(
@@ -44,7 +45,7 @@ admin_keyboard = InlineKeyboardMarkup(
         ],
         [
             InlineKeyboardButton(text="📨 Рассылка", callback_data="admin_broadcast"),
-            InlineKeyboardButton(text="💰 Цена рассылки", callback_data="admin_price")
+            InlineKeyboardButton(text="💰 Цена подписки", callback_data="admin_price")
         ],
         [
             InlineKeyboardButton(text="🎁 Выдать подписку", callback_data="admin_give_sub"),
@@ -56,3 +57,23 @@ admin_keyboard = InlineKeyboardMarkup(
         ]
     ]
 )
+
+def get_ban_keyboard(user_id: int):
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="✅ Подтвердить", callback_data=f"confirm_ban_{user_id}"),
+                InlineKeyboardButton(text="❌ Отменить", callback_data="close")
+            ]
+        ]
+    )
+
+def get_unban_keyboard(user_id: int):
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="✅ Подтвердить", callback_data=f"confirm_unban_{user_id}"),
+                InlineKeyboardButton(text="❌ Отменить", callback_data="close")
+            ]
+        ]
+    )
