@@ -62,12 +62,10 @@ async def start(message: Message, state: FSMContext):
         user = await db.get_user(telegram_id=message.from_user.id)
         if user is None:
             await db.create_user(telegram_id=message.from_user.id)
-            await message.answer("Добро пожаловать! Бот успешно запущен.", parse_mode=ParseMode.HTML)
+            await message.answer("Добро пожаловать! Бот успешно запущен.", reply_markup=kb.start_connection_keyboard)
             logger.info(f"Новый пользователь: {message.from_user.id}")
-        elif user.business_bot_active:
-            await message.answer("Бот уже подключен!", reply_markup=kb.start_connection_keyboard)
         else:
-            await message.answer("Привет! Бот готов к работе.")
+            await message.answer("Привет! Бот готов к работе.", reply_markup=kb.start_connection_keyboard)
         logger.info(f"Команда /start выполнена пользователем {message.from_user.id}")
     except Exception as e:
         logger.error(f"Ошибка в команде start: {e}")
