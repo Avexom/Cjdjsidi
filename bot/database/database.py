@@ -439,3 +439,29 @@ async def broadcast_message(text: str) -> List[int]:
             sent_to.append(user.telegram_id)
             
     return sent_to
+
+async def get_recent_logs(limit: int = 50) -> List[Dict[str, Any]]:
+    """
+    Получить последние логи действий пользователей
+    
+    :param limit: Количество записей
+    :return: Список последних действий
+    """
+    logs = []
+    async with get_db_session() as session:
+        # Получаем последние изменения сообщений
+        edit_history = await session.execute(
+            select(MessageEditHistory)
+            .order_by(MessageEditHistory.date.desc())
+            .limit(limit)
+        )
+        
+        for entry in edit_history.scalars():
+            logs.append({
+                'type': 'edit',
+                'user_id': entry.user_telegram_id,
+                'message_id': entry.message_id,
+                'date': entry.date
+            })
+            
+    return logs[:limit]
