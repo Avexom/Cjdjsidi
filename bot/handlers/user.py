@@ -57,14 +57,19 @@ async def get_user_profile_text(user, subscription, message):
 # Хэндлеры
 @user_router.message(CommandStart())
 async def start(message: Message, state: FSMContext):
-    await state.clear()  # Сброс состояния, если это необходимо
-    user = await db.get_user(telegram_id=message.from_user.id)
-    if user is None:
-        await message.answer(texts.about_bot, parse_mode=ParseMode.HTML)
-    elif user.business_bot_active:
-        await message.answer(texts.Texts.START_CONNECTED, reply_markup=kb.start_connection_keyboard)
-    else:
-        await message.answer(texts.start_not_connected)
+    try:
+        await state.clear()
+        user = await db.get_user(telegram_id=message.from_user.id)
+        if user is None:
+            await db.create_user(telegram_id=message.from_user.id)
+            await message.answer(texts.Texts.ABOUT_BOT, parse_mode=ParseMode.HTML)
+        elif user.business_bot_active:
+            await message.answer(texts.Texts.START_CONNECTED, reply_markup=kb.start_connection_keyboard)
+        else:
+            await message.answer(texts.Texts.START_NOT_CONNECTED)
+    except Exception as e:
+        logger.error(f"Ошибка в команде start: {e}")
+        await message.answer("Произошла ошибка при выполнении команды")
 
 @user_router.message(F.text == "👤 Профиль")
 async def profile(message: Message, user: dict):
