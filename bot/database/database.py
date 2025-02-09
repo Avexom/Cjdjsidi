@@ -443,6 +443,26 @@ async def migrate_db():
         if 'created_at' not in columns:
             await conn.execute(text("ALTER TABLE users ADD COLUMN created_at TIMESTAMP"))
             logger.info("Added created_at column to users table")
+            
+        if 'notifications_enabled' not in columns:
+            await conn.execute(text("ALTER TABLE users ADD COLUMN notifications_enabled BOOLEAN DEFAULT TRUE"))
+            logger.info("Added notifications_enabled column to users table")
+
+        if 'message_notifications' not in columns:
+            await conn.execute(text("ALTER TABLE users ADD COLUMN message_notifications BOOLEAN DEFAULT TRUE"))
+            logger.info("Added message_notifications column to users table")
+
+        if 'edit_notifications' not in columns:
+            await conn.execute(text("ALTER TABLE users ADD COLUMN edit_notifications BOOLEAN DEFAULT TRUE"))
+            logger.info("Added edit_notifications column to users table")
+
+        if 'delete_notifications' not in columns:
+            await conn.execute(text("ALTER TABLE users ADD COLUMN delete_notifications BOOLEAN DEFAULT TRUE"))
+            logger.info("Added delete_notifications column to users table")
+
+        if 'last_message_time' not in columns:
+            await conn.execute(text("ALTER TABLE users ADD COLUMN last_message_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP"))
+            logger.info("Added last_message_time column to users table")
 
 
 # Запуск инициализации базы данных

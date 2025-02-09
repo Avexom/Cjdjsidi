@@ -1,4 +1,3 @@
-
 import asyncio
 import logging
 import colorlog
@@ -32,7 +31,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from bot.handlers.user import user_router
 from bot.handlers.business import business_router
 from bot.handlers.admin import admin_router
-from bot.database.database import init_db, delete_expired_subscriptions
+from bot.database.database import init_db, delete_expired_subscriptions, migrate_db # Added import for migrate_db
 from config import BOT_TOKEN
 
 # Инициализация бота
@@ -46,21 +45,22 @@ async def main():
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.INFO)
     root_logger.addHandler(handler)
-    
+
     # Настраиваем логи внешних библиотек
     for log_name in ['aiosqlite', 'aiogram', 'apscheduler']:
         external_logger = logging.getLogger(log_name)
         external_logger.setLevel(logging.INFO)
         external_logger.addHandler(handler)
-    
+
     # Добавляем свои логи
 
     # Подключение роутеров
     for router in [user_router, business_router, admin_router]:
         dp.include_router(router)
 
-    # Инициализация базы данных
+    # Инициализация и миграция базы данных
     await init_db()
+    await migrate_db()
 
     # Запуск планировщика для удаления истёкших подписок
     scheduler = AsyncIOScheduler()
