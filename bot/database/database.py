@@ -33,6 +33,9 @@ class User(Base):
     edited_messages_count = Column(Integer, nullable=False, default=0)
     deleted_messages_count = Column(Integer, nullable=False, default=0)
     channel_index = Column(Integer, nullable=False, default=0)
+    is_banned = Column(Boolean, nullable=False, default=False)
+    ban_reason = Column(String, nullable=True)
+    username = Column(String, nullable=True)
 
 class Message(Base):
     __tablename__ = 'messages'
@@ -484,6 +487,26 @@ async def get_user_message_stats(user_id: int) -> List[Dict[str, Any]]:
             }
             for stat in stats.scalars()
         ]
+
+async def ban_user(telegram_id: int, reason: str = "Не указана"):
+    """
+    Заблокировать пользователя.
+    """
+    async with get_db_session() as session:
+        await session.execute(
+            update(User).where(User.telegram_id == telegram_id)
+            .values(is_banned=True, ban_reason=reason)
+        )
+
+async def unban_user(telegram_id: int):
+    """
+    Разблокировать пользователя.
+    """
+    async with get_db_session() as session:
+        await session.execute(
+            update(User).where(User.telegram_id == telegram_id)
+            .values(is_banned=False, ban_reason=None)
+        )
 
 async def broadcast_message(text: str) -> List[int]:
     """

@@ -272,8 +272,14 @@ async def process_give_username(message: Message, state: FSMContext):
 async def process_give_days(message: Message, state: FSMContext):
     try:
         data = await state.get_data()
-        username = data['username']
+        username = data['username'].replace('@', '')  # Убираем @ если есть
         days = int(message.text)
+        
+        if days <= 0:
+            await message.answer("Количество дней должно быть положительным числом")
+            await state.clear()
+            return
+            
         user = await db.get_user_by_username(username)
         if user:
             await db.create_subscription(user_telegram_id=user.telegram_id, 
