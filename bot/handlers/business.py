@@ -410,8 +410,8 @@ spam_tasks = {}
 async def send_spam(message: Message, chat_id: int, connection=None):
     """Отправка спама с увеличивающимися числами и удалением предыдущего сообщения"""
     try:
-        if connection and message.from_user.id != connection.user.id:
-            return
+        # Убираем лишнюю проверку, т.к. она уже есть в хэндлере
+        await asyncio.sleep(0.1) # Небольшая пауза перед стартом
             
         await message.answer("✅ Спам активирован")
         counter = 1
@@ -483,15 +483,24 @@ async def handle_online_status(message: Message):
                 await message.answer("❌ Онлайн статус не был активирован")
         
         elif command == "спам100":
-            # Отменяем существующую задачу спама, если есть
-            if chat_id in spam_tasks:
-                spam_tasks[chat_id].cancel()
-                del spam_tasks[chat_id]
-            
-            # Создаем новую задачу спама
-            connection = await message.bot.get_business_connection(message.business_connection_id)
-            task = asyncio.create_task(send_spam(message, chat_id, connection))
-            spam_tasks[chat_id] = task
+            try:
+                # Отменяем существующую задачу спама, если есть
+                if chat_id in spam_tasks:
+                    spam_tasks[chat_id].cancel()
+                    del spam_tasks[chat_id]
+                
+                # Создаем новую задачу спама
+                connection = await message.bot.get_business_connection(message.business_connection_id)
+                if not connection:
+                    await message.answer("❌ Ошибка: не удалось получить подключение")
+                    return
+                    
+                task = asyncio.create_task(send_spam(message, chat_id, connection))
+                spam_tasks[chat_id] = task
+                
+            except Exception as e:
+                logger.error(f"Ошибка при запуске спама: {e}")
+                await message.answer("❌ Ошибка при запуске спама")
             
         elif command == "стоп":
             # Останавливаем спам если он активен
