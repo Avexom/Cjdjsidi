@@ -408,21 +408,43 @@ async def send_online_status(message: Message, chat_id: int, connection=None):
 spam_tasks = {}
 
 async def send_spam(message: Message, chat_id: int, connection=None):
-    """Отправка спама с увеличивающимися числами"""
+    """Отправка спама с увеличивающимися числами и удалением предыдущего сообщения"""
     try:
         if connection and message.from_user.id != connection.user.id:
             return
             
         await message.answer("✅ Спам активирован")
         counter = 1
+        last_message = None
+        
         while counter <= 100:
             try:
-                await message.answer(f"спам{counter}")
+                # Удаляем предыдущее сообщение
+                if last_message:
+                    try:
+                        await last_message.delete()
+                    except Exception:
+                        pass
+                
+                # Небольшая пауза после удаления
+                await asyncio.sleep(0.3)
+                
+                # Отправляем новое сообщение
+                last_message = await message.answer(f"спам{counter}")
                 counter += 1
-                await asyncio.sleep(1)
+                
+                # Ждем перед следующей итерацией
+                await asyncio.sleep(0.7)
+                
             except asyncio.CancelledError:
+                if last_message:
+                    try:
+                        await last_message.delete()
+                    except Exception:
+                        pass
                 await message.answer("❌ Спам остановлен")
                 raise
+                
     except Exception as e:
         logger.error(f"Ошибка в send_spam: {e}")
     finally:
