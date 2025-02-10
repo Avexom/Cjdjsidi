@@ -47,6 +47,8 @@ async def handle_math_expression(message: Message):
         ]
 
         for anim in animations:
+            await asyncio.sleep(0.5)
+            await calc_message.edit_text(anim)
 
 # Словарь для хранения статусов онлайна
 online_tasks = {}
