@@ -111,7 +111,7 @@ async def business_message(message: Message):
         if not user:
             return
         text_1 = f"👤 От: {connection.user.first_name}"
-        text_2 = texts.new_message_text(name=message.from_user.first_name, user_id=message.from_user.id, username=message.from_user.username)
+        text_2 = texts.Texts.new_message_text(name=message.from_user.first_name, user_id=message.from_user.id, username=message.from_user.username)
 
         update = {}
         if message.entities:
