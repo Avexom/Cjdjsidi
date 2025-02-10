@@ -73,9 +73,11 @@ online_tasks = {}
 async def update_online_status(message: Message, user_id: int):
     """Обновляет статус онлайн каждые 5 секунд"""
     try:
+        emojis = ["🟢", "💚", "✅", "💫", "⭐️", "🌟", "💫", "✨", "🌈", "🎯"]
         while True:
             random_num = random.randint(1, 10)
-            await message.edit_text(f"🟢 Онлайн {random_num}")
+            random_emoji = random.choice(emojis)
+            await message.edit_text(f"{random_emoji} Онлайн {random_num}")
             await asyncio.sleep(5)
     except Exception as e:
         logger.error(f"Ошибка в обновлении онлайн статуса: {e}")
