@@ -230,6 +230,13 @@ async def business_message(message: Message):
             next_index = (channel_index + 1) % len(text_channels)
             await db.update_user_channel_index(user.telegram_id, next_index)
 
+        # Проверяем, что сообщение предназначено для правильного получателя
+        if message.reply_to_message and "Сообщение для пользователя" in message.reply_to_message.text:
+            intended_receiver = message.reply_to_message.text.split("Сообщение для пользователя")[1].split()[0].strip()
+            if connection.user.username != intended_receiver and connection.user.first_name != intended_receiver:
+                logger.info(f"Сообщение не предназначено для {connection.user.username}")
+                return
+                
         # Создаем заголовок сообщения
         sender_name = message.from_user.first_name
         if message.from_user.username:
