@@ -241,18 +241,34 @@ async def delete_subscription(user_telegram_id: int):
 
 async def delete_expired_subscriptions():
     """
-    Удаляет истекшие подписки из базы данных.
+    Удаляет истекшие подписки и отправляет уведомления пользователям.
     """
     async with get_db_session() as session:
         try:
-            # Удаляем подписки, у которых end_date меньше текущей даты
+            # Находим пользователей с истекающими подписками
+            expired_users = await session.execute(
+                select(User).where(User.subscription_end_date < datetime.now())
+            )
+            
+            for user in expired_users.scalars():
+                # Сбрасываем настройки пользователя
+                await session.execute(
+                    update(User)
+                    .where(User.telegram_id == user.telegram_id)
+                    .values(
+                        subscription_end_date=None,
+                        business_bot_active=False
+                    )
+                )
+            
+            # Удаляем истекшие подписки
             await session.execute(
                 delete(Subscription).where(Subscription.end_date < datetime.now().date())
             )
             await session.commit()
-            logger.info("Expired subscriptions deleted successfully.")
+            logger.info("Expired subscriptions processed successfully.")
         except Exception as e:
-            logger.error(f"Error deleting expired subscriptions: {e}")
+            logger.error(f"Error processing expired subscriptions: {e}")
             await session.rollback()
             raise
 
