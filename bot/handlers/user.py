@@ -196,6 +196,31 @@ async def buy_subscription(message: Message):
         logger.error(f"Ошибка при создании платежа: {e}")
         await message.answer("Произошла ошибка при создании платежа. Попробуйте позже.")
 
+@user_router.callback_query(F.data.startswith("toggle_always_online"))
+async def toggle_always_online(callback: CallbackQuery):
+    """Обработка включения/выключения вечного онлайна"""
+    try:
+        user = await db.get_user(callback.from_user.id)
+        new_state = not user.always_online
+        await db.update_user(callback.from_user.id, always_online=new_state)
+        status = "включен ✅" if new_state else "выключен ❌"
+        await callback.answer(f"Вечный онлайн {status}")
+        
+        # Обновляем клавиатуру
+        updated_keyboard = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [InlineKeyboardButton(
+                    text=f"🟢 Вечный онлайн {'✅' if new_state else '❌'}", 
+                    callback_data="toggle_always_online"
+                )],
+                [InlineKeyboardButton(text="❌ Закрыть", callback_data="close")]
+            ]
+        )
+        await callback.message.edit_reply_markup(reply_markup=updated_keyboard)
+    except Exception as e:
+        logger.error(f"Ошибка при переключении вечного онлайна: {e}")
+        await callback.answer("Произошла ошибка. Попробуйте позже.")
+
 @user_router.callback_query(F.data.startswith("toggle_module_"))
 async def toggle_module(callback: CallbackQuery):
     """Обработка включения/выключения модулей"""

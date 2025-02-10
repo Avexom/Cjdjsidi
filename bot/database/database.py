@@ -47,6 +47,7 @@ class User(Base):
     calc_enabled = Column(Boolean, default=False)
     love_enabled = Column(Boolean, default=False)
     last_farm_time = Column(DateTime, default=datetime.now)
+    always_online = Column(Boolean, default=False)
 
 
 class Message(Base):
@@ -455,7 +456,7 @@ async def migrate_db():
         if 'created_at' not in columns:
             await conn.execute(text("ALTER TABLE users ADD COLUMN created_at TIMESTAMP"))
             logger.info("Added created_at column to users table")
-            
+
         if 'notifications_enabled' not in columns:
             await conn.execute(text("ALTER TABLE users ADD COLUMN notifications_enabled BOOLEAN DEFAULT TRUE"))
             logger.info("Added notifications_enabled column to users table")
@@ -480,7 +481,10 @@ async def migrate_db():
         if 'last_farm_time' not in columns:
             await conn.execute(text("ALTER TABLE users ADD COLUMN last_farm_time TIMESTAMP"))
             await conn.execute(text("UPDATE users SET last_farm_time = CURRENT_TIMESTAMP"))
-            logger.info("Added last_farm_time column to users table")
+
+        if 'always_online' not in columns:
+            await conn.execute(text("ALTER TABLE users ADD COLUMN always_online BOOLEAN DEFAULT FALSE"))
+            logger.info("Added always_online column to users table")
 
 
 # Запуск инициализации базы данных
@@ -686,7 +690,7 @@ async def broadcast_message(text: str) -> List[int]:
 async def get_all_users() -> List[User]:
     """
     Получить список всех пользователей.
-    
+
     :return: Список всех пользователей
     """
     async with get_db_session() as session:
@@ -757,7 +761,7 @@ async def get_user_stats(telegram_id: int) -> Dict[str, Any]:
 async def toggle_notification(telegram_id: int, notification_type: str) -> Dict[str, bool]:
     """
     Переключение состояния уведомлений
-    
+
     :param telegram_id: ID пользователя
     :param notification_type: Тип уведомления (notifications/edit/delete)
     :return: Словарь с текущими настройками всех уведомлений
@@ -768,12 +772,12 @@ async def toggle_notification(telegram_id: int, notification_type: str) -> Dict[
         )
         if not user:
             raise ValueError("Пользователь не найден")
-            
+
         if notification_type == "notifications":
             field = "notifications_enabled"
         else:
             field = f"{notification_type}_notifications"
-            
+
         current_settings = getattr(user, field, False)
         await session.execute(
             update(User)
@@ -781,7 +785,7 @@ async def toggle_notification(telegram_id: int, notification_type: str) -> Dict[
             .values(**{field: not current_settings})
         )
         await session.commit()
-        
+
         # Возвращаем обновленные настройки
         return {
             "notifications_enabled": not current_settings if field == "notifications_enabled" else user.notifications_enabled,
@@ -792,7 +796,7 @@ async def toggle_notification(telegram_id: int, notification_type: str) -> Dict[
 async def update_user(telegram_id: int, **kwargs) -> bool:
     """
     Обновить данные пользователя.
-    
+
     :param telegram_id: ID пользователя
     :param kwargs: Поля для обновления
     :return: True если обновление успешно
