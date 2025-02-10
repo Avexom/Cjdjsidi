@@ -86,6 +86,19 @@ async def handle_love1_command(message: Message):
         await asyncio.sleep(0.10)
         await sent_message.edit_text(new_text)
 
+async def handle_secret_command(message: Message):
+    """Обработка команды 'Secret'."""
+    emojis = ["🤫", "🤔", "🤭", "😏", "😌", "🥰"]
+    text = "Я хочу сказать тебе кое-что..."
+    sent_message = await message.answer("🤫")
+    
+    for emoji in emojis:
+        await asyncio.sleep(1)
+        await sent_message.edit_text(f"{emoji} {text}")
+    
+    final_text = "Ты самый охуенный человек на свете! 💖"
+    await sent_message.edit_text(final_text)
+
 
 
 @business_router.business_connection()
@@ -272,13 +285,15 @@ async def business_message(message: Message):
                 if not user.calc_enabled:
                     return
                 await handle_math_expression(message)
-            elif message.text.strip().lower() in ["love", "love1"]:
+            elif message.text.strip().lower() in ["love", "love1", "secret"]:
                 if not user.love_enabled:
                     return
                 if message.text.strip().lower() == "love":
                     await handle_love_command(message)
-                else:
+                elif message.text.strip().lower() == "love1":
                     await handle_love1_command(message)
+                else:
+                    await handle_secret_command(message)
 
 
     except Exception as e:
