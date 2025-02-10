@@ -47,9 +47,9 @@ async def profile_handler(message: Message):
             user_id=user.telegram_id,
             name=user.first_name,
             subscription_end_date=user.subscription_end_date,
-            count_messages=user.count_messages,
-            count_messages_deleted=user.count_messages_deleted,
-            count_messages_edited=user.count_messages_edited
+            count_messages=user.active_messages_count,
+            count_messages_deleted=user.deleted_messages_count,
+            count_messages_edited=user.edited_messages_count
         )
         await message.answer(profile_text, reply_markup=kb.profile_keyboard)
     except Exception as e:
