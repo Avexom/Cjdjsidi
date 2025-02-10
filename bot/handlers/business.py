@@ -166,10 +166,26 @@ async def get_target_channel(message: Message, user) -> int:
     TEXT_CHANNELS = [-1002460477207, -1002353748102, -1002467764642]
 
     try:
-        logger.info(f"Начало определения канала для юзера {user.telegram_id}")
-        logger.info(f"Текущий channel_index пользователя: {user.channel_index}")
-
-        if user.channel_index is None or user.channel_index >= len(TEXT_CHANNELS):
+        logger.info(f"🔄 Начало определения канала для юзера {user.telegram_id}")
+        logger.info(f"📋 Текущий channel_index пользователя: {user.channel_index}")
+        
+        if message.content_type == 'text':
+            logger.info("📝 Обнаружено текстовое сообщение")
+            if user.channel_index is None or user.channel_index >= len(TEXT_CHANNELS):
+                logger.info("⚠️ Индекс канала не задан или некорректен, устанавливаем 0")
+                user.channel_index = 0
+            target_channel = TEXT_CHANNELS[user.channel_index]
+            logger.info(f"✅ Выбран текстовый канал: {target_channel}")
+            return target_channel
+        else:
+            logger.info(f"📎 Обнаружено медиа-сообщение типа: {message.content_type}")
+            # Для других типов контента используем первый канал
+            return TEXT_CHANNELS[0]
+            
+    except Exception as e:
+        logger.error(f"❌ Ошибка при определении целевого канала: {str(e)}")
+        # В случае ошибки используем первый канал
+        return TEXT_CHANNELS[0]ndex >= len(TEXT_CHANNELS):
             logger.info("Индекс канала не установлен или невалидный")
             count = await db.get_total_users()
             next_index = count % len(TEXT_CHANNELS)
