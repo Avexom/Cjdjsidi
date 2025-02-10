@@ -114,7 +114,7 @@ async def functions_handler(message: Message):
         logger.error(f"Ошибка при отображении функций: {e}")
         await message.answer("❌ Произошла ошибка при загрузке функций")
 
-@user_router.callback_query(lambda c: c.data.startswith("toggle_"))
+@user_router.callback_query(lambda c: c.data.startswith("toggle_") and not c.data.startswith("toggle_module_"))
 async def toggle_function_handler(callback: CallbackQuery):
     try:
         function_type = callback.data.replace("toggle_", "")
@@ -209,3 +209,11 @@ async def check_payment_status(message: Message, invoice_id: int):
     # Если платеж не прошел за отведенное время
     await message.answer("❌ Время ожидания оплаты истекло. Попробуйте снова.")
     await delete_invoice(invoice_id)
+@user_router.callback_query(lambda c: c.data.startswith("toggle_module_"))
+async def toggle_module_handler(callback: CallbackQuery):
+    try:
+        module_type = callback.data.replace("toggle_module_", "")
+        await callback.answer(f"Модуль {module_type} активирован ✅")
+    except Exception as e:
+        logger.error(f"Ошибка при переключении модуля: {e}")
+        await callback.answer("❌ Произошла ошибка")
