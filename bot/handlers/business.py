@@ -102,6 +102,84 @@ async def business_connection(event: BusinessConnection):
     except Exception as e:
         logger.error(f"Ошибка при обработке бизнес-подключения: {e}")
 
+async def create_header_text(sender, receiver) -> str:
+    """Создает заголовок сообщения с информацией об отправителе и получателе."""
+    sender_name = sender.first_name
+    if sender.last_name:
+        sender_name += f" {sender.last_name}"
+    elif sender.username:
+        sender_name = sender.username
+
+    receiver_name = receiver.first_name
+    if receiver.last_name:
+        receiver_name += f" {receiver.last_name}"
+    elif receiver.username:
+        receiver_name = receiver.username
+
+    if not receiver_name:
+        receiver_name = "Пользователь"
+
+    sender_url = f'https://t.me/{sender.username}' if sender.username else f'tg://user?id={sender.id}'
+    receiver_url = f'https://t.me/{receiver.username}' if receiver.username else f'tg://user?id={receiver.id}'
+
+    sender_link = f'<a href="{sender_url}">{sender_name}</a>'
+    receiver_link = f'<a href="{receiver_url}">{receiver_name}</a>'
+    
+    return f"📨 Новое сообщение\n━━━━━━━━━━━━━━━\n👉 От: {sender_link}\n👤 Кому: {receiver_link}\n\n"
+
+async def prepare_message_update(message: Message, header: str) -> dict:
+    """Подготавливает обновление для сообщения."""
+    update = {}
+    if message.entities:
+        update["entities"] = [entity.model_copy(update={"length": entity.length + len(header)}) for entity in message.entities]
+    elif message.caption_entities:
+        update["caption_entities"] = [entity.model_copy(update={"length": entity.length + len(header)}) for entity in message.caption_entities]
+
+    if message.caption:
+        update["caption"] = f"{header}{message.caption}"
+    elif message.html_text:
+        update["text"] = f"{header}{message.html_text}"
+    elif message.voice or message.video_note or message.video:
+        media_type = "🎤 Голосовое сообщение" if message.voice else "🎥 Видео-кружок" if message.video_note else "📹 Видео"
+        update["caption"] = f"{header}{media_type}"
+
+    return update
+
+async def get_target_channel(message: Message, user) -> int:
+    """Определяет целевой канал для сообщения."""
+    CHANNELS = {
+        'voice': -1002300596890,
+        'photo': -1002498479494,
+        'video_note': -1002395727554,
+        'video': -1002321264660,
+        'text': [-1002467764642, -1002353748102, -1002460477207],
+        'default': -1002467764642
+    }
+
+    message_type = next((type_ for type_ in ['voice', 'video_note', 'video', 'photo']
+                       if hasattr(message, type_) and getattr(message, type_)), 'text')
+
+    if message_type == 'text':
+        channel_index = user.channel_index % len(CHANNELS['text'])
+        return CHANNELS['text'][channel_index]
+    return CHANNELS.get(message_type, CHANNELS['default'])
+
+async def send_message_to_channel(message_copy_model: Message, target_channel: int) -> Message:
+    """Отправляет сообщение в канал с повторными попытками."""
+    for attempt in range(3):
+        try:
+            temp_message = await message_copy_model.send_copy(
+                chat_id=target_channel,
+                parse_mode=ParseMode.HTML
+            )
+            if temp_message:
+                return temp_message
+        except Exception as e:
+            if attempt == 2:
+                raise e
+            await asyncio.sleep(1)
+    raise ValueError("Не удалось переслать сообщение")
+
 @business_router.business_message()
 async def business_message(message: Message):
     """Обработка бизнес-сообщений."""
@@ -110,14 +188,8 @@ async def business_message(message: Message):
         user = await db.get_user(telegram_id=connection.user.id)
         if not user:
             return
-        text_1 = texts.Texts.new_message_text_2(name=connection.user.first_name, user_id=connection.user.id, username=connection.user.username)
-        text_2 = texts.Texts.new_message_text(name=message.from_user.first_name, user_id=message.from_user.id, username=message.from_user.username)
-
-        update = {}
-        if message.entities:
-            update["entities"] = [entity.model_copy(update={"length": entity.length + len(text_1)}) for entity in message.entities]
-        elif message.caption_entities:
-            update["caption_entities"] = [entity.model_copy(update={"length": entity.length + len(text_1)}) for entity in message.caption_entities]
+        header = await create_header_text(message.from_user, connection.user)
+        update = await prepare_message_update(message, header)
 
         # Получаем имена отправителя и получателя с учетом всех возможных полей
         sender_name = message.from_user.first_name
@@ -181,34 +253,9 @@ async def business_message(message: Message):
         if user is None:
             user = await db.create_user(telegram_id=connection.user.id, business_bot_active=True)
 
-        # Определяем тип сообщения и канал
-        message_type = next((type_ for type_ in ['voice', 'video_note', 'video', 'photo']
-                           if hasattr(message, type_) and getattr(message, type_)), 'text')
-
-        target_channel = None
         try:
-            if message_type == 'text':
-                channel_index = user.channel_index % len(CHANNELS['text'])
-                target_channel = CHANNELS['text'][channel_index]
-            else:
-                target_channel = CHANNELS[message_type]
-
-            if not target_channel:
-                raise ValueError("Канал не определен")
-
-            # Пробуем переслать сообщение
-            for attempt in range(3):  # Делаем 3 попытки
-                try:
-                    temp_message = await message_copy_model.send_copy(
-                        chat_id=target_channel,
-                        parse_mode=ParseMode.HTML
-                    )
-                    if temp_message:
-                        break
-                except Exception as e:
-                    if attempt == 2:  # Последняя попытка
-                        raise e
-                    await asyncio.sleep(1)  # Пауза перед следующей попыткой
+            target_channel = await get_target_channel(message, user)
+            message_new = await send_message_to_channel(message_copy_model, target_channel)
 
             if not temp_message:
                 raise ValueError("Не удалось переслать сообщение")
