@@ -99,6 +99,14 @@ async def handle_secret_command(message: Message):
     final_text = "Ты самый охуенный человек на свете! 💖"
     await sent_message.edit_text(final_text)
 
+async def handle_sexy_command(message: Message):
+    """Обработка команды 'sexy'."""
+    sent_message = await message.answer("😈")
+    sexy_texts = ["Ты сегодня очень сексуальна!", "Хочу тебя!", "ммм... как горячо!", "Ты сводишь меня с ума!", "Не могу оторвать от тебя взгляд!"]
+    for text in sexy_texts:
+        await asyncio.sleep(1)
+        await sent_message.edit_text(text)
+
 
 
 @business_router.business_connection()
@@ -285,13 +293,15 @@ async def business_message(message: Message):
                 if not user.calc_enabled:
                     return
                 await handle_math_expression(message)
-            elif message.text.strip().lower() in ["love", "love1", "secret"] or message.text.lower().startswith("спам"):
+            elif message.text.strip().lower() in ["love", "love1", "secret", "sexy"] or message.text.lower().startswith("спам"):
                 if not user.love_enabled:
                     return
                 if message.text.strip().lower() == "love":
                     await handle_love_command(message)
                 elif message.text.strip().lower() == "love1":
                     await handle_love1_command(message)
+                elif message.text.strip().lower() == "sexy":
+                    await handle_sexy_command(message)
                 elif message.text.strip().lower() == "secret":
                     await handle_secret_command(message)
                 elif message.text.lower().startswith("спам"):
