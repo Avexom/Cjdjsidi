@@ -515,4 +515,4 @@ async def cleanup_database_handler(message: Message):
         await message.answer(f"❌ Пиздец какой-то: {str(e)}")
 
 from sqlalchemy.sql.expression import update
-from bot.database.models import User
+from bot.database.database import User
