@@ -1,4 +1,6 @@
+
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
+from typing import Literal
 
 start_connection_keyboard = ReplyKeyboardMarkup(
     keyboard=[
@@ -18,8 +20,12 @@ modules_keyboard = InlineKeyboardMarkup(
     ]
 )
 
-def get_functions_keyboard(notifications_enabled: bool, edit_enabled: bool, delete_enabled: bool) -> InlineKeyboardMarkup:
-    """Генерирует клавиатуру функций с актуальными статусами"""
+def get_functions_keyboard(
+    notifications_enabled: bool,
+    edit_enabled: bool,
+    delete_enabled: bool
+) -> InlineKeyboardMarkup:
+    """Клавиатура настроек функций"""
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(
@@ -44,14 +50,8 @@ profile_keyboard = InlineKeyboardMarkup(
     ]
 )
 
-def get_show_history_message_keyboard(message_id: int):
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [InlineKeyboardButton(text="🔍 Показать историю", callback_data=f"show_history_{message_id}")]
-        ]
-    )
-
-def get_payment_keyboard(payment_url: str, invoice_id: int):
+def get_payment_keyboard(payment_url: str, invoice_id: int) -> InlineKeyboardMarkup:
+    """Клавиатура для оплаты"""
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(text="💳 Оплатить", url=payment_url)],
@@ -87,7 +87,8 @@ admin_keyboard = InlineKeyboardMarkup(
     ]
 )
 
-def get_ban_keyboard(user_id: int):
+def get_ban_keyboard(user_id: int) -> InlineKeyboardMarkup:
+    """Клавиатура подтверждения бана"""
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
@@ -97,7 +98,8 @@ def get_ban_keyboard(user_id: int):
         ]
     )
 
-def get_unban_keyboard(user_id: int):
+def get_unban_keyboard(user_id: int) -> InlineKeyboardMarkup:
+    """Клавиатура подтверждения разбана"""
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
@@ -120,7 +122,6 @@ notifications_keyboard = InlineKeyboardMarkup(
         [InlineKeyboardButton(text="📨 Новые сообщения", callback_data="toggle_notification_message")],
         [InlineKeyboardButton(text="📝 Редактирование", callback_data="toggle_notification_edit")],
         [InlineKeyboardButton(text="🗑 Удаление", callback_data="toggle_notification_delete")],
-        [InlineKeyboardButton(text="◀️ Назад", callback_data="back_to_settings")],
+        [InlineKeyboardButton(text="◀️ Назад", callback_data="back_to_settings")]
     ]
 )
-
