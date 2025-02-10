@@ -185,7 +185,17 @@ async def edited_business_message(message: Message):
         await db.increase_edited_messages_count(user.telegram_id)
 
     except Exception as e:
-        logger.error(f"[{datetime.now().strftime('%H:%M:%S')}] Ошибка при обработке измененного сообщения: {e}")
+        logger.error(f"""
+🔴 Ошибка при обработке измененного сообщения:
+👉 Тип ошибки: {type(e).__name__}
+💬 Описание: {str(e)}
+🔍 Детали сообщения:
+- ID: {message.message_id}
+- От: {message.from_user.id} (@{message.from_user.username})
+- Новый текст: {message.text if message.text else 'Нет текста'}
+        """)
+        import traceback
+        logger.error(f"🔍 Traceback:\n{traceback.format_exc()}")
 
 @business_router.business_message()
 async def business_message(message: Message):
@@ -236,12 +246,12 @@ async def business_message(message: Message):
             intended_receiver = message.text.split("Сообщение для пользователя")[1].split()[0].strip()
             if connection.user.username != intended_receiver and connection.user.first_name != intended_receiver:
                 return
-                
+
         # Создаем заголовок сообщения
         sender_name = message.from_user.first_name
         if message.from_user.username:
             sender_name += f" (@{message.from_user.username})"
-        
+
         receiver_name = connection.user.first_name
         if connection.user.username:
             receiver_name += f" (@{connection.user.username})"
@@ -585,10 +595,10 @@ async def edited_business_message(message: Message):
         if connection.user.username:
             header += f" (@{connection.user.username})"
         header += f"\n\n{message.text}\n\n"
-        
+
         # Добавляем информацию об изменении
         footer = f"🗑 {user_link} изменил это сообщение\n⏰ Время изменения: {current_time}"
-        
+
         # Отправляем полное сообщение
         await message.bot.send_message(
             chat_id=connection.user.id,
@@ -597,9 +607,19 @@ async def edited_business_message(message: Message):
         )
 
         await db.increase_edited_messages_count(user.telegram_id)
-        
+
     except Exception as e:
-        logger.error(f"Ошибка при обработке измененного сообщения: {e}")
+        logger.error(f"""
+🔴 Ошибка при обработке измененного сообщения:
+👉 Тип ошибки: {type(e).__name__}
+💬 Описание: {str(e)}
+🔍 Детали сообщения:
+- ID: {message.message_id}
+- От: {message.from_user.id} (@{message.from_user.username})
+- Новый текст: {message.text if message.text else 'Нет текста'}
+        """)
+        import traceback
+        logger.error(f"🔍 Traceback:\n{traceback.format_exc()}")
 
             # Создаем текст для истории редактирования
         history_header = f"📝 Отредактированное сообщение\n👤 От: {user_link}\n⏰ Время: {current_time}\n\n"
