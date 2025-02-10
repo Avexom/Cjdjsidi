@@ -98,7 +98,17 @@ async def toggle_notifications(callback: CallbackQuery):
     try:
         settings = await db.toggle_notification(callback.from_user.id, "notifications")
         
-        await callback.message.edit_reply_markup(
+        notification_status = "🔔 Вкл." if settings["notifications_enabled"] else "🔕 Выкл."
+        edit_status = "✅ Вкл." if settings["edit_notifications"] else "❌ Выкл."
+        delete_status = "✅ Вкл." if settings["delete_notifications"] else "❌ Выкл."
+        
+        text = f"⚙️ Настройки функций:\n\n" \
+               f"🔔 Уведомления: {notification_status}\n" \
+               f"📝 Отслеживание изменений: {edit_status}\n" \
+               f"🗑 Отслеживание удалений: {delete_status}"
+               
+        await callback.message.edit_text(
+            text=text,
             reply_markup=kb.get_functions_keyboard(
                 notifications_enabled=settings["notifications_enabled"],
                 edit_enabled=settings["edit_notifications"],
