@@ -187,7 +187,7 @@ async def buy_subscription(message: Message):
             raise Exception("Не удалось создать платёж")
         await message.answer(
             "Выберите удобный способ оплаты:",
-            reply_markup=kb.get_payment_keyboard(payment_url, invoice_id)
+            reply_markup=kb.get_payment_keyboard(payment_data["pay_url"], payment_data["invoice_id"])
         )
     except Exception as e:
         logger.error(f"Ошибка при создании платежа: {e}")
