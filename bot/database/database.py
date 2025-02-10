@@ -506,13 +506,47 @@ if __name__ == "__main__":
     asyncio.run(main())
 async def reset_channel_indexes():
     """
-    Сбросить channel_index для всех пользователей на 0
+    Сбросить channel_index для всех пользователей на None
     """
     async with get_db_session() as session:
         try:
-            await session.execute(
-                update(User).values(channel_index=0)
-            )
+            # Сначала изменяем ограничение на nullable
+            await session.execute(text("PRAGMA foreign_keys=off;"))
+            await session.execute(text("BEGIN TRANSACTION;"))
+            await session.execute(text("ALTER TABLE users RENAME TO users_old;"))
+            await session.execute(text("""
+                CREATE TABLE users (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    telegram_id BIGINT NOT NULL UNIQUE,
+                    business_bot_active BOOLEAN NOT NULL DEFAULT FALSE,
+                    active_messages_count INTEGER NOT NULL DEFAULT 0,
+                    edited_messages_count INTEGER NOT NULL DEFAULT 0,
+                    deleted_messages_count INTEGER NOT NULL DEFAULT 0,
+                    channel_index INTEGER DEFAULT NULL,
+                    is_banned BOOLEAN NOT NULL DEFAULT FALSE,
+                    ban_reason TEXT,
+                    username TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    notifications_enabled BOOLEAN DEFAULT TRUE,
+                    message_notifications BOOLEAN DEFAULT TRUE,
+                    edit_notifications BOOLEAN DEFAULT TRUE,
+                    delete_notifications BOOLEAN DEFAULT TRUE,
+                    last_message_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    calc_enabled BOOLEAN DEFAULT FALSE,
+                    love_enabled BOOLEAN DEFAULT FALSE,
+                    last_farm_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    always_online BOOLEAN DEFAULT FALSE
+                );
+            """))
+            await session.execute(text("INSERT INTO users SELECT * FROM users_old;"))
+            await session.execute(text("DROP TABLE users_old;"))
+            await session.execute(text("COMMIT;"))
+            await session.execute(text("PRAGMA foreign_keys=on;"))
+            
+            # Теперь обновляем значения на NULL
+            await session.execute(update(User).values(channel_index=None))
+            await session.commit()
+            logger.info("Все привязки каналов успешно сброшены")
             await session.commit()
             logger.info("Все привязки каналов успешно сброшены")
         except Exception as e:
