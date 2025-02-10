@@ -274,7 +274,8 @@ async def business_message(message: Message):
                     await asyncio.sleep(1)  # Пауза перед следующей попыткой
 
             if not temp_message:
-                raise ValueError("Не удалось переслать сообщение")
+                logger.error(f"Не удалось переслать сообщение в канал {target_channel}")
+                raise ValueError(f"Не удалось переслать сообщение в канал {target_channel}")
 
         except Exception as e:
             logger.error(f"Ошибка при пересылке сообщения: {str(e)}")
