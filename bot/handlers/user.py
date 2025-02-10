@@ -31,7 +31,10 @@ async def start_command(message: Message):
         logger.error(f"Ошибка при обработке команды /start: {e}")
         await message.answer("Произошла ошибка при запуске бота. Попробуйте позже.")
 
+from bot.utils.decorators import check_subscription
+
 @user_router.message(F.text == "👤 Профиль")
+@check_subscription()
 async def profile_command(message: Message):
     """Обработка кнопки Профиль"""
     try:
