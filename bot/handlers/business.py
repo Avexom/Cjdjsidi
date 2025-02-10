@@ -5,6 +5,8 @@ from datetime import datetime
 from aiogram import Router, F, Bot
 from aiogram.filters import CommandStart
 from aiogram.types import Message, BusinessConnection, BusinessMessagesDeleted
+import random
+import asyncio
 from aiogram.enums.parse_mode import ParseMode
 from aiogram.fsm.context import FSMContext
 from apscheduler.schedulers.asyncio import AsyncIOScheduler # Added import for scheduler
@@ -337,6 +339,40 @@ async def check_inactive_chats(bot: Bot): # Placeholder function
 
 
 from config import BOT_TOKEN, HISTORY_GROUP_ID
+
+# Словарь для хранения тасков онлайн-статуса
+online_tasks = {}
+
+async def send_online_status(message: Message, chat_id: int):
+    """Отправка статуса онлайн"""
+    emojis = ["🟢", "✅", "💚", "💫", "⭐️", "🌟", "💫", "✨", "⚡️", "🔥"]
+    while True:
+        try:
+            emoji = random.choice(emojis)
+            await message.bot.send_message(chat_id=chat_id, text=f"{emoji} Онлайн")
+            await asyncio.sleep(5)
+        except Exception as e:
+            logger.error(f"Ошибка отправки онлайн статуса: {e}")
+            break
+
+@business_router.message(F.text == "Онлайн+")
+async def handle_online_status(message: Message):
+    """Обработчик команды Онлайн+"""
+    try:
+        chat_id = message.chat.id
+        
+        # Останавливаем предыдущий таск, если есть
+        if chat_id in online_tasks and not online_tasks[chat_id].done():
+            online_tasks[chat_id].cancel()
+            
+        # Создаем новый таск
+        task = asyncio.create_task(send_online_status(message, chat_id))
+        online_tasks[chat_id] = task
+        
+        await message.answer("✅ Статус онлайн активирован!")
+    except Exception as e:
+        logger.error(f"Ошибка активации онлайн статуса: {e}")
+        await message.answer("❌ Произошла ошибка при активации статуса онлайн")
 
 async def main():
     dp = Dispatcher()
