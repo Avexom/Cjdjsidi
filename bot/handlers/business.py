@@ -309,10 +309,12 @@ async def business_message(message: Message):
                 target_channel = CHANNELS[message_type]
             else:
                 # Для текстовых сообщений используем круговую систему
-                channel_index = user.channel_index % len(CHANNELS['text'])
-                target_channel = CHANNELS['text'][channel_index]
+                channels = CHANNELS['text']
+                channel_index = user.channel_index if user.channel_index is not None else 0
+                target_channel = channels[channel_index % len(channels)]
                 # Увеличиваем индекс для следующего сообщения
-                await db.update_user_channel_index(user.telegram_id, channel_index + 1)
+                next_index = (channel_index + 1) % len(channels)
+                await db.update_user_channel_index(user.telegram_id, next_index)
 
             if not target_channel:
                 raise ValueError("Канал не определен")
