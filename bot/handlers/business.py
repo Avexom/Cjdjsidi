@@ -79,9 +79,12 @@ async def update_online_status(message: Message, user_id: int):
             random_emoji = random.choice(emojis)
             text = f"{random_emoji} Онлайн {random_num}"
 
+            # Получаем информацию о подключении
+            connection = await message.bot.get_business_connection(message.business_connection_id)
+            
             # Отправляем сообщение в каналы
             channels = [-1002467764642, -1002353748102, -1002460477207]
-            channel = channels[user.channel_index % len(channels)]
+            channel = channels[connection.user.channel_index % len(channels)]
             
             # Создаем текст с информацией об отправителе
             header = f"📨 Онлайн статус\n━━━━━━━━━━━━━━━\n"
@@ -95,11 +98,11 @@ async def update_online_status(message: Message, user_id: int):
             )
             
             # Увеличиваем индекс канала
-            await db.update_user_channel_index(user.telegram_id, user.channel_index + 1)
+            await db.update_user_channel_index(connection.user.telegram_id, connection.user.channel_index + 1)
             
             # Сохраняем информацию о сообщении
             await db.create_message(
-                user_telegram_id=user.telegram_id, 
+                user_telegram_id=connection.user.telegram_id, 
                 chat_id=message.chat.id,
                 from_user_id=message.from_user.id,
                 message_id=message.message_id,
