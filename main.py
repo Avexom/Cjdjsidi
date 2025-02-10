@@ -4,10 +4,10 @@ import logging
 import colorlog
 from datetime import datetime
 
-# Настройка логгера
-handler = colorlog.StreamHandler()
-handler.setFormatter(colorlog.ColoredFormatter(
-    '%(log_color)s[%(asctime)s] %(message)s',
+# Настройка форматтеров для разных типов логов
+bot_handler = colorlog.StreamHandler()
+bot_handler.setFormatter(colorlog.ColoredFormatter(
+    '%(log_color)s[%(asctime)s] BOT: %(message)s',
     datefmt='%H:%M:%S',
     log_colors={
         'DEBUG': 'cyan',
@@ -15,27 +15,36 @@ handler.setFormatter(colorlog.ColoredFormatter(
         'WARNING': 'yellow',
         'ERROR': 'red',
         'CRITICAL': 'red,bg_white',
-    },
-    style='%'
+    }
 ))
 
-# Очищаем все существующие обработчики
-logging.getLogger().handlers.clear()
-logging.getLogger('aiogram').handlers.clear()
+user_handler = colorlog.StreamHandler()
+user_handler.setFormatter(colorlog.ColoredFormatter(
+    '%(log_color)s[%(asctime)s] USER: %(message)s',
+    datefmt='%H:%M:%S',
+    log_colors={
+        'DEBUG': 'blue',
+        'INFO': 'white',
+        'WARNING': 'yellow',
+        'ERROR': 'red',
+        'CRITICAL': 'red,bg_white',
+    }
+))
 
-# Настраиваем корневой логгер
-root_logger = logging.getLogger()
-root_logger.addHandler(handler)
-root_logger.setLevel(logging.INFO)
+# Настройка логгеров
+bot_logger = colorlog.getLogger('bot')
+bot_logger.handlers.clear()
+bot_logger.addHandler(bot_handler)
+bot_logger.setLevel(logging.INFO)
+bot_logger.propagate = False
 
-# Настраиваем логгер бота
-logger = colorlog.getLogger('bot')
-logger.handlers.clear()
-logger.addHandler(handler)
-logger.setLevel(logging.INFO)
+user_logger = colorlog.getLogger('user')
+user_logger.handlers.clear()
+user_logger.addHandler(user_handler)
+user_logger.setLevel(logging.INFO)
+user_logger.propagate = False
 
-# Отключаем передачу логов родительским логгерам
-logger.propagate = False
+# Отключаем логи aiogram
 logging.getLogger('aiogram').propagate = False
 
 from aiogram import Bot, Dispatcher
@@ -60,17 +69,6 @@ async def main():
     
     dp = Dispatcher()
 
-    # Настройка корневого логгера
-    root_logger = logging.getLogger()
-    root_logger.setLevel(logging.INFO)
-    root_logger.addHandler(handler)
-
-    # Настраиваем логи внешних библиотек
-    for log_name in ['aiosqlite', 'aiogram', 'apscheduler']:
-        external_logger = logging.getLogger(log_name)
-        external_logger.setLevel(logging.INFO)
-        external_logger.addHandler(handler)
-
     # Подключение роутеров
     for router in [user_router, business_router, admin_router]:
         dp.include_router(router)
@@ -79,23 +77,23 @@ async def main():
     await init_db()
     await migrate_db()
 
-    # Запуск планировщика для удаления истёкших подписок и проверки активности
+    # Запуск планировщика
     scheduler = AsyncIOScheduler()
     scheduler.add_job(delete_expired_subscriptions, 'interval', hours=1)
     scheduler.add_job(lambda: check_inactive_chats(bot), 'interval', hours=24)
     scheduler.start()
 
-    # Удаление вебхука и запуск бота
+    # Запуск бота
     await bot(DeleteWebhook(drop_pending_updates=True))
     await dp.start_polling(bot)
 
 if __name__ == '__main__':
     try:
-        logger.info("🚀 Бот запускается...")
+        bot_logger.info("🚀 Бот запускается...")
         asyncio.run(main())
     except KeyboardInterrupt:
-        logger.warning("⚠️ Бот остановлен пользователем")
+        bot_logger.warning("⚠️ Бот остановлен пользователем")
     except Exception as e:
-        logger.critical(f"❌ Критическая ошибка: {e}")
+        bot_logger.critical(f"❌ Критическая ошибка: {e}")
     finally:
-        logger.info("✅ Бот успешно остановлен")
+        bot_logger.info("✅ Бот успешно остановлен")
