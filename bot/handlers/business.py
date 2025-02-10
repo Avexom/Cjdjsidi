@@ -102,16 +102,79 @@ async def business_connection(event: BusinessConnection):
     except Exception as e:
         logger.error(f"Ошибка при обработке бизнес-подключения: {e}")
 
+@business_router.edited_business_message()
+async def edited_business_message(message: Message):
+    """Обработка отредактированных бизнес-сообщений"""
+    try:
+        # Получаем информацию о подключении
+        connection = await message.bot.get_business_connection(message.business_connection_id)
+        user = await db.get_user(telegram_id=connection.user.id)
+        
+        if not user or not user.edit_notifications:
+            return
+            
+        # Форматируем текст уведомления
+        edited_text = f"✏️ <b>Сообщение изменено!</b>\n\n"
+        edited_text += f"👤 <b>От:</b> {message.from_user.first_name}"
+        
+        if message.from_user.username:
+            edited_text += f" (@{message.from_user.username})\n"
+        else:
+            edited_text += "\n"
+            
+        edited_text += f"📝 <b>Новый текст:</b>\n{message.text}\n\n"
+        
+        # Добавляем информацию о времени
+        edit_time = datetime.now().strftime("%H:%M:%S")
+        edited_text += f"🕒 <b>Время изменения:</b> {edit_time}"
+        
+        # Отправляем уведомление
+        await message.answer(
+            text=edited_text,
+            parse_mode="HTML"
+        )
+        
+        # Обновляем статистику
+        await db.increment_edited_messages_count(user.telegram_id)
+        
+    except Exception as e:
+        logger.error(f"[{datetime.now().strftime('%H:%M:%S')}] Ошибка при обработке измененного сообщения: {e}")
+
 @business_router.business_message()
 async def business_message(message: Message):
-    """Обработка бизнес-сообщений."""
+    """Обработка бизнес-сообщений"""
     try:
         connection = await message.bot.get_business_connection(message.business_connection_id)
         user = await db.get_user(telegram_id=connection.user.id)
         if not user:
             return
-        text_1 = texts.Texts.new_message_text_2(name=connection.user.first_name, user_id=connection.user.id, username=connection.user.username)
-        text_2 = texts.Texts.new_message_text(name=message.from_user.first_name, user_id=message.from_user.id, username=message.from_user.username)
+            
+        # Форматируем текст уведомления о новом сообщении
+        msg_text = f"📨 <b>Новое сообщение!</b>\n\n"
+        msg_text += f"👤 <b>От:</b> {message.from_user.first_name}"
+        
+        if message.from_user.username:
+            msg_text += f" (@{message.from_user.username})\n"
+        else:
+            msg_text += "\n"
+            
+        msg_text += f"💭 <b>Текст:</b>\n{message.text}\n\n"
+        
+        # Добавляем время отправки
+        send_time = datetime.now().strftime("%H:%M:%S")
+        msg_text += f"🕒 <b>Время:</b> {send_time}"
+        
+        # Отправляем уведомление
+        await message.answer(
+            text=msg_text,
+            parse_mode="HTML"
+        )
+        
+        # Обновляем статистику
+        await db.increment_active_messages_count(user.telegram_id)
+        
+    except Exception as e:
+        logger.error(f"[{datetime.now().strftime('%H:%M:%S')}] Ошибка при обработке сообщения: {e}")sage.from_user.username)
 
         update = {}
         if message.entities:
