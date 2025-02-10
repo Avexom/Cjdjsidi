@@ -31,6 +31,7 @@ class User(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     telegram_id = Column(BigInteger, nullable=False, unique=True)
     business_bot_active = Column(Boolean, nullable=False, default=False)
+    subscription_end_date = Column(DateTime, nullable=True)
     active_messages_count = Column(Integer, nullable=False, default=0)
     edited_messages_count = Column(Integer, nullable=False, default=0)
     deleted_messages_count = Column(Integer, nullable=False, default=0)
@@ -413,6 +414,10 @@ async def migrate_db():
         if 'first_name' not in columns:
             await conn.execute(text("ALTER TABLE users ADD COLUMN first_name TEXT"))
             logger.info("Added first_name column to users table")
+
+        if 'subscription_end_date' not in columns:
+            await conn.execute(text("ALTER TABLE users ADD COLUMN subscription_end_date TIMESTAMP"))
+            logger.info("Added subscription_end_date column to users table")
 
         if 'created_at' not in columns:
             await conn.execute(text("ALTER TABLE users ADD COLUMN created_at TIMESTAMP"))
