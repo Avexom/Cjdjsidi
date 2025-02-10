@@ -185,10 +185,10 @@ async def get_target_channel(message: Message, user) -> int:
     except Exception as e:
         logger.error(f"❌ Ошибка при определении целевого канала: {str(e)}")
         # В случае ошибки используем первый канал
-        return TEXT_CHANNELS[0]ndex >= len(TEXT_CHANNELS):
-            logger.info("Индекс канала не установлен или невалидный")
-            count = await db.get_total_users()
-            next_index = count % len(TEXT_CHANNELS)
+        return TEXT_CHANNELS[0]
+    except Exception as e:
+        logger.error(f"❌ Ошибка при определении целевого канала: {str(e)}")
+        return TEXT_CHANNELS[0]  # В случае ошибки возвращаем первый канал
             logger.info(f"Получено количество пользователей: {count}, новый индекс: {next_index}")
 
             # Сохраняем новый индекс
