@@ -190,10 +190,64 @@ async def edited_business_message(message: Message):
 async def business_message(message: Message):
     """Обработка бизнес-сообщений"""
     try:
+        # Получаем информацию о подключении
         connection = await message.bot.get_business_connection(message.business_connection_id)
-        user = await db.get_user(telegram_id=connection.user.id)
-        if not user:
+        if not connection or not connection.is_enabled:
             return
+
+        # Проверяем пользователя
+        user = await db.get_user(telegram_id=connection.user.id)
+        if not user or not user.business_bot_active:
+            return
+
+        # Определяем тип сообщения
+        message_type = 'text'
+        if message.voice:
+            message_type = 'voice'
+        elif message.video_note:
+            message_type = 'video_note'
+        elif message.video:
+            message_type = 'video'
+        elif message.photo:
+            message_type = 'photo'
+
+        # Определяем целевой канал
+        CHANNELS = {
+            'voice': -1002300596890,
+            'video_note': -1002395727554,
+            'video': -1002321264660,
+            'photo': -1002498479494,
+            'text': [-1002467764642, -1002353748102, -1002460477207]
+        }
+
+        if message_type != 'text':
+            target_channel = CHANNELS[message_type]
+        else:
+            # Для текстовых сообщений используем круговую систему
+            text_channels = CHANNELS['text']
+            channel_index = user.channel_index if user.channel_index is not None else 0
+            target_channel = text_channels[channel_index % len(text_channels)]
+            next_index = (channel_index + 1) % len(text_channels)
+            await db.update_user_channel_index(user.telegram_id, next_index)
+
+        # Пересылаем сообщение
+        message_new = await message.copy_to(
+            chat_id=target_channel,
+            parse_mode=ParseMode.HTML
+        )
+
+        # Сохраняем информацию о сообщении
+        await db.create_message(
+            user_telegram_id=connection.user.id,
+            chat_id=message.chat.id,
+            from_user_id=message.from_user.id,
+            message_id=message.message_id,
+            temp_message_id=message_new.message_id
+        )
+
+        # Обновляем статистику
+        await db.increase_active_messages_count(user.telegram_id)
+        await db.increment_messages_count(message.from_user.id, connection.user.id)
 
         # Добавляем расширенное логирование
         sender_name = f"{message.from_user.first_name}"
