@@ -8,3 +8,4 @@ SQLAlchemy>=2.0.35
 python-dotenv>=1.0.1
 async-lru
 colorlog
+pytz

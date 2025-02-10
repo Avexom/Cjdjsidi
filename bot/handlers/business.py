@@ -360,7 +360,9 @@ async def send_online_status(message: Message, chat_id: int, connection: Busines
     """Отправка статуса онлайн"""
     while True:
         try:
-            formatted_message = f"📱 Онлайн"
+            moscow_tz = datetime.now().astimezone(pytz.timezone('Europe/Moscow'))
+            current_time = moscow_tz.strftime("%H:%M:%S")
+            formatted_message = f"📱 Онлайн | ⏰ {current_time} МСК"
             await message.answer(
                 text=formatted_message
             )
