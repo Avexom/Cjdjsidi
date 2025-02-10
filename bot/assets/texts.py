@@ -40,11 +40,11 @@ class Texts:
 
     profile_template = Template("""
 👤 <b>Профиль пользователя:</b> $name
-
+    
 🆔 <b>ID:</b> $user_id
-
+    
 📅 <b>Подписка до:</b> $subscription_status
-
+    
 📊 <b>Статистика:</b>
 - Отслеживаемых сообщений: $count_messages
 - Перехвачено удаленных сообщений: $count_messages_deleted
@@ -73,24 +73,19 @@ class Texts:
 
     @staticmethod
     def new_message_text(name: str, user_id: int, username: str | None) -> str:
-        user_link = Texts.generate_user_link(name, user_id, username)
+        user_link = f'<a href="tg://user?id={user_id}">{name}</a>'
         return f"📨 Уведомление о сообщении\nОт: {user_link}"
 
     @staticmethod
     def new_message_text_2(name: str, user_id: int, username: str | None) -> str:
-        user_link = Texts.generate_user_link(name, user_id, username)
+        user_link = f'<a href="tg://user?id={user_id}">{name}</a>'
         return f"👇 Сообщение для пользователя {user_link} 👇"
 
     @staticmethod
     def deleted_message_text(name: str, user_id: int, username: str | None, deleted_text: str = "") -> str:
-        user_link = Texts.generate_user_link(name, user_id, username)
+        user_link = f'<a href="tg://user?id={user_id}">{name}</a>'
         current_time = datetime.now().strftime("%H:%M:%S")
-        return f"""🗑 {user_link} удалил для тебя сообщение
-
-Удаленное сообщение:
-{deleted_text}
-
-⏰ Время удаления: {current_time}"""
+        return f"""🗑 {user_link} удалил для тебя сообщение\n\nУдаленное сообщение:\n{deleted_text}\n\n⏰ Время удаления: {current_time}"""
 
     @staticmethod
     def edited_message_text(name: str, user_id: int, username: str | None) -> str:
