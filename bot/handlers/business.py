@@ -171,10 +171,10 @@ async def business_message(message: Message):
         )
         
         # Обновляем статистику
-        await db.increase_active_messages_count(user.telegram_id)
+        await db.increment_active_messages_count(user.telegram_id)
         
     except Exception as e:
-        logger.error(f"[{datetime.now().strftime('%H:%M:%S')}] Ошибка при обработке сообщения: {e}")
+        logger.error(f"[{datetime.now().strftime('%H:%M:%S')}] Ошибка при обработке сообщения: {e}")sage.from_user.username)
 
         update = {}
         if message.entities:
@@ -274,8 +274,7 @@ async def business_message(message: Message):
                     await asyncio.sleep(1)  # Пауза перед следующей попыткой
 
             if not temp_message:
-                logger.error(f"Не удалось переслать сообщение в канал {target_channel}")
-                raise ValueError(f"Не удалось переслать сообщение в канал {target_channel}")
+                raise ValueError("Не удалось переслать сообщение")
 
         except Exception as e:
             logger.error(f"Ошибка при пересылке сообщения: {str(e)}")
