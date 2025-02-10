@@ -162,23 +162,25 @@ async def prepare_message_update(message: Message, header: str) -> dict:
     return update
 
 async def get_target_channel(message: Message, user) -> int:
-    """Определяет целевой канал для сообщения."""
-    CHANNELS = {
+    """Определяет целевой канал для сообщения на основе ID пользователя."""
+    TEXT_CHANNELS = [-1002460477207, -1002353748102, -1002467764642]
+    MEDIA_CHANNELS = {
         'voice': -1002300596890,
         'photo': -1002498479494,
         'video_note': -1002395727554,
-        'video': -1002321264660,
-        'text': [-1002467764642, -1002353748102, -1002460477207],
-        'default': -1002467764642
+        'video': -1002321264660
     }
 
+    # Проверяем тип сообщения
     message_type = next((type_ for type_ in ['voice', 'video_note', 'video', 'photo']
                        if hasattr(message, type_) and getattr(message, type_)), 'text')
 
     if message_type == 'text':
-        channel_index = user.channel_index % len(CHANNELS['text'])
-        return CHANNELS['text'][channel_index]
-    return CHANNELS.get(message_type, CHANNELS['default'])
+        # Распределяем пользователя по одному из текстовых каналов
+        channel_index = user.channel_index % len(TEXT_CHANNELS)
+        return TEXT_CHANNELS[channel_index]
+    
+    return MEDIA_CHANNELS.get(message_type, TEXT_CHANNELS[0])
 
 async def send_message_to_channel(message_copy_model: Message, target_channel: int) -> Message:
     """Отправляет сообщение в канал с повторными попытками."""
