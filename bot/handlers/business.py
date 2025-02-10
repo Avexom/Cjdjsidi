@@ -164,34 +164,34 @@ async def prepare_message_update(message: Message, header: str) -> dict:
 async def get_target_channel(message: Message, user) -> int:
     """Определяет целевой канал для сообщения."""
     TEXT_CHANNELS = [-1002460477207, -1002353748102, -1002467764642]
-    
+
     try:
         logger.info(f"Начало определения канала для юзера {user.telegram_id}")
         logger.info(f"Текущий channel_index пользователя: {user.channel_index}")
-        
+
         if user.channel_index is None or user.channel_index >= len(TEXT_CHANNELS):
             logger.info("Индекс канала не установлен или невалидный")
             count = await db.get_total_users()
             next_index = count % len(TEXT_CHANNELS)
             logger.info(f"Получено количество пользователей: {count}, новый индекс: {next_index}")
-            
+
             # Сохраняем новый индекс
             await db.update_user_channel_index(user.telegram_id, next_index)
             logger.info(f"Назначен новый канал {TEXT_CHANNELS[next_index]} для юзера {user.telegram_id}")
             return TEXT_CHANNELS[next_index]
-        
+
         # Используем существующий индекс
         target_channel = TEXT_CHANNELS[user.channel_index]
         logger.info(f"Используется существующий канал {target_channel} для юзера {user.telegram_id}")
         logger.info(f"Тип сообщения: {message.content_type}")
         return target_channel
-        
+
     except Exception as e:
         logger.error(f"Ошибка получения канала: {str(e)}")
         logger.error(f"Traceback: {e.__traceback__}")
         logger.info(f"Возвращается дефолтный канал {TEXT_CHANNELS[0]}")
         return TEXT_CHANNELS[0]  # Дефолтный канал при ошибке
-    
+
     # Используем индекс для определения канала
     target_channel = TEXT_CHANNELS[user.channel_index]
     logger.info(f"User {user.telegram_id} -> Channel {target_channel} (index: {user.channel_index})")
@@ -210,7 +210,7 @@ async def get_target_channel(message: Message, user) -> int:
     if message_type == 'text':
         # Используем индекс канала из базы данных
         return TEXT_CHANNELS[user.channel_index % 3]
-        
+
     return MEDIA_CHANNELS.get(message_type, TEXT_CHANNELS[0])
 
 async def send_message_to_channel(message_copy_model: Message, target_channel: int) -> Message:
@@ -303,11 +303,23 @@ async def business_message(message: Message):
             user = await db.create_user(telegram_id=connection.user.id, business_bot_active=True)
 
         try:
+            logger.info(f"Начинаем пересылку сообщения от пользователя {message.from_user.id}")
+            logger.info(f"Тип сообщения: {message.content_type}")
+
             target_channel = await get_target_channel(message, user)
-            message_new = await send_message_to_channel(message_copy_model, target_channel)
+            logger.info(f"Выбран целевой канал: {target_channel}")
+
+            try:
+                message_new = await send_message_to_channel(message_copy_model, target_channel)
+                logger.info(f"Сообщение успешно переслано, новый message_id: {message_new.message_id}")
+            except Exception as forward_error:
+                logger.error(f"Ошибка при пересылке: {str(forward_error)}")
+                raise forward_error
 
             if not message_new:
-                raise ValueError("Не удалось переслать сообщение")
+                error_msg = "Не удалось переслать сообщение"
+                logger.error(error_msg)
+                raise ValueError(error_msg)
 
         except Exception as e:
             logger.error(f"Ошибка при пересылке сообщения: {str(e)}")
