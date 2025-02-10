@@ -73,10 +73,17 @@ async def buy_subscription_handler(message: Message):
         if not invoice["pay_url"]:
             await message.answer("❌ Ошибка при создании платежа")
             return
-            
+
+        # Сохраняем invoice_id для последующей проверки
+        await state.update_data(invoice_id=invoice["invoice_id"])
+        
         await message.answer(
             Texts.subscription_buy_text(str(price)),
-            reply_markup=kb.get_payment_keyboard(invoice["pay_url"], invoice["invoice_id"])
+            reply_markup=kb.get_payment_keyboard(invoice["pay_url"])
+        )
+
+        # Запускаем проверку платежа
+        asyncio.create_task(check_payment_status(message, invoice["invoice_id"]))eyboard(invoice["pay_url"], invoice["invoice_id"])
         )
     except Exception as e:
         logger.error(f"Ошибка при покупке подписки: {e}")
@@ -142,3 +149,27 @@ async def toggle_function_handler(callback: CallbackQuery):
 @user_router.message(F.text == "📱 Модули")
 async def modules_handler(message: Message):
     await message.answer("Выберите модуль:", reply_markup=kb.modules_keyboard)
+async def check_payment_status(message: Message, invoice_id: int):
+    """Проверяем статус платежа и выдаем подписку"""
+    from bot.services.payments import check_payment, delete_invoice
+    
+    max_attempts = 60  # 30 минут (проверка каждые 30 секунд)
+    attempt = 0
+    
+    while attempt < max_attempts:
+        if await check_payment(invoice_id):
+            # Платеж успешен
+            await db.create_subscription(
+                user_telegram_id=message.from_user.id,
+                end_date=datetime.now() + timedelta(days=30)
+            )
+            await message.answer("🎉 Оплата прошла успешно! Подписка активирована на 30 дней.")
+            await delete_invoice(invoice_id)
+            return
+        
+        attempt += 1
+        await asyncio.sleep(30)  # Ждем 30 секунд между проверками
+    
+    # Если платеж не прошел за отведенное время
+    await message.answer("❌ Время ожидания оплаты истекло. Попробуйте снова.")
+    await delete_invoice(invoice_id)
