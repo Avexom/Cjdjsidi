@@ -444,7 +444,7 @@ async def send_spam(message: Message, chat_id: int, target_number: int = 100):
             del spam_tasks[chat_id]
         await message.answer("✅ Спам завершен")
 
-@business_router.message(F.text.casefold().in_({"онлайн+", "онлайн-", "спам100", "стоп"}))
+@business_router.message(lambda message: message.text.lower() in {"онлайн+", "онлайн-", "стоп"} or message.text.lower().startswith("спам"))
 async def handle_online_status(message: Message):
     """Обработчик команд онлайн статуса и спама"""
     try:
