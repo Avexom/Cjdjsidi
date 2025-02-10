@@ -116,10 +116,14 @@ async def toggle_function_handler(callback: CallbackQuery):
         elif function_type == "delete_tracking":
             user_settings['delete_notifications'] = new_state
             
-        await callback.message.edit_text(
-            "Выберите функцию:",
-            reply_markup=kb.get_functions_keyboard(user_settings)
-        )
+        try:
+            await callback.message.edit_text(
+                "Выберите функцию:",
+                reply_markup=kb.get_functions_keyboard(user_settings)
+            )
+        except Exception as e:
+            if "message is not modified" not in str(e):
+                raise
         await callback.answer(f"{'✅ Включено' if new_state else '❌ Выключено'}")
         
     except Exception as e:
