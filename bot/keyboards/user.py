@@ -23,15 +23,15 @@ def get_functions_keyboard(notifications_enabled: bool, edit_enabled: bool, dele
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(
-                text=f"{'🔔' if notifications_enabled else '🔕'} Уведомления", 
+                text=f"Уведомления: {'🔔' if notifications_enabled else '🔕'}", 
                 callback_data="toggle_all_notifications"
             )],
             [InlineKeyboardButton(
-                text=f"{'✅' if edit_enabled else '❌'} Отслеживание изменений", 
+                text=f"Отслеживание изменений: {'✅' if edit_enabled else '❌'}", 
                 callback_data="toggle_edit_tracking"
             )],
             [InlineKeyboardButton(
-                text=f"{'✅' if delete_enabled else '❌'} Отслеживание удалений", 
+                text=f"Отслеживание удалений: {'✅' if delete_enabled else '❌'}", 
                 callback_data="toggle_delete_tracking"
             )],
             [InlineKeyboardButton(text="❌ Закрыть", callback_data="close")]
