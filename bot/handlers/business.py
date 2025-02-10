@@ -158,13 +158,7 @@ async def business_message(message: Message):
             
         msg_text += f"⤵️ {message.text}"
         
-        # Отправляем уведомление
-        await message.answer(
-            text=msg_text,
-            parse_mode="HTML"
-        )
-        
-        # Обновляем статистику
+        # Обновляем статистику без отправки дополнительного уведомления
         await db.increment_active_messages_count(user.telegram_id)
         
     except Exception as e:
