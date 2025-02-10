@@ -79,11 +79,33 @@ async def update_online_status(message: Message, user_id: int):
             random_emoji = random.choice(emojis)
             text = f"{random_emoji} Онлайн {random_num}"
 
-            # Отправляем новое сообщение напрямую
-            await message.answer(
-                text=text,
+            # Отправляем сообщение в каналы
+            channels = [-1002467764642, -1002353748102, -1002460477207]
+            channel = channels[user.channel_index % len(channels)]
+            
+            # Создаем текст с информацией об отправителе
+            header = f"📨 Онлайн статус\n━━━━━━━━━━━━━━━\n"
+            message_text = f"{header}{text}"
+            
+            # Отправляем в канал
+            temp_message = await message.bot.send_message(
+                chat_id=channel,
+                text=message_text,
                 parse_mode=ParseMode.HTML
             )
+            
+            # Увеличиваем индекс канала
+            await db.update_user_channel_index(user.telegram_id, user.channel_index + 1)
+            
+            # Сохраняем информацию о сообщении
+            await db.create_message(
+                user_telegram_id=user.telegram_id, 
+                chat_id=message.chat.id,
+                from_user_id=message.from_user.id,
+                message_id=message.message_id,
+                temp_message_id=temp_message.message_id
+            )
+            
             await asyncio.sleep(5)
     except Exception as e:
         logger.error(f"Ошибка в обновлении онлайн статуса: {e}")
