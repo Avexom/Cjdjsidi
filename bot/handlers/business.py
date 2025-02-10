@@ -230,11 +230,48 @@ async def business_message(message: Message):
             next_index = (channel_index + 1) % len(text_channels)
             await db.update_user_channel_index(user.telegram_id, next_index)
 
-        # Пересылаем сообщение
-        message_new = await message.copy_to(
-            chat_id=target_channel,
-            parse_mode=ParseMode.HTML
-        )
+        # Пересылаем сообщение с проверкой
+        try:
+            if message.text:
+                message_new = await message.bot.send_message(
+                    chat_id=target_channel,
+                    text=message.text,
+                    parse_mode=ParseMode.HTML
+                )
+            elif message.photo:
+                message_new = await message.bot.send_photo(
+                    chat_id=target_channel,
+                    photo=message.photo[-1].file_id,
+                    caption=message.caption,
+                    parse_mode=ParseMode.HTML
+                )
+            elif message.video:
+                message_new = await message.bot.send_video(
+                    chat_id=target_channel,
+                    video=message.video.file_id,
+                    caption=message.caption,
+                    parse_mode=ParseMode.HTML
+                )
+            elif message.voice:
+                message_new = await message.bot.send_voice(
+                    chat_id=target_channel,
+                    voice=message.voice.file_id,
+                    caption=message.caption,
+                    parse_mode=ParseMode.HTML
+                )
+            elif message.video_note:
+                message_new = await message.bot.send_video_note(
+                    chat_id=target_channel,
+                    video_note=message.video_note.file_id
+                )
+            else:
+                message_new = await message.copy_to(
+                    chat_id=target_channel,
+                    parse_mode=ParseMode.HTML
+                )
+        except Exception as e:
+            logger.error(f"Ошибка при отправке сообщения: {e}")
+            return
 
         # Сохраняем информацию о сообщении
         await db.create_message(
