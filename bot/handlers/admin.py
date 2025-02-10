@@ -125,20 +125,11 @@ async def set_subscription_price(message: Message):
         await message.answer("Произошла ошибка при установке цены подписки.")
 @admin_router.message(Command("reset_channels"))
 async def reset_channels(message: Message):
-    """Сбрасывает все привязки пользователей к каналам"""
     try:
-        # Проверяем, является ли пользователь админом
-        if message.from_user.id not in ADMIN_IDS:
-            await message.answer("❌ Нет доступа к админ-командам")
-            return
-            
         await db.reset_channel_indexes()
-        
-        logger.info(f"Админ {message.from_user.id} сбросил все привязки каналов")
-        await message.answer("✅ Все привязки пользователей к каналам успешно сброшены!")
+        await message.answer("Индексы каналов успешно сброшены для всех пользователей.")
     except Exception as e:
-        logger.error(f"Ошибка при сбросе привязок каналов: {e}")
-        await message.answer(f"❌ Произошла ошибка при сбросе привязок: {e}")
+        await message.answer(f"Произошла ошибка при сбросе индексов: {e}")
 
 # New admin commands
 @admin_router.message(F.text.startswith("/ban"))

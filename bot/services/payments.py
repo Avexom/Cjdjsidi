@@ -59,20 +59,6 @@ async def delete_invoice(invoice_id: int) -> bool:
         logger.error(f"Ошибка при удалении инвойса {invoice_id}: {e}")
         return False
 
-async def cleanup_old_invoices(hours: int = 24):
-    """Clean up old unpaid invoices"""
-    try:
-        invoices = await crypto.get_invoices(status="active")
-        current_time = datetime.now()
-        
-        for invoice in invoices:
-            # Проверяем возраст инвойса
-            if (current_time - invoice.created_at).total_seconds() > hours * 3600:
-                await delete_invoice(invoice.invoice_id)
-                logger.info(f"Удален старый инвойс {invoice.invoice_id}")
-    except Exception as e:
-        logger.error(f"Ошибка при очистке старых инвойсов: {e}")
-
 async def close_crypto_session():
     """Close CryptoPay session"""
     try:

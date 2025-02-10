@@ -31,10 +31,7 @@ async def start_command(message: Message):
         logger.error(f"Ошибка при обработке команды /start: {e}")
         await message.answer("Произошла ошибка при запуске бота. Попробуйте позже.")
 
-from bot.utils.decorators import check_subscription
-
 @user_router.message(F.text == "👤 Профиль")
-@check_subscription()
 async def profile_command(message: Message):
     """Обработка кнопки Профиль"""
     try:
@@ -195,8 +192,6 @@ async def buy_subscription(message: Message):
     except Exception as e:
         logger.error(f"Ошибка при создании платежа: {e}")
         await message.answer("Произошла ошибка при создании платежа. Попробуйте позже.")
-
-
 
 @user_router.callback_query(F.data.startswith("toggle_module_"))
 async def toggle_module(callback: CallbackQuery):

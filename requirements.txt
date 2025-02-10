@@ -8,5 +8,3 @@ SQLAlchemy>=2.0.35
 python-dotenv>=1.0.1
 async-lru
 colorlog
-tlgbotfwk
-requests>=2.31.0

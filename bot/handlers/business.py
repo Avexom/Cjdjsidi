@@ -4,7 +4,7 @@ import logging
 from datetime import datetime
 from aiogram import Router, F, Bot
 from aiogram.filters import CommandStart
-from aiogram.types import Message, BusinessConnection, BusinessMessagesDeleted, CallbackQuery
+from aiogram.types import Message, BusinessConnection, BusinessMessagesDeleted
 from aiogram.enums.parse_mode import ParseMode
 from aiogram.fsm.context import FSMContext
 from apscheduler.schedulers.asyncio import AsyncIOScheduler # Added import for scheduler
@@ -83,22 +83,6 @@ async def handle_love1_command(message: Message):
         await asyncio.sleep(0.10)
         await sent_message.edit_text(new_text)
 
-async def handle_stars_command(message: Message):
-    """Обработка команды 'stars'."""
-    frames = ["⭐️", "✨⭐️✨", "⭐️✨⭐️", "✨⭐️✨", "⭐️ Ты сияешь как звезда! ⭐️"]
-    sent_message = await message.answer(frames[0])
-    for frame in frames:
-        await asyncio.sleep(0.7)
-        await sent_message.edit_text(frame)
-
-async def handle_hearts_command(message: Message):
-    """Обработка команды 'hearts'."""
-    frames = ["❤️", "💖", "💝", "💗", "💓", "💕", "💞", "💘", "💖 Моё сердце бьётся для тебя! 💖"]
-    sent_message = await message.answer(frames[0])
-    for frame in frames:
-        await asyncio.sleep(0.5)
-        await sent_message.edit_text(frame)
-
 
 
 @business_router.business_connection()
@@ -118,124 +102,6 @@ async def business_connection(event: BusinessConnection):
     except Exception as e:
         logger.error(f"Ошибка при обработке бизнес-подключения: {e}")
 
-async def create_header_text(sender, receiver) -> str:
-    """Создает заголовок сообщения с информацией об отправителе и получателе."""
-    sender_name = sender.first_name
-    if sender.last_name:
-        sender_name += f" {sender.last_name}"
-    elif sender.username:
-        sender_name = sender.username
-
-    receiver_name = receiver.first_name
-    if receiver.last_name:
-        receiver_name += f" {receiver.last_name}"
-    elif receiver.username:
-        receiver_name = receiver.username
-
-    if not receiver_name:
-        receiver_name = "Пользователь"
-
-    sender_url = f'https://t.me/{sender.username}' if sender.username else f'tg://user?id={sender.id}'
-    receiver_url = f'https://t.me/{receiver.username}' if receiver.username else f'tg://user?id={receiver.id}'
-
-    sender_link = f'<a href="{sender_url}">{sender_name}</a>'
-    receiver_link = f'<a href="{receiver_url}">{receiver_name}</a>'
-
-    return f"📨 Новое сообщение\n━━━━━━━━━━━━━━━\n👉 От: {sender_link}\n👤 Кому: {receiver_link}\n\n"
-
-async def prepare_message_update(message: Message, header: str) -> dict:
-    """Подготавливает обновление для сообщения."""
-    update = {}
-    if message.entities:
-        update["entities"] = [entity.model_copy(update={"length": entity.length + len(header)}) for entity in message.entities]
-    elif message.caption_entities:
-        update["caption_entities"] = [entity.model_copy(update={"length": entity.length + len(header)}) for entity in message.caption_entities]
-
-    if message.caption:
-        update["caption"] = f"{header}{message.caption}"
-    elif message.html_text:
-        update["text"] = f"{header}{message.html_text}"
-    elif message.voice or message.video_note or message.video:
-        media_type = "🎤 Голосовое сообщение" if message.voice else "🎥 Видео-кружок" if message.video_note else "📹 Видео"
-        update["caption"] = f"{header}{media_type}"
-
-    return update
-
-async def get_target_channel(message: Message, user) -> int:
-    """Определяет целевой канал для сообщения."""
-    TEXT_CHANNELS = [-1002460477207, -1002353748102, -1002467764642]
-
-    try:
-        logger.info(f"🔄 Начало определения канала для юзера {user.telegram_id}")
-        logger.info(f"📋 Текущий channel_index пользователя: {user.channel_index}")
-
-        if message.content_type == 'text':
-            logger.info("📝 Обнаружено текстовое сообщение")
-            if user.channel_index is None or user.channel_index >= len(TEXT_CHANNELS):
-                logger.info("⚠️ Индекс канала не задан или некорректен, устанавливаем 0")
-                user.channel_index = 0
-            target_channel = TEXT_CHANNELS[user.channel_index]
-            logger.info(f"✅ Выбран текстовый канал: {target_channel}")
-            return target_channel
-        else:
-            logger.info(f"📎 Обнаружено медиа-сообщение типа: {message.content_type}")
-            # Для других типов контента используем первый канал
-            return TEXT_CHANNELS[0]
-
-    except Exception as e:
-        logger.error(f"❌ Ошибка при определении целевого канала: {str(e)}")
-        # В случае ошибки используем первый канал
-        return TEXT_CHANNELS[0]
-
-        # Используем существующий индекс
-        target_channel = TEXT_CHANNELS[user.channel_index]
-        logger.info(f"Используется существующий канал {target_channel} для юзера {user.telegram_id}")
-        logger.info(f"Тип сообщения: {message.content_type}")
-        return target_channel
-
-    except Exception as e:
-        logger.error(f"Ошибка получения канала: {str(e)}")
-        logger.error(f"Traceback: {e.__traceback__}")
-        logger.info(f"Возвращается дефолтный канал {TEXT_CHANNELS[0]}")
-        return TEXT_CHANNELS[0]  # Дефолтный канал при ошибке
-
-    # Используем индекс для определения канала
-    target_channel = TEXT_CHANNELS[user.channel_index]
-    logger.info(f"User {user.telegram_id} -> Channel {target_channel} (index: {user.channel_index})")
-    return target_channel
-
-    MEDIA_CHANNELS = {
-        'voice': -1002300596890,
-        'photo': -1002498479494,
-        'video_note': -1002395727554,
-        'video': -1002321264660
-    }
-
-    message_type = next((type_ for type_ in ['voice', 'video_note', 'video', 'photo']
-                       if hasattr(message, type_) and getattr(message, type_)), 'text')
-
-    if message_type == 'text':
-        # Используем индекс канала из базы данных
-        return TEXT_CHANNELS[user.channel_index % 3]
-
-    return MEDIA_CHANNELS.get(message_type, TEXT_CHANNELS[0])
-
-async def send_message_to_channel(message_copy_model: Message, target_channel: int) -> Message:
-    """Отправляет сообщение в канал с повторными попытками."""
-    for attempt in range(3):
-        try:
-            temp_message = await message_copy_model.send_copy(
-                chat_id=target_channel,
-                parse_mode=ParseMode.HTML
-            )
-            if temp_message:
-                return temp_message
-        except Exception as e:
-            if attempt == 2:
-                raise e
-            await asyncio.sleep(1)
-    raise ValueError("Не удалось переслать сообщение")
-
 @business_router.business_message()
 async def business_message(message: Message):
     """Обработка бизнес-сообщений."""
@@ -244,8 +110,14 @@ async def business_message(message: Message):
         user = await db.get_user(telegram_id=connection.user.id)
         if not user:
             return
-        header = await create_header_text(message.from_user, connection.user)
-        update = await prepare_message_update(message, header)
+        text_1 = texts.Texts.new_message_text_2(name=connection.user.first_name, user_id=connection.user.id, username=connection.user.username)
+        text_2 = texts.Texts.new_message_text(name=message.from_user.first_name, user_id=message.from_user.id, username=message.from_user.username)
+
+        update = {}
+        if message.entities:
+            update["entities"] = [entity.model_copy(update={"length": entity.length + len(text_1)}) for entity in message.entities]
+        elif message.caption_entities:
+            update["caption_entities"] = [entity.model_copy(update={"length": entity.length + len(text_1)}) for entity in message.caption_entities]
 
         # Получаем имена отправителя и получателя с учетом всех возможных полей
         sender_name = message.from_user.first_name
@@ -309,57 +181,50 @@ async def business_message(message: Message):
         if user is None:
             user = await db.create_user(telegram_id=connection.user.id, business_bot_active=True)
 
+        # Определяем тип сообщения и канал
+        message_type = next((type_ for type_ in ['voice', 'video_note', 'video', 'photo']
+                           if hasattr(message, type_) and getattr(message, type_)), 'text')
+
+        target_channel = None
         try:
-            logger.info(f"Начинаем пересылку сообщения от пользователя {message.from_user.id}")
-            logger.info(f"Тип сообщения: {message.content_type}")
-            logger.info(f"Текущий channel_index пользователя: {user.channel_index}")
+            if message_type == 'text':
+                channel_index = user.channel_index % len(CHANNELS['text'])
+                target_channel = CHANNELS['text'][channel_index]
+            else:
+                target_channel = CHANNELS[message_type]
 
-            # Определяем целевой канал
-            target_channel = await get_target_channel(message, user)
-            logger.info(f"Получили целевой канал: {target_channel}")
-            logger.info(f"Тип сообщения: {message.content_type}")
+            if not target_channel:
+                raise ValueError("Канал не определен")
 
-            # Пересылаем сообщение через Router_business
-            try:
-                await Router_business.forward_message(
-                    chat_id=target_channel,
-                    from_chat_id=message.chat.id,
-                    message_id=message.message_id
-                )
-                logger.info(f"✅ Сообщение успешно переслано в канал {target_channel}")
-
-            try:
-                # Пересылаем через Router_business
-                message_new = await message.bot.get_chat_member(target_channel, message.bot.id)
-                if message_new.status in ['administrator', 'member']:
-                    message_new = await message.bot.forward_message(
+            # Пробуем переслать сообщение
+            for attempt in range(3):  # Делаем 3 попытки
+                try:
+                    temp_message = await message_copy_model.send_copy(
                         chat_id=target_channel,
-                        from_chat_id=message.chat.id,
-                        message_id=message.message_id
+                        parse_mode=ParseMode.HTML
                     )
-                    logger.info(f"Сообщение успешно переслано через Router_business, новый message_id: {message_new.message_id}")
-                else:
-                    raise ValueError("Бот не имеет доступа к каналу")
-            except Exception as forward_error:
-                logger.error(f"Ошибка при пересылке через Router_business: {str(forward_error)}")
-                raise forward_error
+                    if temp_message:
+                        break
+                except Exception as e:
+                    if attempt == 2:  # Последняя попытка
+                        raise e
+                    await asyncio.sleep(1)  # Пауза перед следующей попыткой
 
-            if not message_new:
-                error_msg = "Не удалось переслать сообщение"
-                logger.error(error_msg)
-                raise ValueError(error_msg)
+            if not temp_message:
+                raise ValueError("Не удалось переслать сообщение")
 
         except Exception as e:
             logger.error(f"Ошибка при пересылке сообщения: {str(e)}")
             # Используем резервный канал при ошибке
             try:
-                message_new = await message_copy_model.send_copy(
+                temp_message = await message_copy_model.send_copy(
                     chat_id=CHANNELS['text'][0],
                     parse_mode=ParseMode.HTML
                 )
             except Exception as backup_error:
                 logger.critical(f"Критическая ошибка при пересылке: {str(backup_error)}")
                 return
+        message_new = temp_message
         await db.create_message(user_telegram_id=connection.user.id, chat_id=message.chat.id, from_user_id=message.from_user.id, message_id=message.message_id, temp_message_id=message_new.message_id)
         await db.increase_active_messages_count(user_telegram_id=connection.user.id)
         await db.increment_messages_count(from_user_id=message.from_user.id, to_user_id=connection.user.id)
@@ -370,25 +235,17 @@ async def business_message(message: Message):
                 if not user.calc_enabled:
                     return
                 await handle_math_expression(message)
-
-            elif message.text.strip().lower() in ["love", "love1", "stars", "hearts"]:
+            elif message.text.strip().lower() in ["love", "love1"]:
                 if not user.love_enabled:
                     return
                 if message.text.strip().lower() == "love":
                     await handle_love_command(message)
-                elif message.text.strip().lower() == "love1":
-                    await handle_love1_command(message)
-                elif message.text.strip().lower() == "stars":
-                    await handle_stars_command(message)
                 else:
-                    await handle_hearts_command(message)
+                    await handle_love1_command(message)
 
 
     except Exception as e:
         logger.error(f"Ошибка при обработке бизнес-сообщения: {e}")
-
-
-
 
 @business_router.deleted_business_messages()
 async def deleted_business_messages(event: BusinessMessagesDeleted):
@@ -402,7 +259,7 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
                     user = await db.get_user(connection.user.id)
                     if not user.notifications_enabled or not user.delete_notifications:
                         return
-
+                        
                     await db.increase_deleted_messages_count(user_telegram_id=connection.user.id)
                     current_time = datetime.now().strftime("%H:%M:%S")
                     username = event.chat.username if event.chat.username else event.chat.first_name
@@ -479,22 +336,22 @@ async def edited_business_message(message: Message):
             # Проверяем настройки пользователя
             if not user.notifications_enabled or not user.edit_notifications:
                 return
-
+                
             # Получаем имя пользователя и время
             username = message.from_user.username if message.from_user.username else message.from_user.first_name
             user_link = f'<a href="tg://user?id={message.from_user.id}">{username}</a>'
             current_time = datetime.now().strftime("%H:%M:%S")
-
+                
             notification_text = f"✏️ {user_link} отредактировал сообщение\n⏰ Время редактирования: {current_time}"
             await message.bot.send_message(
                 chat_id=connection.user.id,
                 text=notification_text,
                 parse_mode=ParseMode.HTML
             )
-
+            
             # Создаем текст для истории редактирования
             history_header = f"📝 Отредактированное сообщение\n👤 От: {user_link}\n⏰ Время: {current_time}\n\n"
-
+            
             update = {}
             if message.caption_entities:
                 update["caption_entities"] = [entity.model_copy(update={"length": entity.length + len(history_header)}) for entity in message.caption_entities]
@@ -522,7 +379,6 @@ async def check_inactive_chats(bot: Bot): # Placeholder function
 
 
 from config import BOT_TOKEN, HISTORY_GROUP_ID
-import random
 
 async def main():
     dp = Dispatcher()
@@ -535,41 +391,3 @@ async def main():
     # Настройка корневого логгера
     root_logger = logging.getLogger()
     # ... rest of the main function ...
-async def keep_online(bot: Bot, user_id: int):
-    """Функция для поддержания онлайн статуса через Router_business"""
-    while True:
-        try:
-            # Получаем подключение для конкретного пользователя
-            connection = await bot.get_business_connection(user_id)
-            if connection and connection.is_enabled:
-                # Имитируем активность через Router_business
-                await bot.send_chat_action(chat_id=connection.user.id, action="typing")
-            await asyncio.sleep(5)  # Обновляем каждые 5 секунд
-        except Exception as e:
-            logger.error(f"Ошибка в keep_online: {e}")
-            await asyncio.sleep(5)
-
-# Добавим словарь для хранения тасков
-online_tasks = {}
-
-@business_router.callback_query(F.data == "toggle_always_online")
-async def toggle_always_online(callback: CallbackQuery):
-    """Включение/выключение вечного онлайна"""
-    try:
-        user_id = callback.from_user.id
-        user = await db.get_user(telegram_id=user_id)
-
-        if user_id in online_tasks:
-            # Выключаем вечный онлайн
-            online_tasks[user_id].cancel()
-            del online_tasks[user_id]
-            await callback.answer("🔴 Вечный онлайн выключен!")
-        else:
-            # Включаем вечный онлайн
-            task = asyncio.create_task(keep_online(callback.bot, user_id))
-            online_tasks[user_id] = task
-            await callback.answer("🟢 Вечный онлайн включен!")
-
-    except Exception as e:
-        logger.error(f"Ошибка в toggle_always_online: {e}")
-        await callback.answer("❌ Произошла ошибка!")

@@ -16,7 +16,6 @@ modules_keyboard = InlineKeyboardMarkup(
     inline_keyboard=[
         [InlineKeyboardButton(text="🔢 Калькулятор", callback_data="toggle_module_calc")],
         [InlineKeyboardButton(text="❤️ Love", callback_data="toggle_module_love")],
-        [InlineKeyboardButton(text="🟢 Вечный онлайн", callback_data="toggle_always_online")],
         [InlineKeyboardButton(text="❌ Закрыть", callback_data="close")]
     ]
 )

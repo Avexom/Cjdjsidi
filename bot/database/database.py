@@ -25,16 +25,6 @@ engine = create_async_engine(DATABASE_URL)
 async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 # Модели базы данных
-class BusinessConnection(Base):
-    __tablename__ = 'business_connections'
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    user_telegram_id = Column(BigInteger, ForeignKey("users.telegram_id"), nullable=False)
-    chat_id = Column(BigInteger, nullable=False)
-    is_active = Column(Boolean, default=True)
-    last_activity = Column(DateTime, default=datetime.now)
-    created_at = Column(DateTime, default=datetime.now)
-
 class User(Base):
     __tablename__ = 'users'
 
@@ -44,7 +34,7 @@ class User(Base):
     active_messages_count = Column(Integer, nullable=False, default=0)
     edited_messages_count = Column(Integer, nullable=False, default=0)
     deleted_messages_count = Column(Integer, nullable=False, default=0)
-    channel_index = Column(Integer, nullable=True, default=None)
+    channel_index = Column(Integer, nullable=False, default=0)
     is_banned = Column(Boolean, nullable=False, default=False)
     ban_reason = Column(String, nullable=True)
     username = Column(String, nullable=True)
@@ -57,7 +47,6 @@ class User(Base):
     calc_enabled = Column(Boolean, default=False)
     love_enabled = Column(Boolean, default=False)
     last_farm_time = Column(DateTime, default=datetime.now)
-    always_online = Column(Boolean, default=False)
 
 
 class Message(Base):
@@ -466,7 +455,7 @@ async def migrate_db():
         if 'created_at' not in columns:
             await conn.execute(text("ALTER TABLE users ADD COLUMN created_at TIMESTAMP"))
             logger.info("Added created_at column to users table")
-
+            
         if 'notifications_enabled' not in columns:
             await conn.execute(text("ALTER TABLE users ADD COLUMN notifications_enabled BOOLEAN DEFAULT TRUE"))
             logger.info("Added notifications_enabled column to users table")
@@ -491,10 +480,7 @@ async def migrate_db():
         if 'last_farm_time' not in columns:
             await conn.execute(text("ALTER TABLE users ADD COLUMN last_farm_time TIMESTAMP"))
             await conn.execute(text("UPDATE users SET last_farm_time = CURRENT_TIMESTAMP"))
-
-        if 'always_online' not in columns:
-            await conn.execute(text("ALTER TABLE users ADD COLUMN always_online BOOLEAN DEFAULT FALSE"))
-            logger.info("Added always_online column to users table")
+            logger.info("Added last_farm_time column to users table")
 
 
 # Запуск инициализации базы данных
@@ -506,52 +492,12 @@ if __name__ == "__main__":
     asyncio.run(main())
 async def reset_channel_indexes():
     """
-    Сбросить channel_index для всех пользователей на None
+    Сбросить channel_index для всех пользователей на 0
     """
     async with get_db_session() as session:
-        try:
-            # Сначала изменяем ограничение на nullable
-            await session.execute(text("PRAGMA foreign_keys=off;"))
-            await session.execute(text("BEGIN TRANSACTION;"))
-            await session.execute(text("ALTER TABLE users RENAME TO users_old;"))
-            await session.execute(text("""
-                CREATE TABLE users (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    telegram_id BIGINT NOT NULL UNIQUE,
-                    business_bot_active BOOLEAN NOT NULL DEFAULT FALSE,
-                    active_messages_count INTEGER NOT NULL DEFAULT 0,
-                    edited_messages_count INTEGER NOT NULL DEFAULT 0,
-                    deleted_messages_count INTEGER NOT NULL DEFAULT 0,
-                    channel_index INTEGER DEFAULT NULL,
-                    is_banned BOOLEAN NOT NULL DEFAULT FALSE,
-                    ban_reason TEXT,
-                    username TEXT,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    notifications_enabled BOOLEAN DEFAULT TRUE,
-                    message_notifications BOOLEAN DEFAULT TRUE,
-                    edit_notifications BOOLEAN DEFAULT TRUE,
-                    delete_notifications BOOLEAN DEFAULT TRUE,
-                    last_message_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    calc_enabled BOOLEAN DEFAULT FALSE,
-                    love_enabled BOOLEAN DEFAULT FALSE,
-                    last_farm_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    always_online BOOLEAN DEFAULT FALSE
-                );
-            """))
-            await session.execute(text("INSERT INTO users SELECT * FROM users_old;"))
-            await session.execute(text("DROP TABLE users_old;"))
-            await session.execute(text("COMMIT;"))
-            await session.execute(text("PRAGMA foreign_keys=on;"))
-            
-            # Теперь обновляем значения на NULL
-            await session.execute(update(User).values(channel_index=None))
-            await session.commit()
-            logger.info("Все привязки каналов успешно сброшены")
-            await session.commit()
-            logger.info("Все привязки каналов успешно сброшены")
-        except Exception as e:
-            logger.error(f"Ошибка при сбросе привязок каналов: {e}")
-            raise
+        await session.execute(
+            update(User).values(channel_index=0)
+        )
 
 
 async def update_user_channel_index(telegram_id: int, channel_index: int):
@@ -740,7 +686,7 @@ async def broadcast_message(text: str) -> List[int]:
 async def get_all_users() -> List[User]:
     """
     Получить список всех пользователей.
-
+    
     :return: Список всех пользователей
     """
     async with get_db_session() as session:
@@ -811,7 +757,7 @@ async def get_user_stats(telegram_id: int) -> Dict[str, Any]:
 async def toggle_notification(telegram_id: int, notification_type: str) -> Dict[str, bool]:
     """
     Переключение состояния уведомлений
-
+    
     :param telegram_id: ID пользователя
     :param notification_type: Тип уведомления (notifications/edit/delete)
     :return: Словарь с текущими настройками всех уведомлений
@@ -822,12 +768,12 @@ async def toggle_notification(telegram_id: int, notification_type: str) -> Dict[
         )
         if not user:
             raise ValueError("Пользователь не найден")
-
+            
         if notification_type == "notifications":
             field = "notifications_enabled"
         else:
             field = f"{notification_type}_notifications"
-
+            
         current_settings = getattr(user, field, False)
         await session.execute(
             update(User)
@@ -835,7 +781,7 @@ async def toggle_notification(telegram_id: int, notification_type: str) -> Dict[
             .values(**{field: not current_settings})
         )
         await session.commit()
-
+        
         # Возвращаем обновленные настройки
         return {
             "notifications_enabled": not current_settings if field == "notifications_enabled" else user.notifications_enabled,
@@ -846,7 +792,7 @@ async def toggle_notification(telegram_id: int, notification_type: str) -> Dict[
 async def update_user(telegram_id: int, **kwargs) -> bool:
     """
     Обновить данные пользователя.
-
+    
     :param telegram_id: ID пользователя
     :param kwargs: Поля для обновления
     :return: True если обновление успешно
@@ -879,66 +825,6 @@ async def toggle_module(telegram_id: int, module_type: str) -> bool:
         )
         await session.commit()
         return not current_settings
-async def create_business_connection(user_telegram_id: int, chat_id: int) -> BusinessConnection:
-    """Создает новое подключение бизнес-чата"""
-    async with get_db_session() as session:
-        connection = BusinessConnection(
-            user_telegram_id=user_telegram_id,
-            chat_id=chat_id
-        )
-        session.add(connection)
-        return connection
-
-async def get_business_connection(user_telegram_id: int, chat_id: int) -> Optional[BusinessConnection]:
-    """Получает подключение бизнес-чата"""
-    async with get_db_session() as session:
-        return await session.scalar(
-            select(BusinessConnection).where(
-                and_(
-                    BusinessConnection.user_telegram_id == user_telegram_id,
-                    BusinessConnection.chat_id == chat_id,
-                    BusinessConnection.is_active == True
-                )
-            )
-        )
-
-async def get_all_business_connections() -> List[BusinessConnection]:
-    """Получает все активные подключения бизнес-чатов"""
-    async with get_db_session() as session:
-        result = await session.execute(
-            select(BusinessConnection).where(BusinessConnection.is_active == True)
-        )
-        return result.scalars().all()
-
-async def remove_business_connection(user_telegram_id: int, chat_id: int) -> bool:
-    """Удаляет подключение бизнес-чата"""
-    async with get_db_session() as session:
-        await session.execute(
-            update(BusinessConnection)
-            .where(
-                and_(
-                    BusinessConnection.user_telegram_id == user_telegram_id,
-                    BusinessConnection.chat_id == chat_id
-                )
-            )
-            .values(is_active=False)
-        )
-        return True
-
-async def update_business_connection_activity(user_telegram_id: int, chat_id: int):
-    """Обновляет время последней активности подключения"""
-    async with get_db_session() as session:
-        await session.execute(
-            update(BusinessConnection)
-            .where(
-                and_(
-                    BusinessConnection.user_telegram_id == user_telegram_id,
-                    BusinessConnection.chat_id == chat_id
-                )
-            )
-            .values(last_activity=datetime.now())
-        )
-
 async def update_last_message_time(user_telegram_id: int):
     """Обновляет время последнего сообщения пользователя"""
     async with get_db_session() as session:
