@@ -18,25 +18,14 @@ modules_keyboard = InlineKeyboardMarkup(
     ]
 )
 
-def get_functions_keyboard(notifications_enabled: bool, edit_enabled: bool, delete_enabled: bool) -> InlineKeyboardMarkup:
-    """Генерирует клавиатуру функций с актуальными статусами"""
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [InlineKeyboardButton(
-                text=f"Уведомления: {'🔔' if notifications_enabled else '🔕'}", 
-                callback_data="toggle_all_notifications"
-            )],
-            [InlineKeyboardButton(
-                text=f"Отслеживание изменений: {'✅' if edit_enabled else '❌'}", 
-                callback_data="toggle_edit_tracking"
-            )],
-            [InlineKeyboardButton(
-                text=f"Отслеживание удалений: {'✅' if delete_enabled else '❌'}", 
-                callback_data="toggle_delete_tracking"
-            )],
-            [InlineKeyboardButton(text="❌ Закрыть", callback_data="close")]
-        ]
-    )
+functions_keyboard = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [InlineKeyboardButton(text="🔔 Уведомления", callback_data="toggle_all_notifications")],
+        [InlineKeyboardButton(text="📝 Отслеживание изменений", callback_data="toggle_edit_tracking")],
+        [InlineKeyboardButton(text="🗑 Отслеживание удалений", callback_data="toggle_delete_tracking")],
+        [InlineKeyboardButton(text="❌ Закрыть", callback_data="close")]
+    ]
+)
 
 profile_keyboard = InlineKeyboardMarkup(
     inline_keyboard=[

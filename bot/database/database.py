@@ -19,18 +19,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Настройка базы данных
-import os
-
 DATABASE_URL = "sqlite+aiosqlite:///database.db"
 Base = declarative_base()
-
-# Проверяем существование файла базы данных
-if not os.path.exists("database.db"):
-    # Создаем пустой файл с правильными правами
-    with open("database.db", "w") as f:
-        pass
-    os.chmod("database.db", 0o666)
-
 engine = create_async_engine(DATABASE_URL)
 async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
@@ -764,21 +754,12 @@ async def get_user_stats(telegram_id: int) -> Dict[str, Any]:
             "registration_date": user.created_at.strftime("%d.%m.%Y") if user.created_at else None
         }
 
-async def toggle_notification(telegram_id: int, notification_type: str) -> Dict[str, bool]:
-    """
-    Переключение состояния уведомлений
-    
-    :param telegram_id: ID пользователя
-    :param notification_type: Тип уведомления (notifications/edit/delete)
-    :return: Словарь с текущими настройками всех уведомлений
-    """
+async def toggle_notification(telegram_id: int, notification_type: str) -> bool:
+    """Переключение состояния уведомлений"""
     async with get_db_session() as session:
         user = await session.scalar(
             select(User).where(User.telegram_id == telegram_id)
         )
-        if not user:
-            raise ValueError("Пользователь не найден")
-            
         if notification_type == "notifications":
             field = "notifications_enabled"
         else:
@@ -791,34 +772,7 @@ async def toggle_notification(telegram_id: int, notification_type: str) -> Dict[
             .values(**{field: not current_settings})
         )
         await session.commit()
-        
-        # Возвращаем обновленные настройки
-        return {
-            "notifications_enabled": not current_settings if field == "notifications_enabled" else user.notifications_enabled,
-            "edit_notifications": not current_settings if field == "edit_notifications" else user.edit_notifications,
-            "delete_notifications": not current_settings if field == "delete_notifications" else user.delete_notifications
-        }
-
-async def update_user(telegram_id: int, **kwargs) -> bool:
-    """
-    Обновить данные пользователя.
-    
-    :param telegram_id: ID пользователя
-    :param kwargs: Поля для обновления
-    :return: True если обновление успешно
-    """
-    async with get_db_session() as session:
-        try:
-            await session.execute(
-                update(User)
-                .where(User.telegram_id == telegram_id)
-                .values(**kwargs)
-            )
-            await session.commit()
-            return True
-        except Exception as e:
-            logger.error(f"Ошибка обновления пользователя: {e}")
-            return False
+        return not current_settings
 
 async def toggle_module(telegram_id: int, module_type: str) -> bool:
     """Переключение состояния модуля"""

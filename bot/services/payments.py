@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 # Инициализация CryptoPay
 crypto = AioCryptoPay(CRYPTO_PAY_API_TOKEN, network=Networks.MAIN_NET)
 
-async def create_invoice(amount: float, user_id: int, bot_username: str = "Spy_ls_Robot") -> dict:
+async def create_invoice(amount: float, user_id: int, bot_username: str) -> dict:
     """Create payment invoice"""
     try:
         invoice = await crypto.create_invoice(

@@ -102,67 +102,16 @@ async def business_connection(event: BusinessConnection):
     except Exception as e:
         logger.error(f"Ошибка при обработке бизнес-подключения: {e}")
 
-@business_router.edited_business_message()
-async def edited_business_message(message: Message):
-    """Обработка отредактированных бизнес-сообщений"""
-    try:
-        # Получаем информацию о подключении
-        connection = await message.bot.get_business_connection(message.business_connection_id)
-        user = await db.get_user(telegram_id=connection.user.id)
-        
-        if not user or not user.edit_notifications:
-            return
-            
-        # Форматируем текст уведомления
-        edited_text = f"✏️ <b>Сообщение изменено!</b>\n\n"
-        edited_text += f"👤 <b>От:</b> {message.from_user.first_name}"
-        
-        if message.from_user.username:
-            edited_text += f" (@{message.from_user.username})\n"
-        else:
-            edited_text += "\n"
-            
-        edited_text += f"📝 <b>Новый текст:</b>\n{message.text}\n\n"
-        
-        # Добавляем информацию о времени
-        edit_time = datetime.now().strftime("%H:%M:%S")
-        edited_text += f"🕒 <b>Время изменения:</b> {edit_time}"
-        
-        # Отправляем уведомление
-        await message.answer(
-            text=edited_text,
-            parse_mode="HTML"
-        )
-        
-        # Обновляем статистику
-        await db.increment_edited_messages_count(user.telegram_id)
-        
-    except Exception as e:
-        logger.error(f"[{datetime.now().strftime('%H:%M:%S')}] Ошибка при обработке измененного сообщения: {e}")
-
 @business_router.business_message()
 async def business_message(message: Message):
-    """Обработка бизнес-сообщений"""
+    """Обработка бизнес-сообщений."""
     try:
         connection = await message.bot.get_business_connection(message.business_connection_id)
         user = await db.get_user(telegram_id=connection.user.id)
         if not user:
             return
-            
-        # Форматируем текст уведомления о новом сообщении
-        msg_text = f"💌 Сообщение от: {message.from_user.first_name}"
-        if message.from_user.username:
-            msg_text += f" (@{message.from_user.username})\n"
-        else:
-            msg_text += "\n"
-            
-        msg_text += f"⤵️ {message.text}"
-        
-        # Обновляем статистику без отправки дополнительного уведомления
-        await db.increment_active_messages_count(user.telegram_id)
-        
-    except Exception as e:
-        logger.error(f"[{datetime.now().strftime('%H:%M:%S')}] Ошибка при обработке сообщения: {e}")
+        text_1 = texts.new_message_text_2(name=connection.user.first_name, user_id=connection.user.id, username=connection.user.username)
+        text_2 = texts.new_message_text(name=message.from_user.first_name, user_id=message.from_user.id, username=message.from_user.username)
 
         update = {}
         if message.entities:
@@ -306,11 +255,6 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
         for message_id in event.message_ids:
                 message_old = await db.get_message(message_id)
                 if message_old:
-                    # Проверяем настройки пользователя
-                    user = await db.get_user(connection.user.id)
-                    if not user.notifications_enabled or not user.delete_notifications:
-                        return
-                        
                     await db.increase_deleted_messages_count(user_telegram_id=connection.user.id)
                     current_time = datetime.now().strftime("%H:%M:%S")
                     username = event.chat.username if event.chat.username else event.chat.first_name
@@ -379,44 +323,28 @@ async def edited_business_message(message: Message):
             return
 
         # Проверяем подписку
-        user = await db.get_user(telegram_id=connection.user.id)
-        subscription = await db.get_subscription(connection.user.id)
+        
 
         message_old = await db.get_message(message.message_id)
-        if message_old and user and subscription:
-            # Проверяем настройки пользователя
-            if not user.notifications_enabled or not user.edit_notifications:
-                return
-                
-            # Получаем имя пользователя и время
-            username = message.from_user.username if message.from_user.username else message.from_user.first_name
-            user_link = f'<a href="tg://user?id={message.from_user.id}">{username}</a>'
-            current_time = datetime.now().strftime("%H:%M:%S")
-                
-            notification_text = f"✏️ {user_link} отредактировал сообщение\n⏰ Время редактирования: {current_time}"
-            await message.bot.send_message(
-                chat_id=connection.user.id,
-                text=notification_text,
-                parse_mode=ParseMode.HTML
-            )
-            
-            # Создаем текст для истории редактирования
-            history_header = f"📝 Отредактированное сообщение\n👤 От: {user_link}\n⏰ Время: {current_time}\n\n"
-            
+        if message_old:
+            text_1 = texts.edited_message_text(name=message.from_user.first_name, user_id=message_old.from_user_id, username=message.from_user.username)
             update = {}
-            if message.caption_entities:
-                update["caption_entities"] = [entity.model_copy(update={"length": entity.length + len(history_header)}) for entity in message.caption_entities]
+            if message.entities:
+                update["entities"] = [entity.model_copy(update={"length": entity.length + len(text_1)}) for entity in message.entities]
+            elif message.caption_entities:
+                update["caption_entities"] = [entity.model_copy(update={"length": entity.length + len(text_1)}) for entity in message.caption_entities]
             if message.caption:
-                update["caption"] = f"{history_header}{message.caption}"
+                update["caption"] = f"{text_1}\n\n{message.caption}"
             elif message.html_text:
-                update["text"] = f"{history_header}{message.html_text}"
+                update["text"] = f"{text_1}\n\n{message.html_text}"
 
             message_copy_model = message.model_copy(update=update)
             temp_message = await message_copy_model.send_copy(chat_id=HISTORY_GROUP_ID, parse_mode=ParseMode.HTML)
 
-            await db.increase_edited_messages_count(user_telegram_id=message_old.user_telegram_id)
-            await db.add_message_edit_history(user_telegram_id=message_old.user_telegram_id, message_id=message.message_id, chat_id=message.chat.id, from_user_id=message.from_user.id, temp_message_id=temp_message.message_id, date=datetime.now())
-            await message.bot.copy_message(chat_id=message_old.user_telegram_id, from_chat_id=HISTORY_GROUP_ID, message_id=temp_message.message_id, reply_markup=kb.get_show_history_message_keyboard(message.message_id))
+            if subscription is not None:
+                await db.increase_edited_messages_count(user_telegram_id=message_old.user_telegram_id)
+                await db.add_message_edit_history(user_telegram_id=message_old.user_telegram_id, message_id=message.message_id, chat_id=message.chat.id, from_user_id=message.from_user.id, temp_message_id=temp_message.message_id, date=datetime.now())
+                await message.bot.copy_message(chat_id=message_old.user_telegram_id, from_chat_id=HISTORY_GROUP_ID, message_id=temp_message.message_id, reply_markup=kb.get_show_history_message_keyboard(message.message_id))
     except Exception as e:
         logger.error(f"Ошибка при обработке измененного сообщения: {e}")
 
