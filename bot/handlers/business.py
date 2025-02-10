@@ -585,7 +585,19 @@ async def edited_business_message(message: Message):
         username = message.from_user.username if message.from_user.username else message.from_user.first_name
         user_link = f'<a href="tg://user?id={message.from_user.id}">{username}</a>'
 
-        # Создаем заголовок сообщения
+        # Получаем старый текст сообщения
+        old_text = message_old.text if hasattr(message_old, 'text') else "Текст не доступен"
+        # Получаем новый текст
+        new_text = message.text if message.text else "Текст не доступен"
+
+        # Создаем текст уведомления
+        edit_text = (
+            f"✏️ Сообщение изменено!\n\n"
+            f"👤 От: {user_link}\n"
+            f"📝 Старый текст:\n{old_text}\n\n"
+            f"📝 Новый текст:\n{new_text}\n\n"
+            f"🕒 Время изменения: {current_time}"
+        ) сообщения
         header = f"📨 От: {message.from_user.first_name}"
         if message.from_user.username:
             header += f" (@{message.from_user.username})"
