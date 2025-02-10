@@ -258,11 +258,8 @@ async def business_message(message: Message):
 
         target_channel = None
         try:
-            if message_type == 'text':
-                channel_index = user.channel_index % len(CHANNELS['text'])
-                target_channel = CHANNELS['text'][channel_index]
-            else:
-                target_channel = CHANNELS[message_type]
+            # Отправляем все сообщения в основной канал для текста
+            target_channel = CHANNELS['text'][0]  # Всегда используем первый текстовый канал
 
             if not target_channel:
                 raise ValueError("Канал не определен")
