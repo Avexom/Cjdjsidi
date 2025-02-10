@@ -75,7 +75,56 @@ async def buy_subscription_handler(message: Message):
 
 @user_router.message(F.text == "⚙️ Функции")
 async def functions_handler(message: Message):
-    await message.answer("Выберите функцию:", reply_markup=kb.functions_keyboard)
+    try:
+        user = await db.get_user(message.from_user.id)
+        if not user:
+            await message.answer("❌ Профиль не найден")
+            return
+            
+        user_settings = {
+            'notifications_enabled': user.notifications_enabled,
+            'edit_notifications': user.edit_notifications,
+            'delete_notifications': user.delete_notifications
+        }
+        await message.answer("Выберите функцию:", reply_markup=kb.get_functions_keyboard(user_settings))
+    except Exception as e:
+        logger.error(f"Ошибка при отображении функций: {e}")
+        await message.answer("❌ Произошла ошибка при загрузке функций")
+
+@user_router.callback_query(lambda c: c.data.startswith("toggle_"))
+async def toggle_function_handler(callback: CallbackQuery):
+    try:
+        function_type = callback.data.replace("toggle_", "")
+        user = await db.get_user(callback.from_user.id)
+        if not user:
+            await callback.answer("❌ Профиль не найден")
+            return
+
+        new_state = await db.toggle_notification(callback.from_user.id, function_type)
+        
+        user_settings = {
+            'notifications_enabled': user.notifications_enabled,
+            'edit_notifications': user.edit_notifications,
+            'delete_notifications': user.delete_notifications
+        }
+        
+        # Обновляем состояние для конкретной функции
+        if function_type == "all_notifications":
+            user_settings['notifications_enabled'] = new_state
+        elif function_type == "edit_tracking":
+            user_settings['edit_notifications'] = new_state
+        elif function_type == "delete_tracking":
+            user_settings['delete_notifications'] = new_state
+            
+        await callback.message.edit_text(
+            "Выберите функцию:",
+            reply_markup=kb.get_functions_keyboard(user_settings)
+        )
+        await callback.answer(f"{'✅ Включено' if new_state else '❌ Выключено'}")
+        
+    except Exception as e:
+        logger.error(f"Ошибка при переключении функции: {e}")
+        await callback.answer("❌ Произошла ошибка")
 
 @user_router.message(F.text == "📱 Модули")
 async def modules_handler(message: Message):
