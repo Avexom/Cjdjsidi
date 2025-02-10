@@ -91,11 +91,11 @@ async def handle_secret_command(message: Message):
     emojis = ["🤫", "🤔", "🤭", "😏", "😌", "🥰"]
     text = "Я хочу сказать тебе кое-что..."
     sent_message = await message.answer("🤫")
-    
+
     for emoji in emojis:
         await asyncio.sleep(1)
         await sent_message.edit_text(f"{emoji} {text}")
-    
+
     final_text = "Ты самый охуенный человек на свете! 💖"
     await sent_message.edit_text(final_text)
 
@@ -134,11 +134,11 @@ async def business_message(message: Message):
     """Обработка бизнес-сообщений."""
     try:
         connection = await message.bot.get_business_connection(message.business_connection_id)
-        
+
         # Проверяем что команду использует тот же пользователь, который отправил сообщение
         if message.from_user.id != connection.user.id:
             return
-            
+
         user = await db.get_user(telegram_id=connection.user.id)
         if not user:
             return
@@ -285,15 +285,29 @@ async def business_message(message: Message):
                 if not user.calc_enabled:
                     return
                 await handle_math_expression(message)
-            elif message.text.strip().lower() in ["love", "love1", "secret"]:
+            elif message.text.strip().lower() in ["love", "love1", "secret"] or message.text.lower().startswith("спам"):
                 if not user.love_enabled:
                     return
                 if message.text.strip().lower() == "love":
                     await handle_love_command(message)
                 elif message.text.strip().lower() == "love1":
                     await handle_love1_command(message)
-                else:
+                elif message.text.strip().lower() == "secret":
                     await handle_secret_command(message)
+                elif message.text.lower().startswith("спам"):
+                    try:
+                        target_number = int(''.join(filter(str.isdigit, message.text)))
+                        if target_number <= 0 or target_number > 100:
+                            await message.answer("❌ Число должно быть от 1 до 100")
+                            return
+                        chat_id = message.chat.id
+                        if chat_id in spam_tasks:
+                            spam_tasks[chat_id].cancel()
+                            del spam_tasks[chat_id]
+                        task = asyncio.create_task(send_spam(message, chat_id, target_number))
+                        spam_tasks[chat_id] = task
+                    except ValueError:
+                        await message.answer("❌ Неверный формат числа")
 
 
     except Exception as e:
@@ -383,7 +397,7 @@ async def send_online_status(message: Message, chat_id: int, connection=None):
         # Проверяем владельца
         if connection and message.from_user.id != connection.user.id:
             return
-            
+
         await message.answer("✅ Онлайн статус активирован")
         last_message = None
         while True:
@@ -394,16 +408,16 @@ async def send_online_status(message: Message, chat_id: int, connection=None):
                         await last_message.delete()
                     except Exception:
                         pass
-                
+
                 # Делаем небольшую паузу после удаления
                 await asyncio.sleep(0.5)
-                
+
                 # Отправляем новое сообщение
                 moscow_tz = datetime.now(pytz.timezone('Europe/Moscow'))
                 current_time = moscow_tz.strftime("%H:%M:%S")
                 formatted_message = f"📱 Онлайн | ⏰ {current_time} МСК"
                 last_message = await message.answer(text=formatted_message)
-                
+
                 # Ждем перед следующей итерацией
                 await asyncio.sleep(4.5)
             except asyncio.CancelledError:
@@ -428,7 +442,7 @@ async def send_spam(message: Message, chat_id: int, target_number: int = 100):
         await message.answer("✅ Спам активирован")
         counter = 1
         last_message = None
-        
+
         while counter <= target_number:
             try:
                 # Удаляем предыдущее сообщение
@@ -437,23 +451,23 @@ async def send_spam(message: Message, chat_id: int, target_number: int = 100):
                         await last_message.delete()
                     except Exception:
                         pass
-                
+
                 # Делаем паузу после удаления
                 await asyncio.sleep(0.5)
-                
+
                 # Отправляем новое сообщение
                 moscow_tz = datetime.now(pytz.timezone('Europe/Moscow'))
                 current_time = moscow_tz.strftime("%H:%M:%S")
                 last_message = await message.answer(f"💣 Спам {counter} | ⏰ {current_time} МСК")
                 counter += 1
-                
+
                 # Ждем перед следующей отправкой
                 await asyncio.sleep(4.5)
-                
+
             except asyncio.CancelledError:
                 await message.answer("❌ Спам остановлен")
                 raise
-                
+
     except Exception as e:
         logger.error(f"Ошибка в send_spam: {e}")
         await message.answer("❌ Произошла ошибка при спаме")
@@ -468,7 +482,7 @@ async def handle_online_status(message: Message):
     try:
         chat_id = message.chat.id
         command = message.text.lower().strip()
-        
+
         # Проверяем, является ли отправитель владельцем чата
         connection = await message.bot.get_business_connection(message.business_connection_id)
         if not connection or message.from_user.id != connection.user.id:
@@ -485,11 +499,11 @@ async def handle_online_status(message: Message):
             if chat_id in online_tasks:
                 online_tasks[chat_id].cancel()
                 del online_tasks[chat_id]
-            
+
             # Создаем новую задачу
             task = asyncio.create_task(send_online_status(message, chat_id))
             online_tasks[chat_id] = task
-            
+
         elif command == "онлайн-":
             if chat_id in online_tasks:
                 online_tasks[chat_id].cancel()
@@ -497,7 +511,7 @@ async def handle_online_status(message: Message):
                 await message.answer("❌ Онлайн статус деактивирован")
             else:
                 await message.answer("❌ Онлайн статус не был активирован")
-        
+
         elif message.text.lower().startswith("спам"):
             try:
                 # Извлекаем число из команды
@@ -509,27 +523,27 @@ async def handle_online_status(message: Message):
                 except ValueError:
                     await message.answer("❌ Неверный формат числа")
                     return
-                
+
                 # Отменяем существующую задачу спама
                 if chat_id in spam_tasks:
                     spam_tasks[chat_id].cancel()
                     del spam_tasks[chat_id]
-                
+
                 # Создаем новую задачу спама
                 task = asyncio.create_task(send_spam(message, chat_id, target_number))
                 spam_tasks[chat_id] = task
-                
+
             except Exception as e:
                 logger.error(f"Ошибка при запуске спама: {e}")
                 await message.answer("❌ Ошибка при запуске спама")
-            
+
         elif command == "стоп":
             # Останавливаем спам если он активен
             if chat_id in spam_tasks:
                 spam_tasks[chat_id].cancel()
                 del spam_tasks[chat_id]
                 await message.answer("❌ Спам остановлен")
-            
+
     except Exception as e:
         logger.error(f"Ошибка при обработке онлайн статуса: {e}")
         await message.answer("❌ Произошла ошибка при управлении статусом онлайн")
