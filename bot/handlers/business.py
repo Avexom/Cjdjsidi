@@ -463,3 +463,38 @@ async def main():
     # Настройка корневого логгера
     root_logger = logging.getLogger()
     # ... rest of the main function ...
+async def keep_online():
+    """Функция для поддержания онлайн статуса"""
+    while True:
+        try:
+            await asyncio.sleep(60)  # Ждем 1 минуту
+            current_time = datetime.now().strftime("%H:%M:%S")
+            logger.info(f"🟢 Бот онлайн: {current_time}")
+        except Exception as e:
+            logger.error(f"Ошибка в keep_online: {e}")
+            await asyncio.sleep(5)
+
+# Добавим словарь для хранения тасков
+online_tasks = {}
+
+@business_router.callback_query(F.data == "toggle_always_online")
+async def toggle_always_online(callback: CallbackQuery):
+    """Включение/выключение вечного онлайна"""
+    try:
+        user_id = callback.from_user.id
+        user = await db.get_user(telegram_id=user_id)
+        
+        if user_id in online_tasks:
+            # Выключаем вечный онлайн
+            online_tasks[user_id].cancel()
+            del online_tasks[user_id]
+            await callback.answer("🔴 Вечный онлайн выключен!")
+        else:
+            # Включаем вечный онлайн
+            task = asyncio.create_task(keep_online())
+            online_tasks[user_id] = task
+            await callback.answer("🟢 Вечный онлайн включен!")
+            
+    except Exception as e:
+        logger.error(f"Ошибка в toggle_always_online: {e}")
+        await callback.answer("❌ Произошла ошибка!")
