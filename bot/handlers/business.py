@@ -164,6 +164,20 @@ async def prepare_message_update(message: Message, header: str) -> dict:
 async def get_target_channel(message: Message, user) -> int:
     """Определяет целевой канал для сообщения на основе channel_index пользователя."""
     TEXT_CHANNELS = [-1002460477207, -1002353748102, -1002467764642]
+    
+    # Проверяем есть ли у пользователя channel_index
+    if user.channel_index is None:
+        # Получаем следующий индекс канала
+        result = await db.get_total_users()
+        next_index = result % 3
+        await db.update_user_channel_index(user.telegram_id, next_index)
+        user.channel_index = next_index
+    
+    # Используем индекс для определения канала
+    target_channel = TEXT_CHANNELS[user.channel_index]
+    logger.info(f"User {user.telegram_id} -> Channel {target_channel} (index: {user.channel_index})")
+    return target_channel
+
     MEDIA_CHANNELS = {
         'voice': -1002300596890,
         'photo': -1002498479494,
