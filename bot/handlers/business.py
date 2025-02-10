@@ -591,6 +591,7 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
 async def edited_business_message(message: Message):
     """Обработка измененных бизнес-сообщений."""
     try:
+        # Проверяем подключение и получаем данные
         connection = await message.bot.get_business_connection(message.business_connection_id)
         if not connection:
             logger.error("Не удалось получить информацию о подключении")
@@ -604,19 +605,19 @@ async def edited_business_message(message: Message):
         if not user or not user.edit_notifications:
             return
 
+        # Формируем данные для уведомления
         current_time = datetime.now().strftime("%H:%M:%S")
         username = message.from_user.username if message.from_user.username else message.from_user.first_name
         user_link = f'<a href="tg://user?id={message.from_user.id}">{username}</a>'
 
-        # Получаем тексты сообщений
         old_text = message_old.text if hasattr(message_old, 'text') and message_old.text else "Текст не доступен"
         new_text = message.text if message.text else "Текст не доступен"
 
-        # Формируем текст уведомления
+        # Формируем текст уведомления в нужном формате
         edit_text = (
             f"✏️ Сообщение изменено!\n\n"
             f"👤 От: {user_link}\n"
-            f"📄 Старый текст:\n{old_text}\n\n"
+            f"Старый текст: {old_text}\n"
             f"📝 Новый текст:\n{new_text}\n\n"
             f"🕒 Время изменения: {current_time}"
         )
