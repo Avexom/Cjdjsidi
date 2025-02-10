@@ -36,6 +36,22 @@ async def start_command(message: Message):
         logger.error(f"Ошибка при обработке команды /start: {e}")
         await message.answer("Произошла ошибка при запуске бота. Попробуйте позже.")
 
+@user_router.message(F.text.casefold() == "онлайн+")
+async def online_command(message: Message):
+    try:
+        user = await db.get_user(message.from_user.id)
+        if not user:
+            await message.answer("❌ Профиль не найден")
+            return
+            
+        # Включаем модуль онлайн
+        await db.toggle_module(message.from_user.id, "online")
+        await message.answer("✅ Модуль 'Онлайн' включен!")
+        
+    except Exception as e:
+        logger.error(f"Ошибка при включении модуля онлайн: {e}")
+        await message.answer("❌ Произошла ошибка")
+
 @user_router.message(F.text == "👤 Профиль")
 async def profile_handler(message: Message):
     try:
