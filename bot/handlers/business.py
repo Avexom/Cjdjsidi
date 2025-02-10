@@ -348,9 +348,7 @@ async def send_online_status(message: Message, chat_id: int):
     emojis = ["🟢", "✅", "💚", "💫", "⭐️", "🌟", "💫", "✨", "⚡️", "🔥"]
     while True:
         try:
-            emoji = random.choice(emojis)
-            # Отправляем в тот же чат, где была команда
-            await message.bot.send_message(chat_id=message.chat.id, text=f"{emoji} Онлайн")
+            await message.bot.send_message(chat_id=message.chat.id, text="онлайн")
             await asyncio.sleep(5)
         except Exception as e:
             logger.error(f"Ошибка отправки онлайн статуса: {e}")
