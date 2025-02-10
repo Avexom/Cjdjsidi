@@ -150,19 +150,13 @@ async def business_message(message: Message):
             return
             
         # Форматируем текст уведомления о новом сообщении
-        msg_text = f"📨 <b>Новое сообщение!</b>\n\n"
-        msg_text += f"👤 <b>От:</b> {message.from_user.first_name}"
-        
+        msg_text = f"💌 Сообщение от: {message.from_user.first_name}"
         if message.from_user.username:
             msg_text += f" (@{message.from_user.username})\n"
         else:
             msg_text += "\n"
             
-        msg_text += f"💭 <b>Текст:</b>\n{message.text}\n\n"
-        
-        # Добавляем время отправки
-        send_time = datetime.now().strftime("%H:%M:%S")
-        msg_text += f"🕒 <b>Время:</b> {send_time}"
+        msg_text += f"⤵️ {message.text}"
         
         # Отправляем уведомление
         await message.answer(
