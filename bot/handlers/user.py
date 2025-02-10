@@ -132,11 +132,11 @@ async def toggle_function_handler(callback: CallbackQuery):
         }
         
         # Обновляем состояние для конкретной функции
-        if function_type == "all_notifications":
+        if function_type == "all":
             user_settings['notifications_enabled'] = new_state
-        elif function_type == "edit_tracking":
+        elif function_type == "edit":
             user_settings['edit_notifications'] = new_state
-        elif function_type == "delete_tracking":
+        elif function_type == "delete":
             user_settings['delete_notifications'] = new_state
             
         try:
