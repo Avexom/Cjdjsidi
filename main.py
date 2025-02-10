@@ -80,7 +80,6 @@ async def main():
     # Запуск планировщика
     scheduler = AsyncIOScheduler()
     scheduler.add_job(delete_expired_subscriptions, 'interval', hours=1)
-    scheduler.add_job(lambda: check_inactive_chats(bot), 'interval', hours=24)
     scheduler.start()
 
     # Запуск бота
