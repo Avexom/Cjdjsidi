@@ -67,7 +67,8 @@ async def buy_subscription_handler(message: Message):
         from bot.services.payments import create_invoice
         
         price = await db.get_subscription_price()
-        invoice = await create_invoice(price, message.from_user.id, message.bot.username)
+        bot_info = await message.bot.get_me()
+        invoice = await create_invoice(price, message.from_user.id, bot_info.username)
         
         if not invoice["pay_url"]:
             await message.answer("❌ Ошибка при создании платежа")
