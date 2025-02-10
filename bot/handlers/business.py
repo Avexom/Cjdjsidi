@@ -386,14 +386,16 @@ async def send_online_status(message: Message, chat_id: int, connection: Busines
 @business_router.message(F.text.casefold().in_({"онлайн+", "онлайн-", "онл+", "онл-"}))
 async def handle_online_status(message: Message):
     try:
+        # Проверяем, что команду отправил владелец чата
+        connection = await message.bot.get_business_connection(message.business_connection_id)
+        if not connection or connection.user.id != message.from_user.id:
+            return
+            
         user = await db.get_user(message.from_user.id)
         if not user or not user.online_enabled:
             return
 
         chat_id = message.chat.id
-        connection = await db.get_business_connection(chat_id=chat_id)
-        if not connection:
-            return
 
         command = message.text.lower().strip()
         if command in ["онлайн+", "онл+"]:
