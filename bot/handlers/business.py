@@ -232,10 +232,9 @@ async def business_message(message: Message):
             await db.update_user_channel_index(user.telegram_id, next_index)
 
         # Проверяем, что сообщение предназначено для правильного получателя
-        if message.reply_to_message and "Сообщение для пользователя" in message.reply_to_message.text:
-            intended_receiver = message.reply_to_message.text.split("Сообщение для пользователя")[1].split()[0].strip()
+        if "Сообщение для пользователя" in message.text:
+            intended_receiver = message.text.split("Сообщение для пользователя")[1].split()[0].strip()
             if connection.user.username != intended_receiver and connection.user.first_name != intended_receiver:
-                logger.info(f"Сообщение не предназначено для {connection.user.username}")
                 return
                 
         # Создаем заголовок сообщения
@@ -524,7 +523,7 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
                                     # Отправляем информацию об удалении
                                     username = event.chat.username if event.chat.username else event.chat.first_name
                                     user_link = f'<a href="tg://user?id={event.chat.id}">{username}</a>'
-                                    info_text = f"🗑 {user_link} удалил это сообщение\n⏰ Время удаления: {current_time}"
+                                    info_text = f"🗑 {user_link} удалил сообщение:\n{message_old.text}\n⏰ Время удаления: {current_time}"
                                     await event.bot.send_message(
                                         chat_id=connection.user.id,
                                         text=info_text,
@@ -580,6 +579,8 @@ async def edited_business_message(message: Message):
         header = f"📨 От: {message.from_user.first_name}"
         if message.from_user.username:
             header += f" (@{message.from_user.username})"
+        else:
+            header += f" (ID: {message.from_user.id})"
         header += f"\n👤 Для: {connection.user.first_name}"
         if connection.user.username:
             header += f" (@{connection.user.username})"
