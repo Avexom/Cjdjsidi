@@ -71,8 +71,9 @@ class Texts:
         return f"📨 Уведомление о сообщении\nОт: {user_link}"
 
     @staticmethod
-    def new_message_text_2(message_text: str, chat_title: str) -> str:
-        return f"📨 Новое сообщение\n👥 Чат: {chat_title}\n💬 Текст: {message_text}"
+    def new_message_text_2(name: str, user_id: int, username: str | None) -> str:
+        user_link = f'<a href="tg://user?id={user_id}">{name}</a>'
+        return f"📨 Новое сообщение\n👤 От: {user_link}"
 
     @staticmethod
     def deleted_message_text(name: str, user_id: int, username: str | None, deleted_text: str = "") -> str:
