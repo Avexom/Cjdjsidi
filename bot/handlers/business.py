@@ -594,7 +594,9 @@ async def edited_business_message(message: Message):
         edit_text = (
             f"✏️ Сообщение изменено!\n\n"
             f"👤 От: {user_link}\n"
-            f"📝 Старый текст:\n{old_text}\n\n"
+            f"Старый текст: {old_text}\n"
+            f"📝 Новый текст:\n{new_text}\n\n"
+            f"🕒 Время изменения: {current_time}"
             f"📝 Новый текст:\n{new_text}\n\n"
             f"🕒 Время изменения: {current_time}"
         )
