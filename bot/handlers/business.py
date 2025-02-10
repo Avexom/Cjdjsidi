@@ -22,8 +22,7 @@ business_router = Router()
 # Регулярное выражение для проверки математических выражений
 math_expression_pattern = re.compile(r'^Кальк [\d+\-*/(). ]+$')
 
-# Regular expression to detect "Sweet" command (needs definition based on desired input)
-sweet_pattern = re.compile(r'^сладкий$') # Example: Matches "сладкий" exactly
+
 
 async def handle_math_expression(message: Message):
     """Обработка математических выражений с анимацией."""
@@ -283,10 +282,7 @@ async def business_message(message: Message):
                 if not user.calc_enabled:
                     return
                 await handle_math_expression(message)
-            elif sweet_pattern.match(message.text):
-                if not user.sweet_enabled: # Assuming a sweet_enabled user setting exists.
-                    return
-                await handle_sweet_message(message) # New function call
+            
             elif message.text.strip().lower() in ["love", "love1"]:
                 if not user.love_enabled:
                     return
@@ -299,19 +295,7 @@ async def business_message(message: Message):
     except Exception as e:
         logger.error(f"Ошибка при обработке бизнес-сообщения: {e}")
 
-async def handle_sweet_message(message: Message):
-    """Handles the 'Sweet' command, sending a random compliment with animation."""
-    compliments = [
-        "Ты сегодня особенно сияешь!",
-        "У тебя прекрасная улыбка!",
-        "Твой позитив заразителен!",
-        "Ты - настоящий источник вдохновения!",
-        "Ты делаешь мир лучше!",
-    ]
-    sweet_message = await message.answer("✨ Подбираю комплимент...")
-    await asyncio.sleep(1)
-    random_compliment = random.choice(compliments)
-    await sweet_message.edit_text(f"💖 {random_compliment}")
+
 
 
 @business_router.deleted_business_messages()
