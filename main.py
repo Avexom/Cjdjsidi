@@ -26,9 +26,9 @@ def setup_logger(name: str, level=logging.INFO) -> logging.Logger:
     return logger
 
 # Настраиваем логгеры
-logger = setup_logger('bot')
+logger = setup_logger('bot', level=logging.DEBUG)
 for log_name in ['aiogram', 'aiosqlite', 'apscheduler']:
-    setup_logger(log_name)
+    setup_logger(log_name, level=logging.DEBUG)
 
 from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
