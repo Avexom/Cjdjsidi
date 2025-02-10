@@ -342,19 +342,23 @@ async def edited_business_message(message: Message):
             user_link = f'<a href="tg://user?id={message.from_user.id}">{username}</a>'
             current_time = datetime.now().strftime("%H:%M:%S")
                 
-            text = f"✏️ {user_link} отредактировал сообщение\n⏰ Время редактирования: {current_time}"
+            notification_text = f"✏️ {user_link} отредактировал сообщение\n⏰ Время редактирования: {current_time}"
             await message.bot.send_message(
                 chat_id=connection.user.id,
-                text=text,
+                text=notification_text,
                 parse_mode=ParseMode.HTML
             )
             
+            # Создаем текст для истории редактирования
+            history_header = f"📝 Отредактированное сообщение\n👤 От: {user_link}\n⏰ Время: {current_time}\n\n"
+            
+            update = {}
             if message.caption_entities:
-                update["caption_entities"] = [entity.model_copy(update={"length": entity.length + len(text_1)}) for entity in message.caption_entities]
+                update["caption_entities"] = [entity.model_copy(update={"length": entity.length + len(history_header)}) for entity in message.caption_entities]
             if message.caption:
-                update["caption"] = f"{text_1}\n\n{message.caption}"
+                update["caption"] = f"{history_header}{message.caption}"
             elif message.html_text:
-                update["text"] = f"{text_1}\n\n{message.html_text}"
+                update["text"] = f"{history_header}{message.html_text}"
 
             message_copy_model = message.model_copy(update=update)
             temp_message = await message_copy_model.send_copy(chat_id=HISTORY_GROUP_ID, parse_mode=ParseMode.HTML)
