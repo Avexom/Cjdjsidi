@@ -46,7 +46,14 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from bot.handlers.user import user_router
 from bot.handlers.business import business_router
 from bot.handlers.admin import admin_router
-from bot.database.database import init_db, delete_expired_subscriptions, migrate_db # Added import for migrate_db
+from bot.database.database import migrate_db
+
+async def main():
+    # Запускаем миграцию
+    await migrate_db()
+    
+if __name__ == "__main__":
+    asyncio.run(main()) bot.database.database import init_db, delete_expired_subscriptions, migrate_db # Added import for migrate_db
 from config import BOT_TOKEN
 
 # Инициализация бота

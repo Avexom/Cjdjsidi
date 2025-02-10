@@ -410,6 +410,10 @@ async def migrate_db():
             await conn.execute(text("ALTER TABLE users ADD COLUMN username TEXT"))
             logger.info("Added username column to users table")
 
+        if 'first_name' not in columns:
+            await conn.execute(text("ALTER TABLE users ADD COLUMN first_name TEXT"))
+            logger.info("Added first_name column to users table")
+
         if 'created_at' not in columns:
             await conn.execute(text("ALTER TABLE users ADD COLUMN created_at TIMESTAMP"))
             logger.info("Added created_at column to users table")
