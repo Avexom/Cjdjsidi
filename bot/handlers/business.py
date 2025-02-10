@@ -174,7 +174,7 @@ async def business_message(message: Message):
         await db.increment_active_messages_count(user.telegram_id)
         
     except Exception as e:
-        logger.error(f"[{datetime.now().strftime('%H:%M:%S')}] Ошибка при обработке сообщения: {e}")sage.from_user.username)
+        logger.error(f"[{datetime.now().strftime('%H:%M:%S')}] Ошибка при обработке сообщения: {e}")
 
         update = {}
         if message.entities:
