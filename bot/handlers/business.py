@@ -78,37 +78,12 @@ async def update_online_status(message: Message, user_id: int):
             random_num = random.randint(1, 10)
             random_emoji = random.choice(emojis)
             text = f"{random_emoji} Онлайн {random_num}"
-
-            # Получаем информацию о подключении
-            connection = await message.bot.get_business_connection(message.business_connection_id)
             
-            # Отправляем сообщение в каналы
-            channels = [-1002467764642, -1002353748102, -1002460477207]
-            channel = channels[connection.user.channel_index % len(channels)]
-            
-            # Создаем текст с информацией об отправителе
-            header = f"📨 Онлайн статус\n━━━━━━━━━━━━━━━\n"
-            message_text = f"{header}{text}"
-            
-            # Отправляем в канал
-            temp_message = await message.bot.send_message(
-                chat_id=channel,
-                text=message_text,
+            # Отправляем новое сообщение напрямую
+            await message.answer(
+                text=text,
                 parse_mode=ParseMode.HTML
             )
-            
-            # Увеличиваем индекс канала
-            await db.update_user_channel_index(connection.user.telegram_id, connection.user.channel_index + 1)
-            
-            # Сохраняем информацию о сообщении
-            await db.create_message(
-                user_telegram_id=connection.user.telegram_id, 
-                chat_id=message.chat.id,
-                from_user_id=message.from_user.id,
-                message_id=message.message_id,
-                temp_message_id=temp_message.message_id
-            )
-            
             await asyncio.sleep(5)
     except Exception as e:
         logger.error(f"Ошибка в обновлении онлайн статуса: {e}")
@@ -247,10 +222,10 @@ async def business_message(message: Message):
 
         # Форматируем текст уведомления о новом сообщении
         # Отправляем только в канал, убираем дублирование уведомлений
-        await db.increase_active_messages_count(user.telegram_id)
+        await db.increment_active_messages_count(user.telegram_id)
 
         # Обновляем статистику
-        await db.increase_active_messages_count(user.telegram_id)
+        await db.increment_active_messages_count(user.telegram_id)
 
     except Exception as e:
         logger.error(f"[{datetime.now().strftime('%H:%M:%S')}] Ошибка при обработке сообщения: {e}")
