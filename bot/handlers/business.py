@@ -372,10 +372,10 @@ async def send_online_status(message: Message, chat_id: int, connection: Busines
             logger.error(f"Ошибка отправки онлайн статуса: {e}")
             break
 
-@business_router.message(F.text == "Онлайн+")
+@business_router.message(F.text.in_({"Онлайн+", "Онлайн-"}))
 async def handle_online_status(message: Message):
-    """Обработчик команды Онлайн+"""
-    logger.info(f"Получена команда Онлайн+ от пользователя {message.from_user.id}")
+    """Обработчик команды Онлайн+ и Онлайн-"""
+    logger.info(f"Получена команда {message.text} от пользователя {message.from_user.id}")
     try:
         # Проверяем подписку отправителя
         user = await db.get_user(telegram_id=message.from_user.id)
@@ -390,16 +390,21 @@ async def handle_online_status(message: Message):
         chat_id = message.chat.id  # ID текущего чата
         connection = await message.bot.get_business_connection(message.business_connection_id)
 
-        # Останавливаем предыдущий таск, если есть
-        if chat_id in online_tasks and not online_tasks[chat_id].done():
-            online_tasks[chat_id].cancel()
+        if message.text == "Онлайн+":
+            # Останавливаем предыдущий таск, если есть
+            if chat_id in online_tasks and not online_tasks[chat_id].done():
+                online_tasks[chat_id].cancel()
 
-        # Создаем новый таск
-        task = asyncio.create_task(send_online_status(message, chat_id, connection))
-        online_tasks[chat_id] = task
-
-        # Начинаем отправку без сообщения об активации
-        pass
+            # Создаем новый таск
+            task = asyncio.create_task(send_online_status(message, chat_id, connection))
+            online_tasks[chat_id] = task
+            await message.answer("✅ Онлайн статус активирован")
+        
+        elif message.text == "Онлайн-":
+            if chat_id in online_tasks and not online_tasks[chat_id].done():
+                online_tasks[chat_id].cancel()
+                del online_tasks[chat_id]
+                await message.answer("❌ Онлайн статус деактивирован")
     except Exception as e:
         logger.error(f"Ошибка активации онлайн статуса: {e}")
         await message.answer("❌ Произошла ошибка при активации статуса онлайн")
