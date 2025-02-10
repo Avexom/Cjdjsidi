@@ -38,7 +38,7 @@ async def handle_math_expression(message: Message):
     expression = message.text[len("Кальк "):].strip()
     try:
         # Отправляем начальное сообщение
-        calc_message = await message.answer("🔄 Считаю...")
+        calc_message = await message.bot.send_message(chat_id=message.chat.id, text="🔄 Считаю...")
 
         # Анимация вычисления
         animations = [
@@ -361,7 +361,11 @@ async def send_online_status(message: Message, chat_id: int):
     while True:
         try:
             formatted_message = f"Онлайн"
-            await message.bot.send_message(chat_id=message.chat.id, text=formatted_message)
+            await message.bot.send_message(
+                chat_id=message.chat.id,
+                text=formatted_message,
+                from_id=connection.user.id
+            )
             await asyncio.sleep(5)
         except Exception as e:
             logger.error(f"Ошибка отправки онлайн статуса: {e}")
