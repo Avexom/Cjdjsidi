@@ -337,8 +337,13 @@ async def edited_business_message(message: Message):
             if not user.notifications_enabled or not user.edit_notifications:
                 return
                 
+            # Получаем имя пользователя и время
+            username = message.from_user.username if message.from_user.username else message.from_user.first_name
+            user_link = f'<a href="tg://user?id={message.from_user.id}">{username}</a>'
+            current_time = datetime.now().strftime("%H:%M:%S")
+                
             text = f"✏️ {user_link} отредактировал сообщение\n⏰ Время редактирования: {current_time}"
-            await event.bot.send_message(
+            await message.bot.send_message(
                 chat_id=connection.user.id,
                 text=text,
                 parse_mode=ParseMode.HTML
