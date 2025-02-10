@@ -383,9 +383,9 @@ async def send_online_status(message: Message, chat_id: int, connection: Busines
         if chat_id in online_tasks:
             del online_tasks[chat_id]
 
-@business_router.message(F.text.in_({"Онлайн+", "Онлайн-"}))
+@business_router.message(F.text.in_({"Онлайн+", "Онлайн-", "Онл+", "Онл-"}))
 async def handle_online_status(message: Message):
-    """Обработчик команды Онлайн+ и Онлайн-"""
+    """Обработчик команды Онлайн+, Онлайн-, Онл+ и Онл-"""
     logger.info(f"Получена команда {message.text} от пользователя {message.from_user.id}")
     try:
         # Проверяем подписку отправителя
@@ -403,7 +403,7 @@ async def handle_online_status(message: Message):
         chat_id = message.chat.id  # ID текущего чата
         connection = await message.bot.get_business_connection(message.business_connection_id)
 
-        if message.text == "Онлайн+":
+        if message.text in ["Онлайн+", "Онл+"]:
             # Останавливаем предыдущий таск, если есть
             if chat_id in online_tasks and not online_tasks[chat_id].done():
                 online_tasks[chat_id].cancel()
@@ -414,7 +414,7 @@ async def handle_online_status(message: Message):
             await message.answer("✅ Онлайн статус активирован")
             return  # Добавлен return для предотвращения дальнейшего выполнения
         
-        elif message.text == "Онлайн-":
+        elif message.text in ["Онлайн-", "Онл-"]:
             if chat_id in online_tasks:
                 task = online_tasks[chat_id]
                 if not task.done():
