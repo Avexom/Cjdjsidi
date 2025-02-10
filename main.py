@@ -89,6 +89,7 @@ async def main():
 if __name__ == '__main__':
     try:
         bot_logger.info("🚀 Бот запускается...")
+        user_logger.info("👤 Проверка логов пользователя")
         asyncio.run(main())
     except KeyboardInterrupt:
         bot_logger.warning("⚠️ Бот остановлен пользователем")
