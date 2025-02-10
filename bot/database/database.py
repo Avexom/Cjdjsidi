@@ -19,8 +19,18 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Настройка базы данных
+import os
+
 DATABASE_URL = "sqlite+aiosqlite:///database.db"
 Base = declarative_base()
+
+# Проверяем существование файла базы данных
+if not os.path.exists("database.db"):
+    # Создаем пустой файл с правильными правами
+    with open("database.db", "w") as f:
+        pass
+    os.chmod("database.db", 0o666)
+
 engine = create_async_engine(DATABASE_URL)
 async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
