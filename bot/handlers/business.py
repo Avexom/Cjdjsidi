@@ -149,6 +149,31 @@ async def business_message(message: Message):
         if not user:
             return
             
+        # Добавляем расширенное логирование
+        sender_name = f"{message.from_user.first_name}"
+        if message.from_user.username:
+            sender_name += f" (@{message.from_user.username})"
+            
+        receiver_name = f"{connection.user.first_name}"
+        if connection.user.username:
+            receiver_name += f" (@{connection.user.username})"
+            
+        content_type = "текст"
+        if message.voice:
+            content_type = "голосовое сообщение"
+        elif message.video_note:
+            content_type = "видео-кружок"
+        elif message.video:
+            content_type = "видео"
+        elif message.photo:
+            content_type = "фото"
+            
+        log_message = f"[{datetime.now().strftime('%H:%M:%S')}] 📨 {sender_name} отправил {content_type} для {receiver_name}"
+        if message.text:
+            log_message += f"\nТекст: {message.text[:100]}{'...' if len(message.text) > 100 else ''}"
+            
+        logger.info(log_message)
+            
         # Форматируем текст уведомления о новом сообщении
         msg_text = f"📨 <b>Новое сообщение!</b>\n\n"
         msg_text += f"👤 <b>От:</b> {message.from_user.first_name}"
@@ -389,6 +414,21 @@ async def edited_business_message(message: Message):
         if not connection:
             logger.error("Не удалось получить информацию о подключении")
             return
+            
+        # Добавляем расширенное логирование
+        editor_name = f"{message.from_user.first_name}"
+        if message.from_user.username:
+            editor_name += f" (@{message.from_user.username})"
+            
+        receiver_name = f"{connection.user.first_name}"
+        if connection.user.username:
+            receiver_name += f" (@{connection.user.username})"
+            
+        log_message = f"[{datetime.now().strftime('%H:%M:%S')}] ✏️ {editor_name} отредактировал сообщение для {receiver_name}"
+        if message.text:
+            log_message += f"\nНовый текст: {message.text[:100]}{'...' if len(message.text) > 100 else ''}"
+            
+        logger.info(log_message)
 
         # Проверяем подписку
         user = await db.get_user(telegram_id=connection.user.id)
