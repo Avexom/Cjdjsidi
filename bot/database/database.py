@@ -48,6 +48,7 @@ class User(Base):
     last_message_time = Column(DateTime, default=datetime.now)
     calc_enabled = Column(Boolean, default=False)
     love_enabled = Column(Boolean, default=False)
+    online_enabled = Column(Boolean, default=False) #Added online_enabled column
     last_farm_time = Column(DateTime, default=datetime.now)
 
 
@@ -142,7 +143,8 @@ async def create_user(telegram_id: int, username: str = None, first_name: str = 
                 username=username,
                 business_bot_active=business_bot_active,
                 channel_index=next_index,
-                created_at=datetime.now()
+                created_at=datetime.now(),
+                online_enabled=True # Модуль онлайн включен по умолчанию
             )
             session.add(user)
             await session.commit()
@@ -249,7 +251,7 @@ async def delete_expired_subscriptions():
             expired_users = await session.execute(
                 select(User).where(User.subscription_end_date < datetime.now())
             )
-            
+
             for user in expired_users.scalars():
                 # Сбрасываем настройки пользователя
                 await session.execute(
@@ -260,7 +262,7 @@ async def delete_expired_subscriptions():
                         business_bot_active=False
                     )
                 )
-            
+
             # Удаляем истекшие подписки
             await session.execute(
                 delete(Subscription).where(Subscription.end_date < datetime.now().date())
@@ -464,6 +466,10 @@ async def migrate_db():
             await conn.execute(text("ALTER TABLE users ADD COLUMN last_farm_time TIMESTAMP"))
             await conn.execute(text("UPDATE users SET last_farm_time = CURRENT_TIMESTAMP"))
             logger.info("Added last_farm_time column to users table")
+
+        if 'online_enabled' not in columns:
+            await conn.execute(text("ALTER TABLE users ADD COLUMN online_enabled BOOLEAN DEFAULT FALSE"))
+            logger.info("Added online_enabled column to users table")
 
 
 # Запуск инициализации базы данных
@@ -684,7 +690,7 @@ async def get_recent_logs(limit: int = 50) -> List[Dict[str, Any]]:
     :return: Список последних действий
     """
     logs = []
-    
+
     return logs[:limit]
 async def get_top_users(limit: int = 10) -> List[Dict[str, Any]]:
     """Получение топа пользователей по разным параметрам"""
@@ -728,7 +734,7 @@ async def toggle_notification(telegram_id: int, notification_type: str) -> bool:
         user = await session.scalar(
             select(User).where(User.telegram_id == telegram_id)
         )
-        
+
         # Маппинг типов уведомлений на поля базы данных
         notification_fields = {
             "all": "notifications_enabled",
@@ -736,7 +742,7 @@ async def toggle_notification(telegram_id: int, notification_type: str) -> bool:
             "edit": "edit_notifications",
             "delete": "delete_notifications"
         }
-        
+
         field = notification_fields.get(notification_type)
         if not field:
             logger.error(f"Неизвестный тип уведомления: {notification_type}")
@@ -798,10 +804,10 @@ async def cleanup_database():
         try:
             # Сначала удаляем все подписки, потому что они зависят от юзеров
             await session.execute(delete(Subscription))
-            
+
             # Потом удаляем всех пользователей
             await session.execute(delete(User))
-            
+
             await session.commit()
             logger.info("🧹 База данных успешно очищена")
             return True
