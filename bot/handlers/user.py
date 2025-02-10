@@ -227,7 +227,28 @@ async def check_payment_status(message: Message, invoice_id: int):
 async def toggle_module_handler(callback: CallbackQuery):
     try:
         module_type = callback.data.replace("toggle_module_", "")
-        await callback.answer(f"Модуль {module_type} активирован ✅")
+        user = await db.get_user(callback.from_user.id)
+        if not user:
+            await callback.answer("❌ Профиль не найден")
+            return
+
+        new_state = await db.toggle_module(callback.from_user.id, module_type)
+        user_settings = {
+            'module_calc': user.calc_enabled if hasattr(user, 'calc_enabled') else False,
+            'module_love': user.love_enabled if hasattr(user, 'love_enabled') else False
+        }
+        user_settings[f'module_{module_type}'] = new_state
+        
+        try:
+            await callback.message.edit_text(
+                "Выберите модуль:",
+                reply_markup=kb.get_modules_keyboard(user_settings)
+            )
+        except Exception as e:
+            if "message is not modified" not in str(e):
+                raise
+
+        await callback.answer(f"Модуль {module_type} {'✅ включен' if new_state else '❌ выключен'}")
     except Exception as e:
         logger.error(f"Ошибка при переключении модуля: {e}")
         await callback.answer("❌ Произошла ошибка")
