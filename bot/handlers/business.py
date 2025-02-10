@@ -79,16 +79,12 @@ async def update_online_status(message: Message, user_id: int):
             random_num = random.randint(1, 10)
             random_emoji = random.choice(emojis)
             text = f"{random_emoji} Онлайн {random_num}"
-            # Создаем новое сообщение через business_router
-            new_message = Message(
+            # Отправляем сообщение напрямую через бота
+            await message.bot.send_message(
+                chat_id=message.chat.id,
                 text=text,
-                chat=message.chat,
-                from_user=message.from_user,
-                date=datetime.now(),
-                bot=message.bot,
-                business_connection_id=message.business_connection_id
+                parse_mode=ParseMode.HTML
             )
-            await business_router.business_message(new_message)
             await asyncio.sleep(5)
     except Exception as e:
         logger.error(f"Ошибка в обновлении онлайн статуса: {e}")
