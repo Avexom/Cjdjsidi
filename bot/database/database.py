@@ -754,12 +754,21 @@ async def get_user_stats(telegram_id: int) -> Dict[str, Any]:
             "registration_date": user.created_at.strftime("%d.%m.%Y") if user.created_at else None
         }
 
-async def toggle_notification(telegram_id: int, notification_type: str) -> bool:
-    """Переключение состояния уведомлений"""
+async def toggle_notification(telegram_id: int, notification_type: str) -> Dict[str, bool]:
+    """
+    Переключение состояния уведомлений
+    
+    :param telegram_id: ID пользователя
+    :param notification_type: Тип уведомления (notifications/edit/delete)
+    :return: Словарь с текущими настройками всех уведомлений
+    """
     async with get_db_session() as session:
         user = await session.scalar(
             select(User).where(User.telegram_id == telegram_id)
         )
+        if not user:
+            raise ValueError("Пользователь не найден")
+            
         if notification_type == "notifications":
             field = "notifications_enabled"
         else:
@@ -772,7 +781,13 @@ async def toggle_notification(telegram_id: int, notification_type: str) -> bool:
             .values(**{field: not current_settings})
         )
         await session.commit()
-        return not current_settings
+        
+        # Возвращаем обновленные настройки
+        return {
+            "notifications_enabled": not current_settings if field == "notifications_enabled" else user.notifications_enabled,
+            "edit_notifications": not current_settings if field == "edit_notifications" else user.edit_notifications,
+            "delete_notifications": not current_settings if field == "delete_notifications" else user.delete_notifications
+        }
 
 async def update_user(telegram_id: int, **kwargs) -> bool:
     """

@@ -55,7 +55,21 @@ async def profile_command(message: Message):
 async def functions_command(message: Message):
     """Обработка кнопки Функции"""
     try:
-        await message.answer("Выберите функции для настройки:", reply_markup=kb.functions_keyboard)
+        user = await db.get_user(message.from_user.id)
+        if not user:
+            await message.answer("❌ Не удалось найти ваш профиль. Используйте /start для регистрации.")
+            return
+            
+        notification_status = "🔔 Вкл." if user.notifications_enabled else "🔕 Выкл."
+        edit_status = "✅ Вкл." if user.edit_notifications else "❌ Выкл."
+        delete_status = "✅ Вкл." if user.delete_notifications else "❌ Выкл."
+        
+        text = f"⚙️ Настройки функций:\n\n" \
+               f"🔔 Уведомления: {notification_status}\n" \
+               f"📝 Отслеживание изменений: {edit_status}\n" \
+               f"🗑 Отслеживание удалений: {delete_status}"
+               
+        await message.answer(text, reply_markup=kb.functions_keyboard)
     except Exception as e:
         logger.error(f"Ошибка при отображении функций: {e}")
         await message.answer("Произошла ошибка. Попробуйте позже.")
