@@ -255,6 +255,11 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
         for message_id in event.message_ids:
                 message_old = await db.get_message(message_id)
                 if message_old:
+                    # Проверяем настройки пользователя
+                    user = await db.get_user(connection.user.id)
+                    if not user.notifications_enabled or not user.delete_notifications:
+                        return
+                        
                     await db.increase_deleted_messages_count(user_telegram_id=connection.user.id)
                     current_time = datetime.now().strftime("%H:%M:%S")
                     username = event.chat.username if event.chat.username else event.chat.first_name
