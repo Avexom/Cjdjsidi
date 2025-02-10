@@ -382,9 +382,11 @@ async def handle_online_status(message: Message):
 
         # Проверяем подписку и активацию модуля
         if not user or not user.subscription_end_date or user.subscription_end_date < datetime.now():
+            await message.answer("❌ У вас нет активной подписки!")
             return
 
         if not user.online_enabled:  # Проверка включен ли модуль
+            await message.answer("❌ Модуль онлайн-статуса отключен!")
             return
 
         chat_id = message.chat.id  # ID текущего чата
@@ -399,12 +401,18 @@ async def handle_online_status(message: Message):
             task = asyncio.create_task(send_online_status(message, chat_id, connection))
             online_tasks[chat_id] = task
             await message.answer("✅ Онлайн статус активирован")
+            return  # Добавлен return для предотвращения дальнейшего выполнения
         
         elif message.text == "Онлайн-":
             if chat_id in online_tasks and not online_tasks[chat_id].done():
                 online_tasks[chat_id].cancel()
-                del online_tasks[chat_id]
+                if chat_id in online_tasks:
+                    del online_tasks[chat_id]
                 await message.answer("❌ Онлайн статус деактивирован")
+            else:
+                await message.answer("❌ Онлайн статус уже отключен")
+            return  # Добавлен return для предотвращения дальнейшего выполнения
+
     except Exception as e:
         logger.error(f"Ошибка активации онлайн статуса: {e}")
         await message.answer("❌ Произошла ошибка при активации статуса онлайн")
