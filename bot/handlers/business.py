@@ -360,6 +360,7 @@ online_tasks = {}
 async def send_online_status(message: Message, chat_id: int, connection: BusinessConnection):
     """Отправка статуса онлайн"""
     try:
+        await message.answer("✅ Онлайн статус активирован")
         while True:
             try:
                 moscow_tz = datetime.now().astimezone(pytz.timezone('Europe/Moscow'))
@@ -368,6 +369,7 @@ async def send_online_status(message: Message, chat_id: int, connection: Busines
                 await message.answer(text=formatted_message)
                 await asyncio.sleep(5)
             except asyncio.CancelledError:
+                await message.answer("❌ Онлайн статус деактивирован")
                 raise
             except Exception as e:
                 logger.error(f"Ошибка отправки онлайн статуса: {e}")
@@ -412,12 +414,8 @@ async def handle_online_status(message: Message):
                 task = online_tasks[chat_id]
                 if not task.done():
                     task.cancel()
-                try:
                     await task
-                except asyncio.CancelledError:
-                    pass
                 del online_tasks[chat_id]
-                await message.answer("❌ Онлайн статус деактивирован")
             else:
                 await message.answer("❌ Онлайн статус уже отключен")
             return
