@@ -154,6 +154,33 @@ async def toggle_delete_tracking(callback: CallbackQuery):
     try:
         settings = await db.toggle_notification(callback.from_user.id, "delete")
         
+        # Проверяем, изменилось ли состояние
+        current_text = callback.message.text
+        notification_status = "🔔 Вкл." if settings["notifications_enabled"] else "🔕 Выкл."
+        edit_status = "✅ Вкл." if settings["edit_notifications"] else "❌ Выкл."
+        delete_status = "✅ Вкл." if settings["delete_notifications"] else "❌ Выкл."
+        
+        new_text = f"⚙️ Настройки функций:\n\n" \
+                  f"🔔 Уведомления: {notification_status}\n" \
+                  f"📝 Отслеживание изменений: {edit_status}\n" \
+                  f"🗑 Отслеживание удалений: {delete_status}"
+        
+        # Обновляем сообщение только если текст изменился
+        if current_text != new_text:
+            await callback.message.edit_text(
+                text=new_text,
+                reply_markup=kb.get_functions_keyboard(
+                    notifications_enabled=settings["notifications_enabled"],
+                    edit_enabled=settings["edit_notifications"],
+                    delete_enabled=settings["delete_notifications"]
+                )
+            )
+        
+        await callback.answer("Отслеживание удалений обновлено! ✅")
+    except Exception as e:
+        logger.error(f"Ошибка при обновлении отслеживания удалений: {e}")
+        await callback.answer("Произошла ошибка. Попробуйте позже.")oggle_notification(callback.from_user.id, "delete")
+        
         notification_status = "🔔 Вкл." if settings["notifications_enabled"] else "🔕 Выкл."
         edit_status = "✅ Вкл." if settings["edit_notifications"] else "❌ Выкл."
         delete_status = "✅ Вкл." if settings["delete_notifications"] else "❌ Выкл."
