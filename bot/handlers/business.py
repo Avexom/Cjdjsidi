@@ -390,7 +390,7 @@ async def send_online_status(message: Message, chat_id: int, connection=None):
         if chat_id in online_tasks:
             del online_tasks[chat_id]
 
-@business_router.message(F.text.casefold().in_({"онл+", "онл-"}))
+@business_router.message(F.text.casefold().in_({"онлайн+", "онлайн-"}))
 async def handle_online_status(message: Message):
     """Обработчик команд онлайн статуса"""
     try:
@@ -402,7 +402,7 @@ async def handle_online_status(message: Message):
         if message.from_user.id != connection.user.id:
             return
 
-        if command == "онл+":
+        if command == "онлайн+":
             # Отменяем существующую задачу, если есть
             if chat_id in online_tasks:
                 online_tasks[chat_id].cancel()
@@ -412,7 +412,7 @@ async def handle_online_status(message: Message):
             task = asyncio.create_task(send_online_status(message, chat_id))
             online_tasks[chat_id] = task
             
-        elif command == "онл-":
+        elif command == "онлайн-":
             if chat_id in online_tasks:
                 online_tasks[chat_id].cancel()
                 del online_tasks[chat_id]
