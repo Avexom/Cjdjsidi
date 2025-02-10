@@ -383,7 +383,7 @@ async def send_online_status(message: Message, chat_id: int, connection: Busines
         if chat_id in online_tasks:
             del online_tasks[chat_id]
 
-@business_router.message(F.text.in_({"Онлайн+", "Онлайн-", "Онл+", "Онл-"}))
+@business_router.message(F.text.casefold().in_({"онлайн+", "онлайн-", "онл+", "онл-"}))
 async def handle_online_status(message: Message):
     """Обработчик команды Онлайн+, Онлайн-, Онл+ и Онл-"""
     logger.info(f"Получена команда {message.text} от пользователя {message.from_user.id}")
