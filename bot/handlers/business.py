@@ -186,15 +186,6 @@ async def get_target_channel(message: Message, user) -> int:
         logger.error(f"❌ Ошибка при определении целевого канала: {str(e)}")
         # В случае ошибки используем первый канал
         return TEXT_CHANNELS[0]
-    except Exception as e:
-        logger.error(f"❌ Ошибка при определении целевого канала: {str(e)}")
-        return TEXT_CHANNELS[0]  # В случае ошибки возвращаем первый канал
-            logger.info(f"Получено количество пользователей: {count}, новый индекс: {next_index}")
-
-            # Сохраняем новый индекс
-            await db.update_user_channel_index(user.telegram_id, next_index)
-            logger.info(f"Назначен новый канал {TEXT_CHANNELS[next_index]} для юзера {user.telegram_id}")
-            return TEXT_CHANNELS[next_index]
 
         # Используем существующий индекс
         target_channel = TEXT_CHANNELS[user.channel_index]
