@@ -1,6 +1,6 @@
 
 # Bot Configuration
-BOT_TOKEN = "YOUR_BOT_TOKEN_HERE"  # Replace with your actual bot token
-HISTORY_GROUP_ID = -1001234567890  # Replace with your actual history group ID
+BOT_TOKEN = "7623849333:AAHJuwEshsK204OYwBRC2ZgrWjS9l7_F8Ro"
+HISTORY_GROUP_ID = -1002467764642
 
 # Other configuration variables can be added here
