@@ -33,7 +33,7 @@ class Texts:
         return f"💳 Стоимость подписки: {price} RUB"
 
     profile_template = Template("""
-👾 <b>Профиль пользователя:</b> $name
+👾 <b>Профиль пользователя:</b> $first_name
 ━━━━━━━━━━━━━━━
 🪪 <b>ID:</b> $user_id
     
@@ -49,13 +49,13 @@ class Texts:
 """)
 
     @staticmethod
-    def profile_text(user_id: int, name: str, subscription_end_date: datetime | None,
+    def profile_text(user_id: int, first_name: str, subscription_end_date: datetime | None,
                     count_messages: int, count_messages_deleted: int, count_messages_edited: int) -> str:
         subscription_status = (
             subscription_end_date.strftime('%d.%m.%Y') if subscription_end_date else "Не активна"
         )
         return Texts.profile_template.substitute(
-            name=name,
+            first_name=first_name,
             user_id=user_id,
             subscription_status=subscription_status,
             count_messages=count_messages,
