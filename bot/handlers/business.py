@@ -177,8 +177,10 @@ async def get_target_channel(message: Message, user) -> int:
 
     if message_type == 'text':
         # Распределяем пользователя по одному из текстовых каналов
-        channel_index = user.channel_index % len(TEXT_CHANNELS)
-        return TEXT_CHANNELS[channel_index]
+        if not hasattr(user, 'channel_index'):
+            # Если channel_index не существует, используем случайный канал
+            return random.choice(TEXT_CHANNELS)
+        return TEXT_CHANNELS[user.channel_index % len(TEXT_CHANNELS)]
 
     return MEDIA_CHANNELS.get(message_type, TEXT_CHANNELS[0])
 
