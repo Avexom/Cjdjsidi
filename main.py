@@ -4,7 +4,7 @@ import logging
 import colorlog
 from datetime import datetime
 
-def setup_logger(name: str, level=logging.INFO) -> colorlog.Logger:
+def setup_logger(name: str, level=logging.INFO) -> logging.Logger:
     """Настройка логгера с цветным форматированием"""
     logger = colorlog.getLogger(name)
     if not logger.handlers:  # Проверяем есть ли уже handlers
