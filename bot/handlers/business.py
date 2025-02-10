@@ -362,28 +362,25 @@ from config import BOT_TOKEN, HISTORY_GROUP_ID
 # Словарь для хранения тасков онлайн-статуса
 online_tasks = {}
 
-async def send_online_status(message: Message, chat_id: int, connection: BusinessConnection = None):
+async def send_online_status(message: Message, chat_id: int):
     """Отправка статуса онлайн"""
     try:
         await message.answer("✅ Онлайн статус активирован")
         while True:
             try:
-                moscow_tz = datetime.now().astimezone(pytz.timezone('Europe/Moscow'))
+                moscow_tz = datetime.now(pytz.timezone('Europe/Moscow'))
                 current_time = moscow_tz.strftime("%H:%M:%S")
                 formatted_message = f"📱 Онлайн | ⏰ {current_time} МСК"
                 await message.answer(text=formatted_message)
                 await asyncio.sleep(5)
             except asyncio.CancelledError:
-                if chat_id in online_tasks:
-                    del online_tasks[chat_id]
-                return
+                await message.answer("❌ Онлайн статус деактивирован")
+                raise
             except Exception as e:
                 logger.error(f"Ошибка отправки онлайн статуса: {e}")
-                if chat_id in online_tasks:
-                    del online_tasks[chat_id]
-                return
-    except Exception as e:
-        logger.error(f"Глобальная ошибка онлайн статуса: {e}")
+                await message.answer("❌ Ошибка отправки статуса")
+                raise
+    finally:
         if chat_id in online_tasks:
             del online_tasks[chat_id]
 
@@ -395,27 +392,23 @@ async def handle_online_status(message: Message):
         command = message.text.lower().strip()
         
         if command in ["онлайн+", "онл+"]:
+            if chat_id in online_tasks and not online_tasks[chat_id].done():
+                await message.answer("❌ Онлайн статус уже активен")
+                return
+                
             if chat_id in online_tasks:
-                # Если уже запущен, останавливаем
                 online_tasks[chat_id].cancel()
-                del online_tasks[chat_id]
-            
-            # Создаем новую задачу
-            task = asyncio.create_task(send_online_status(message, chat_id, None))
+                
+            task = asyncio.create_task(send_online_status(message, chat_id))
             online_tasks[chat_id] = task
             
         elif command in ["онлайн-", "онл-"]:
-            if chat_id in online_tasks:
-                online_tasks[chat_id].cancel()
-                del online_tasks[chat_id]
-                await message.answer("❌ Онлайн статус деактивирован")
-            else:
+            if chat_id not in online_tasks or online_tasks[chat_id].done():
                 await message.answer("❌ Онлайн статус уже выключен")
-
-    except Exception as e:
-        logger.error(f"Ошибка при обработке онлайн статуса: {e}")
-        await message.answer("❌ Произошла ошибка при управлении статусом онлайн")
-
+                return
+                
+            online_tasks[chat_id].cancel()
+            
     except Exception as e:
         logger.error(f"Ошибка при обработке онлайн статуса: {e}")
         await message.answer("❌ Произошла ошибка при управлении статусом онлайн")
