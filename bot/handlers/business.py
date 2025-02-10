@@ -316,7 +316,7 @@ async def business_message(message: Message):
                 logger.info(f"Выбран канал для {message.content_type}: {target_channel}")
 
             # Пересылаем сообщение
-            logger.info(f"Пересылаем сообщение в канал {target_channel}")e.from_user.id}")
+            logger.info(f"Пересылаем сообщение в канал {target_channel}")
             logger.info(f"Тип сообщения: {message.content_type}")
 
             target_channel = await get_target_channel(message, user)
