@@ -337,10 +337,12 @@ async def edited_business_message(message: Message):
             if not user.notifications_enabled or not user.edit_notifications:
                 return
                 
-            text_1 = texts.Texts.edited_message_text(name=message.from_user.first_name, user_id=message_old.from_user_id, username=message.from_user.username)
-            update = {}
-            if message.entities:
-                update["entities"] = [entity.model_copy(update={"length": entity.length + len(text_1)}) for entity in message.entities]
+            text = f"✏️ {user_link} отредактировал сообщение\n⏰ Время редактирования: {current_time}"
+            await event.bot.send_message(
+                chat_id=connection.user.id,
+                text=text,
+                parse_mode=ParseMode.HTML
+            )ntities]
             elif message.caption_entities:
                 update["caption_entities"] = [entity.model_copy(update={"length": entity.length + len(text_1)}) for entity in message.caption_entities]
             if message.caption:
