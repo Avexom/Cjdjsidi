@@ -1,6 +1,12 @@
-
 import os
 from typing import List
+
+# Токены и API ключи
+BOT_TOKEN = "7623849333:AAHJuwEshsK204OYwBRC2ZgrWjS9l7_F8Ro"  # Токен бота от @BotFather
+CRYPTO_PAY_API_TOKEN = "335460:AA8SyvLO290vdLcodSDYVykIKg5eYdWGpiC"  # Токен приложения от @CryptoBot
+
+# Админы и группы
+ADMIN_IDS = [8115432365]  # Айди админов через запятую
 
 # ID групп для хранения истории сообщений
 HISTORY_GROUP_IDS = [
@@ -12,20 +18,3 @@ HISTORY_GROUP_IDS = [
     -1002395727554,  # Резервная группа 5
     -1002321264660   # Резервная группа 6
 ]
-
-# Загружаем токены из переменных окружения
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-if not BOT_TOKEN:
-    raise ValueError("❌ Блять, укажи BOT_TOKEN в переменных окружения!")
-
-CRYPTO_PAY_API_TOKEN = os.getenv("CRYPTO_PAY_API_TOKEN")
-if not CRYPTO_PAY_API_TOKEN:
-    raise ValueError("❌ Сука, где CRYPTO_PAY_API_TOKEN?!")
-
-# Админские ID из строки с разделителями в список
-ADMIN_IDS: List[int] = [
-    int(id_) for id_ in os.getenv("ADMIN_IDS", "").split(",")
-    if id_.strip().isdigit()
-]
-if not ADMIN_IDS:
-    raise ValueError("❌ Ебать, добавь хотя бы одного админа!")
