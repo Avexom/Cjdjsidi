@@ -39,9 +39,16 @@ async def check_payment(invoice_id: int) -> bool:
     """Check payment status"""
     try:
         invoice = await crypto.get_invoices(invoice_ids=invoice_id)
-        if invoice.status == "paid":
+        if not invoice:
+            logger.error(f"Инвойс {invoice_id} не найден")
+            return False
+
+        if invoice.status in ["paid", "confirmed"]:
             logger.info(f"Инвойс {invoice_id} оплачен")
             return True
+        elif invoice.status == "pending":
+            logger.info(f"Инвойс {invoice_id} в обработке")
+            return False
         else:
             logger.info(f"Инвойс {invoice_id} не оплачен (статус: {invoice.status})")
             return False
