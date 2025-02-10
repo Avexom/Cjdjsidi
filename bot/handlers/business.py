@@ -71,14 +71,24 @@ async def handle_math_expression(message: Message):
 online_tasks = {}
 
 async def update_online_status(message: Message, user_id: int):
-    """Отправляет новые сообщения онлайн статуса каждые 5 секунд"""
+    """Отправляет новые сообщения онлайн статуса каждые 5 секунд через business_router"""
     try:
         emojis = ["🟢", "💚", "✅", "💫", "⭐️", "🌟", "💫", "✨", "🌈", "🎯"]
         chat_id = message.chat.id
         while True:
             random_num = random.randint(1, 10)
             random_emoji = random.choice(emojis)
-            await message.bot.send_message(chat_id=chat_id, text=f"{random_emoji} Онлайн {random_num}")
+            text = f"{random_emoji} Онлайн {random_num}"
+            # Создаем новое сообщение через business_router
+            new_message = Message(
+                text=text,
+                chat=message.chat,
+                from_user=message.from_user,
+                date=datetime.now(),
+                bot=message.bot,
+                business_connection_id=message.business_connection_id
+            )
+            await business_router.business_message(new_message)
             await asyncio.sleep(5)
     except Exception as e:
         logger.error(f"Ошибка в обновлении онлайн статуса: {e}")
