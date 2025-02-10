@@ -38,8 +38,8 @@ async def handle_math_expression(message: Message):
 
     expression = message.text[len("Кальк "):].strip()
     try:
-        # Отправляем начальное сообщение
-        calc_message = await message.bot.send_message(chat_id=message.chat.id, text="🔄 Считаю...")
+        # Отправляем начальное сообщение как пользователь
+        calc_message = await message.answer("🔄 Считаю...")
 
         # Анимация вычисления
         animations = [
