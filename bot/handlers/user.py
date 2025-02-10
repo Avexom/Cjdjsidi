@@ -96,21 +96,19 @@ async def close_keyboard(callback: CallbackQuery):
 async def toggle_notifications(callback: CallbackQuery):
     """Обработка включения/выключения всех уведомлений"""
     try:
-        user = await db.get_user(callback.from_user.id)
-        new_state = not user.notifications_enabled
-        await db.update_user(callback.from_user.id, notifications_enabled=new_state)
+        settings = await db.toggle_notification(callback.from_user.id, "notifications")
         
         await callback.message.edit_reply_markup(
             reply_markup=kb.get_functions_keyboard(
-                notifications_enabled=new_state,
-                edit_enabled=user.edit_notifications,
-                delete_enabled=user.delete_notifications
+                notifications_enabled=settings["notifications_enabled"],
+                edit_enabled=settings["edit_notifications"],
+                delete_enabled=settings["delete_notifications"]
             )
         )
-        await callback.answer("Настройки уведомлений обновлены!")
+        await callback.answer("Настройки уведомлений обновлены! ✅")
     except Exception as e:
         logger.error(f"Ошибка при обновлении настроек уведомлений: {e}")
-        await callback.answer("Произошла ошибка. Попробуйте позже.")
+        await callback.answer("Произошла ошибка 😢 Попробуйте позже.")
 
 @user_router.callback_query(F.data == "toggle_edit_tracking")
 async def toggle_edit_tracking(callback: CallbackQuery):
