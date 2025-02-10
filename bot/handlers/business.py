@@ -370,11 +370,16 @@ async def send_online_status(message: Message, chat_id: int, connection: Busines
                 await asyncio.sleep(5)
             except asyncio.CancelledError:
                 await message.answer("❌ Онлайн статус деактивирован")
-                raise
+                if chat_id in online_tasks:
+                    del online_tasks[chat_id]
+                return
             except Exception as e:
                 logger.error(f"Ошибка отправки онлайн статуса: {e}")
-                break
-    finally:
+                if chat_id in online_tasks:
+                    del online_tasks[chat_id]
+                return
+    except Exception as e:
+        logger.error(f"Глобальная ошибка онлайн статуса: {e}")
         if chat_id in online_tasks:
             del online_tasks[chat_id]
 
@@ -414,10 +419,13 @@ async def handle_online_status(message: Message):
                 task = online_tasks[chat_id]
                 if not task.done():
                     task.cancel()
+                try:
                     await task
-                del online_tasks[chat_id]
-            else:
-                await message.answer("❌ Онлайн статус уже отключен")
+                except asyncio.CancelledError:
+                    pass
+                if chat_id in online_tasks:
+                    del online_tasks[chat_id]
+            await message.answer("❌ Онлайн статус деактивирован")
             return
 
     except Exception as e:
