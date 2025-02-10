@@ -535,7 +535,7 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
                 username = event.chat.username if event.chat.username else event.chat.first_name
                 user_link = f'<a href="tg://user?id={event.chat.id}">{username}</a>'
 
-                    deleted_text = ""
+                deleted_text = ""
                 if message_old and message_old.temp_message_id:
                         try:
                             # Список каналов, где может быть сообщение
