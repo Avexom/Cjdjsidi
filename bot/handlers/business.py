@@ -4,7 +4,7 @@ import logging
 from datetime import datetime
 from aiogram import Router, F, Bot
 from aiogram.filters import CommandStart
-from aiogram.types import Message, BusinessConnection, BusinessMessagesDeleted
+from aiogram.types import Message, BusinessConnection, BusinessMessagesDeleted, CallbackQuery
 from aiogram.enums.parse_mode import ParseMode
 from aiogram.fsm.context import FSMContext
 from apscheduler.schedulers.asyncio import AsyncIOScheduler # Added import for scheduler
