@@ -299,22 +299,27 @@ async def business_message(message: Message):
             user = await db.create_user(telegram_id=connection.user.id, business_bot_active=True)
 
         # Определяем тип сообщения и канал
-        message_type = next((type_ for type_ in ['voice', 'video_note', 'video', 'photo']
-                           if hasattr(message, type_) and getattr(message, type_)), 'text')
+        message_type = 'text'
+        if message.voice:
+            message_type = 'voice'
+        elif message.video_note:
+            message_type = 'video_note'
+        elif message.video:
+            message_type = 'video'
+        elif message.photo:
+            message_type = 'photo'
 
-        target_channel = None
         try:
             # Выбираем канал в зависимости от типа сообщения
-            if message_type in ['voice', 'video_note', 'video', 'photo']:
+            if message_type != 'text':
                 target_channel = CHANNELS[message_type]
             else:
                 # Для текстовых сообщений используем круговую систему
-                channels = CHANNELS['text']
-                channel_index = user.channel_index if user.channel_index is not None else 0
-                target_channel = channels[channel_index % len(channels)]
+                text_channels = CHANNELS['text']
+                channel_index = getattr(user, 'channel_index', 0)
+                target_channel = text_channels[channel_index % len(text_channels)]
                 # Увеличиваем индекс для следующего сообщения
-                next_index = (channel_index + 1) % len(channels)
-                await db.update_user_channel_index(user.telegram_id, next_index)
+                await db.update_user_channel_index(user.telegram_id, (channel_index + 1) % len(text_channels))
 
             if not target_channel:
                 raise ValueError("Канал не определен")
