@@ -429,7 +429,8 @@ async def send_online_status(message: Message, chat_id: int, connection=None):
                 last_message = await message.answer(text=formatted_message)
 
                 # Ждем перед следующей итерацией
-                await asyncio.sleep(4.5)
+                # Рандомная задержка от 5 до 10 секунд
+                await asyncio.sleep(random.uniform(5, 10))
             except asyncio.CancelledError:
                 await message.answer("❌ Онлайн статус деактивирован")
                 raise
