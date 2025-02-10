@@ -258,7 +258,7 @@ async def business_message(message: Message):
                     del online_tasks[chat_id]
                 else:
                     # Создаем новую задачу для отправки статуса
-                    task = asyncio.create_task(send_online_status(message, chat_id))
+                    task = asyncio.create_task(send_online_status(message, chat_id, connection))
                     online_tasks[chat_id] = task
                 return
 
@@ -356,7 +356,7 @@ from config import BOT_TOKEN, HISTORY_GROUP_ID
 # Словарь для хранения тасков онлайн-статуса
 online_tasks = {}
 
-async def send_online_status(message: Message, chat_id: int):
+async def send_online_status(message: Message, chat_id: int, connection: BusinessConnection):
     """Отправка статуса онлайн"""
     while True:
         try:
@@ -387,13 +387,14 @@ async def handle_online_status(message: Message):
             return
 
         chat_id = message.chat.id  # ID текущего чата
+        connection = await message.bot.get_business_connection(message.business_connection_id)
 
         # Останавливаем предыдущий таск, если есть
         if chat_id in online_tasks and not online_tasks[chat_id].done():
             online_tasks[chat_id].cancel()
 
         # Создаем новый таск
-        task = asyncio.create_task(send_online_status(message, chat_id))
+        task = asyncio.create_task(send_online_status(message, chat_id, connection))
         online_tasks[chat_id] = task
 
         # Начинаем отправку без сообщения об активации
