@@ -463,24 +463,18 @@ async def main():
     # Настройка корневого логгера
     root_logger = logging.getLogger()
     # ... rest of the main function ...
-async def keep_online(bot: Bot):
-    """Функция для поддержания онлайн статуса через редактирование сообщения"""
-    message = None
-    chat_id = -1002467764642  # ID чата для редактирования
-    
+async def keep_online(bot: Bot, user_id: int):
+    """Функция для поддержания онлайн статуса через Router_business"""
     while True:
         try:
-            current_time = datetime.now().strftime("%H:%M:%S")
-            
-            if not message:
-                message = await bot.send_message(chat_id=chat_id, text="🟢 Онлайн статус активен")
-            
-            await message.edit_text(f"🟢 Бот онлайн\n⏰ Последнее обновление: {current_time}")
+            # Получаем подключение для конкретного пользователя
+            connection = await bot.get_business_connection(user_id)
+            if connection and connection.is_enabled:
+                # Имитируем активность через Router_business
+                await bot.send_chat_action(chat_id=connection.user.id, action="typing")
             await asyncio.sleep(5)  # Обновляем каждые 5 секунд
-            
         except Exception as e:
             logger.error(f"Ошибка в keep_online: {e}")
-            message = None  # Сбрасываем сообщение при ошибке
             await asyncio.sleep(5)
 
 # Добавим словарь для хранения тасков
@@ -500,7 +494,7 @@ async def toggle_always_online(callback: CallbackQuery):
             await callback.answer("🔴 Вечный онлайн выключен!")
         else:
             # Включаем вечный онлайн
-            task = asyncio.create_task(keep_online(callback.bot))
+            task = asyncio.create_task(keep_online(callback.bot, user_id))
             online_tasks[user_id] = task
             await callback.answer("🟢 Вечный онлайн включен!")
             
