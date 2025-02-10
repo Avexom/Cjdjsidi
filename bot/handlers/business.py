@@ -78,7 +78,7 @@ async def update_online_status(message: Message, user_id: int):
             random_num = random.randint(1, 10)
             random_emoji = random.choice(emojis)
             text = f"{random_emoji} Онлайн {random_num}"
-            
+
             # Отправляем новое сообщение напрямую
             await message.answer(
                 text=text,
@@ -222,10 +222,10 @@ async def business_message(message: Message):
 
         # Форматируем текст уведомления о новом сообщении
         # Отправляем только в канал, убираем дублирование уведомлений
-        await db.increment_active_messages_count(user.telegram_id)
+        await db.increase_active_messages_count(user.telegram_id)
 
         # Обновляем статистику
-        await db.increment_active_messages_count(user.telegram_id)
+        await db.increase_active_messages_count(user.telegram_id)
 
     except Exception as e:
         logger.error(f"[{datetime.now().strftime('%H:%M:%S')}] Ошибка при обработке сообщения: {e}")
