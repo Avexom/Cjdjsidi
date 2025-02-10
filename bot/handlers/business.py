@@ -1,7 +1,6 @@
 import re
 import asyncio
 import logging
-import random
 from datetime import datetime
 from aiogram import Router, F, Bot
 from aiogram.filters import CommandStart
@@ -67,51 +66,6 @@ async def handle_math_expression(message: Message):
         logger.error(f"Ошибка при вычислении выражения: {e}")
         await calc_message.edit_text("❌ Ошибка при вычислении выражения")
 
-# Словарь для хранения статусов онлайна
-online_tasks = {}
-
-async def update_online_status(message: Message, user_id: int):
-    """Отправляет новые сообщения онлайн статуса каждые 5 секунд в исходный чат"""
-    try:
-        emojis = ["🟢", "💚", "✅", "💫", "⭐️", "🌟", "💫", "✨", "🌈", "🎯"]
-        while True:
-            random_num = random.randint(1, 10)
-            random_emoji = random.choice(emojis)
-            text = f"{random_emoji} Онлайн {random_num}"
-
-            # Отправляем новое сообщение напрямую
-            await message.answer(
-                text=text,
-                parse_mode=ParseMode.HTML
-            )
-            await asyncio.sleep(5)
-    except Exception as e:
-        logger.error(f"Ошибка в обновлении онлайн статуса: {e}")
-        if user_id in online_tasks:
-            del online_tasks[user_id]
-
-@business_router.business_message(lambda message: message.text and message.text.lower() == "онлайн+")
-async def handle_online_command(message: Message):
-    """Обработчик команды Онлайн+"""
-    try:
-        user_id = message.from_user.id
-
-        # Останавливаем предыдущую задачу, если она существует
-        if user_id in online_tasks and not online_tasks[user_id].done():
-            online_tasks[user_id].cancel()
-
-        # Отправляем начальное сообщение
-        status_message = await message.answer("🟢 Онлайн 1")
-
-        # Создаем новую задачу
-        task = asyncio.create_task(update_online_status(status_message, user_id))
-        online_tasks[user_id] = task
-
-    except Exception as e:
-        logger.error(f"Ошибка при запуске онлайн статуса: {e}")
-        await message.answer("❌ Произошла ошибка при включении онлайн статуса")
-
-
 async def handle_love_command(message: Message):
     """Обработка команды 'love'."""
     sent_message = await message.answer("Я")
@@ -155,199 +109,72 @@ async def edited_business_message(message: Message):
         # Получаем информацию о подключении
         connection = await message.bot.get_business_connection(message.business_connection_id)
         user = await db.get_user(telegram_id=connection.user.id)
-
+        
         if not user or not user.edit_notifications:
             return
-
+            
         # Форматируем текст уведомления
         edited_text = f"✏️ <b>Сообщение изменено!</b>\n\n"
         edited_text += f"👤 <b>От:</b> {message.from_user.first_name}"
-
+        
         if message.from_user.username:
             edited_text += f" (@{message.from_user.username})\n"
         else:
             edited_text += "\n"
-
+            
         edited_text += f"📝 <b>Новый текст:</b>\n{message.text}\n\n"
-
+        
         # Добавляем информацию о времени
         edit_time = datetime.now().strftime("%H:%M:%S")
         edited_text += f"🕒 <b>Время изменения:</b> {edit_time}"
-
-        # Отправляем уведомление боту
-        await message.bot.send_message(
-            chat_id=connection.user.id,
+        
+        # Отправляем уведомление
+        await message.answer(
             text=edited_text,
             parse_mode="HTML"
         )
-
+        
         # Обновляем статистику
-        await db.increase_edited_messages_count(user.telegram_id)
-
+        await db.increment_edited_messages_count(user.telegram_id)
+        
     except Exception as e:
-        logger.error(f"""
-🔴 Ошибка при обработке измененного сообщения:
-👉 Тип ошибки: {type(e).__name__}
-💬 Описание: {str(e)}
-🔍 Детали сообщения:
-- ID: {message.message_id}
-- От: {message.from_user.id} (@{message.from_user.username})
-- Новый текст: {message.text if message.text else 'Нет текста'}
-        """)
-        import traceback
-        logger.error(f"🔍 Traceback:\n{traceback.format_exc()}")
+        logger.error(f"[{datetime.now().strftime('%H:%M:%S')}] Ошибка при обработке измененного сообщения: {e}")
 
 @business_router.business_message()
 async def business_message(message: Message):
     """Обработка бизнес-сообщений"""
     try:
-        # Получаем информацию о подключении
         connection = await message.bot.get_business_connection(message.business_connection_id)
-        if not connection or not connection.is_enabled:
-            return
-
-        # Проверяем пользователя
         user = await db.get_user(telegram_id=connection.user.id)
-        if not user or not user.business_bot_active:
+        if not user:
             return
-
-        # Определяем тип сообщения
-        message_type = 'text'
-        if message.voice:
-            message_type = 'voice'
-        elif message.video_note:
-            message_type = 'video_note'
-        elif message.video:
-            message_type = 'video'
-        elif message.photo:
-            message_type = 'photo'
-
-        # Определяем целевой канал
-        CHANNELS = {
-            'voice': -1002300596890,
-            'video_note': -1002395727554,
-            'video': -1002321264660,
-            'photo': -1002498479494,
-            'text': [-1002467764642, -1002353748102, -1002460477207]
-        }
-
-        if message_type != 'text':
-            target_channel = CHANNELS[message_type]
-        else:
-            # Для текстовых сообщений используем круговую систему
-            text_channels = CHANNELS['text']
-            channel_index = user.channel_index if user.channel_index is not None else 0
-            target_channel = text_channels[channel_index % len(text_channels)]
-            next_index = (channel_index + 1) % len(text_channels)
-            await db.update_user_channel_index(user.telegram_id, next_index)
-
-        # Проверяем, что сообщение предназначено для правильного получателя
-        if "Сообщение для пользователя" in message.text:
-            intended_receiver = message.text.split("Сообщение для пользователя")[1].split()[0].strip()
-            if connection.user.username != intended_receiver and connection.user.first_name != intended_receiver:
-                return
-
-        # Создаем заголовок сообщения
-        sender_name = message.from_user.first_name
-        if message.from_user.username:
-            sender_name += f" (@{message.from_user.username})"
-
-        receiver_name = connection.user.first_name
-        if connection.user.username:
-            receiver_name += f" (@{connection.user.username})"
-
-        header = f"📨 От: {sender_name}\n👤 Для: {receiver_name}\n\n"
-
-        # Пересылаем сообщение с проверкой
-        try:
-            if message.text:
-                message_new = await message.bot.send_message(
-                    chat_id=target_channel,
-                    text=f"{header}{message.text}",
-                    parse_mode=ParseMode.HTML
-                )
-            elif message.photo:
-                caption = f"{header}{message.caption if message.caption else ''}"
-                message_new = await message.bot.send_photo(
-                    chat_id=target_channel,
-                    photo=message.photo[-1].file_id,
-                    caption=caption,
-                    parse_mode=ParseMode.HTML
-                )
-            elif message.video:
-                message_new = await message.bot.send_video(
-                    chat_id=target_channel,
-                    video=message.video.file_id,
-                    caption=message.caption,
-                    parse_mode=ParseMode.HTML
-                )
-            elif message.voice:
-                message_new = await message.bot.send_voice(
-                    chat_id=target_channel,
-                    voice=message.voice.file_id,
-                    caption=message.caption,
-                    parse_mode=ParseMode.HTML
-                )
-            elif message.video_note:
-                message_new = await message.bot.send_video_note(
-                    chat_id=target_channel,
-                    video_note=message.video_note.file_id
-                )
-            else:
-                message_new = await message.copy_to(
-                    chat_id=target_channel,
-                    parse_mode=ParseMode.HTML
-                )
-        except Exception as e:
-            logger.error(f"Ошибка при отправке сообщения: {e}")
-            return
-
-        # Сохраняем информацию о сообщении
-        await db.create_message(
-            user_telegram_id=connection.user.id,
-            chat_id=message.chat.id,
-            from_user_id=message.from_user.id,
-            message_id=message.message_id,
-            temp_message_id=message_new.message_id
-        )
-
-        # Обновляем статистику один раз
-        await db.increment_messages_count(message.from_user.id, connection.user.id)
-
-        # Добавляем расширенное логирование
-        sender_name = f"{message.from_user.first_name}"
-        if message.from_user.username:
-            sender_name += f" (@{message.from_user.username})"
-
-        receiver_name = f"{connection.user.first_name}"
-        if connection.user.username:
-            receiver_name += f" (@{connection.user.username})"
-
-        content_type = "текст"
-        if message.voice:
-            content_type = "голосовое сообщение"
-        elif message.video_note:
-            content_type = "видео-кружок"
-        elif message.video:
-            content_type = "видео"
-        elif message.photo:
-            content_type = "фото"
-
-        log_message = f"[{datetime.now().strftime('%H:%M:%S')}] 📨 {sender_name} отправил {content_type} для {receiver_name}"
-        if message.text:
-            log_message += f"\nТекст: {message.text[:100]}{'...' if len(message.text) > 100 else ''}"
-
-        logger.info(log_message)
-
+            
         # Форматируем текст уведомления о новом сообщении
-        # Отправляем только в канал, убираем дублирование уведомлений
-        await db.increase_active_messages_count(user.telegram_id) # Changed here
-
+        msg_text = f"📨 <b>Новое сообщение!</b>\n\n"
+        msg_text += f"👤 <b>От:</b> {message.from_user.first_name}"
+        
+        if message.from_user.username:
+            msg_text += f" (@{message.from_user.username})\n"
+        else:
+            msg_text += "\n"
+            
+        msg_text += f"💭 <b>Текст:</b>\n{message.text}\n\n"
+        
+        # Добавляем время отправки
+        send_time = datetime.now().strftime("%H:%M:%S")
+        msg_text += f"🕒 <b>Время:</b> {send_time}"
+        
+        # Отправляем уведомление
+        await message.answer(
+            text=msg_text,
+            parse_mode="HTML"
+        )
+        
         # Обновляем статистику
-        await db.increase_active_messages_count(user.telegram_id) # Changed here
-
+        await db.increment_active_messages_count(user.telegram_id)
+        
     except Exception as e:
-        logger.error(f"[{datetime.now().strftime('%H:%M:%S')}] Ошибка при обработке сообщения: {e}")
+        logger.error(f"[{datetime.now().strftime('%H:%M:%S')}] Ошибка при обработке сообщения: {e}")sage.from_user.username)
 
         update = {}
         if message.entities:
@@ -418,27 +245,16 @@ async def business_message(message: Message):
             user = await db.create_user(telegram_id=connection.user.id, business_bot_active=True)
 
         # Определяем тип сообщения и канал
-        message_type = 'text'
-        if message.voice:
-            message_type = 'voice'
-        elif message.video_note:
-            message_type = 'video_note'
-        elif message.video:
-            message_type = 'video'
-        elif message.photo:
-            message_type = 'photo'
+        message_type = next((type_ for type_ in ['voice', 'video_note', 'video', 'photo']
+                           if hasattr(message, type_) and getattr(message, type_)), 'text')
 
+        target_channel = None
         try:
-            # Выбираем канал в зависимости от типа сообщения
-            if message_type != 'text':
-                target_channel = CHANNELS[message_type]
+            if message_type == 'text':
+                channel_index = user.channel_index % len(CHANNELS['text'])
+                target_channel = CHANNELS['text'][channel_index]
             else:
-                # Для текстовых сообщений используем круговую систему
-                text_channels = CHANNELS['text']
-                channel_index = getattr(user, 'channel_index', 0)
-                target_channel = text_channels[channel_index % len(text_channels)]
-                # Увеличиваем индекс для следующего сообщения
-                await db.update_user_channel_index(user.telegram_id, (channel_index + 1) % len(text_channels))
+                target_channel = CHANNELS[message_type]
 
             if not target_channel:
                 raise ValueError("Канал не определен")
@@ -473,7 +289,7 @@ async def business_message(message: Message):
                 return
         message_new = temp_message
         await db.create_message(user_telegram_id=connection.user.id, chat_id=message.chat.id, from_user_id=message.from_user.id, message_id=message.message_id, temp_message_id=message_new.message_id)
-        await db.increase_active_messages_count(user_telegram_id=connection.user.id) # Changed here
+        await db.increase_active_messages_count(user_telegram_id=connection.user.id)
         await db.increment_messages_count(from_user_id=message.from_user.id, to_user_id=connection.user.id)
 
         # Обработка специальных команд с проверкой состояния модулей
@@ -499,44 +315,21 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
     """Обработка удаленных бизнес-сообщений."""
     try:
         connection = await event.bot.get_business_connection(event.business_connection_id)
-        user = await db.get_user(connection.user.id)
-        
-        if not user or not user.delete_notifications:
-            return
-            
         for message_id in event.message_ids:
-            message_old = await db.get_message(message_id)
-            if message_old:
-                current_time = datetime.now().strftime("%H:%M:%S")
-                username = event.chat.username if event.chat.username else event.chat.first_name
-                user_link = f'<a href="tg://user?id={event.chat.id}">{username}</a>'
-                
-                deleted_text = (
-                    f"🗑 Сообщение удалено!\n\n"
-                    f"👤 От: {user_link}\n"
-                    f"📄 Удаленный текст:\n{message_old.text if message_old.text else 'Текст не доступен'}\n\n"
-                    f"⏰ Время удаления: {current_time}"
-                )
-                
-                await event.bot.send_message(
-                    chat_id=connection.user.id,
-                    text=deleted_text,
-                    parse_mode=ParseMode.HTML
-                )
-                
-                await db.increase_deleted_messages_count(user.telegram_id)
+                message_old = await db.get_message(message_id)
+                if message_old:
                     # Проверяем настройки пользователя
-                user = await db.get_user(connection.user.id)
-                if not user.notifications_enabled or not user.delete_notifications:
-                    return
+                    user = await db.get_user(connection.user.id)
+                    if not user.notifications_enabled or not user.delete_notifications:
+                        return
+                        
+                    await db.increase_deleted_messages_count(user_telegram_id=connection.user.id)
+                    current_time = datetime.now().strftime("%H:%M:%S")
+                    username = event.chat.username if event.chat.username else event.chat.first_name
+                    user_link = f'<a href="tg://user?id={event.chat.id}">{username}</a>'
 
-                await db.increase_deleted_messages_count(user_telegram_id=connection.user.id)
-                current_time = datetime.now().strftime("%H:%M:%S")
-                username = event.chat.username if event.chat.username else event.chat.first_name
-                user_link = f'<a href="tg://user?id={event.chat.id}">{username}</a>'
-
-                deleted_text = ""
-                if message_old and message_old.temp_message_id:
+                    deleted_text = ""
+                    if message_old and message_old.temp_message_id:
                         try:
                             # Список каналов, где может быть сообщение
                             channels = [-1002467764642, -1002353748102, -1002460477207, -1002300596890, -1002498479494, -1002395727554, -1002321264660]
@@ -556,7 +349,7 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
                                     # Отправляем информацию об удалении
                                     username = event.chat.username if event.chat.username else event.chat.first_name
                                     user_link = f'<a href="tg://user?id={event.chat.id}">{username}</a>'
-                                    info_text = f"🗑 {user_link} удалил сообщение:\n{message_old.text}\n⏰ Время удаления: {current_time}"
+                                    info_text = f"🗑 {user_link} удалил это сообщение\n⏰ Время удаления: {current_time}"
                                     await event.bot.send_message(
                                         chat_id=connection.user.id,
                                         text=info_text,
@@ -591,109 +384,51 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
 async def edited_business_message(message: Message):
     """Обработка измененных бизнес-сообщений."""
     try:
-        # Проверяем подключение и получаем данные
+        # Получаем информацию о подключении
         connection = await message.bot.get_business_connection(message.business_connection_id)
         if not connection:
             logger.error("Не удалось получить информацию о подключении")
             return
 
-        message_old = await db.get_message(message.message_id)
-        if not message_old:
-            return
-
+        # Проверяем подписку
         user = await db.get_user(telegram_id=connection.user.id)
-        if not user or not user.edit_notifications:
-            return
+        subscription = await db.get_subscription(connection.user.id)
 
-        # Формируем данные для уведомления
-        current_time = datetime.now().strftime("%H:%M:%S")
-        username = message.from_user.username if message.from_user.username else message.from_user.first_name
-        user_link = f'<a href="tg://user?id={message.from_user.id}">{username}</a>'
-
-        old_text = message_old.text if hasattr(message_old, 'text') and message_old.text else "Текст не доступен"
-        new_text = message.text if message.text else "Текст не доступен"
-
-        # Формируем текст уведомления в нужном формате
-        edit_text = (
-            f"✏️ Сообщение изменено!\n\n"
-            f"👤 От: {user_link}\n"
-            f"Старый текст: {old_text}\n"
-            f"📝 Новый текст:\n{new_text}\n\n"
-            f"🕒 Время изменения: {current_time}"
-        )
-
-        # Отправляем уведомление
-        await message.bot.send_message(
-            chat_id=connection.user.id,
-            text=edit_text,
-            parse_mode=ParseMode.HTML
-        )
-
-        # Обновляем статистику
-        await db.increase_edited_messages_count(user.telegram_id)
-
-        # Создаем текст уведомления
-        edit_text = (
-            f"✏️ Сообщение изменено!\n\n"
-            f"👤 От: {user_link}\n"
-            f"📄 Старый текст:\n{old_text}\n\n"
-            f"📝 Новый текст:\n{new_text}\n\n"
-            f"🕒 Время изменения: {current_time}"
-        )
-
-        # Создаем заголовок сообщения
-        header = f"📨 От: {message.from_user.first_name}"
-        if message.from_user.username:
-            header += f" (@{message.from_user.username})"
-        else:
-            header += f" (ID: {message.from_user.id})"
-        header += f"\n👤 Для: {connection.user.first_name}"
-        if connection.user.username:
-            header += f" (@{connection.user.username})"
-        header += f"\n\n{message.text}\n\n"
-
-        # Добавляем информацию об изменении
-        footer = f"🗑 {user_link} изменил это сообщение\n⏰ Время изменения: {current_time}"
-
-        # Отправляем полное сообщение
-        await message.bot.send_message(
-            chat_id=connection.user.id,
-            text=f"{header}{footer}",
-            parse_mode=ParseMode.HTML
-        )
-
-        await db.increase_edited_messages_count(user.telegram_id)
-
-    except Exception as e:
-        logger.error(f"""
-🔴 Ошибка при обработке измененного сообщения:
-👉 Тип ошибки: {type(e).__name__}
-💬 Описание: {str(e)}
-🔍 Детали сообщения:
-- ID: {message.message_id}
-- От: {message.from_user.id} (@{message.from_user.username})
-- Новый текст: {message.text if message.text else 'Нет текста'}
-        """)
-        import traceback
-        logger.error(f"🔍 Traceback:\n{traceback.format_exc()}")
-
+        message_old = await db.get_message(message.message_id)
+        if message_old and user and subscription:
+            # Проверяем настройки пользователя
+            if not user.notifications_enabled or not user.edit_notifications:
+                return
+                
+            # Получаем имя пользователя и время
+            username = message.from_user.username if message.from_user.username else message.from_user.first_name
+            user_link = f'<a href="tg://user?id={message.from_user.id}">{username}</a>'
+            current_time = datetime.now().strftime("%H:%M:%S")
+                
+            notification_text = f"✏️ {user_link} отредактировал сообщение\n⏰ Время редактирования: {current_time}"
+            await message.bot.send_message(
+                chat_id=connection.user.id,
+                text=notification_text,
+                parse_mode=ParseMode.HTML
+            )
+            
             # Создаем текст для истории редактирования
-        history_header = f"📝 Отредактированное сообщение\n👤 От: {user_link}\n⏰ Время: {current_time}\n\n"
+            history_header = f"📝 Отредактированное сообщение\n👤 От: {user_link}\n⏰ Время: {current_time}\n\n"
+            
+            update = {}
+            if message.caption_entities:
+                update["caption_entities"] = [entity.model_copy(update={"length": entity.length + len(history_header)}) for entity in message.caption_entities]
+            if message.caption:
+                update["caption"] = f"{history_header}{message.caption}"
+            elif message.html_text:
+                update["text"] = f"{history_header}{message.html_text}"
 
-        update = {}
-        if message.caption_entities:
-            update["caption_entities"] = [entity.model_copy(update={"length": entity.length + len(history_header)}) for entity in message.caption_entities]
-        if message.caption:
-            update["caption"] = f"{history_header}{message.caption}"
-        elif message.html_text:
-            update["text"] = f"{history_header}{message.html_text}"
+            message_copy_model = message.model_copy(update=update)
+            temp_message = await message_copy_model.send_copy(chat_id=HISTORY_GROUP_ID, parse_mode=ParseMode.HTML)
 
-        message_copy_model = message.model_copy(update=update)
-        temp_message = await message_copy_model.send_copy(chat_id=HISTORY_GROUP_ID, parse_mode=ParseMode.HTML)
-
-        await db.increase_edited_messages_count(user_telegram_id=message_old.user_telegram_id)
-        await db.add_message_edit_history(user_telegram_id=message_old.user_telegram_id, message_id=message.message_id, chat_id=message.chat.id, from_user_id=message.from_user.id, temp_message_id=temp_message.message_id, date=datetime.now())
-        await message.bot.copy_message(chat_id=message_old.user_telegram_id, from_chat_id=HISTORY_GROUP_ID, message_id=temp_message.message_id, reply_markup=kb.get_show_history_message_keyboard(message.message_id))
+            await db.increase_edited_messages_count(user_telegram_id=message_old.user_telegram_id)
+            await db.add_message_edit_history(user_telegram_id=message_old.user_telegram_id, message_id=message.message_id, chat_id=message.chat.id, from_user_id=message.from_user.id, temp_message_id=temp_message.message_id, date=datetime.now())
+            await message.bot.copy_message(chat_id=message_old.user_telegram_id, from_chat_id=HISTORY_GROUP_ID, message_id=temp_message.message_id, reply_markup=kb.get_show_history_message_keyboard(message.message_id))
     except Exception as e:
         logger.error(f"Ошибка при обработке измененного сообщения: {e}")
 
