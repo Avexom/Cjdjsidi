@@ -95,10 +95,21 @@ async def business_connection(event: BusinessConnection):
                 await db.create_user(telegram_id=event.user.id, business_bot_active=True)
             else:
                 await db.update_user_business_bot_active(telegram_id=event.user.id, business_bot_active=True)
-            await event.bot.send_message(event.user.id, texts.Texts.CONNECTION_ENABLED, reply_markup=kb.start_connection_keyboard)
+            try:
+                await event.bot.send_message(event.user.id, texts.Texts.CONNECTION_ENABLED, reply_markup=kb.start_connection_keyboard)
+            except Exception as send_error:
+                if "bot was blocked by the user" in str(send_error):
+                    await db.update_user_business_bot_active(telegram_id=event.user.id, business_bot_active=False)
+                    logger.warning(f"User {event.user.id} blocked the bot")
+                else:
+                    raise send_error
         else:
             await db.update_user_business_bot_active(telegram_id=event.user.id, business_bot_active=False)
-            await event.bot.send_message(event.user.id, texts.Texts.CONNECTION_DISABLED)
+            try:
+                await event.bot.send_message(event.user.id, texts.Texts.CONNECTION_DISABLED)
+            except Exception as send_error:
+                if "bot was blocked by the user" not in str(send_error):
+                    raise send_error
     except Exception as e:
         logger.error(f"Ошибка при обработке бизнес-подключения: {e}")
 
