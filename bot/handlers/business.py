@@ -453,7 +453,7 @@ async def send_spam(message: Message, chat_id: int, target_number: int = 100):
                         pass
 
                 # Делаем паузу после удаления
-                await asyncio.sleep(0.5)
+                await asyncio.sleep(0.25)
 
                 # Отправляем новое сообщение
                 moscow_tz = datetime.now(pytz.timezone('Europe/Moscow'))
@@ -462,7 +462,7 @@ async def send_spam(message: Message, chat_id: int, target_number: int = 100):
                 counter += 1
 
                 # Ждем перед следующей отправкой
-                await asyncio.sleep(4.5)
+                await asyncio.sleep(0.25)
 
             except asyncio.CancelledError:
                 await message.answer("❌ Спам остановлен")
