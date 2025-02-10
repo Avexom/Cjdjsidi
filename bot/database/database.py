@@ -506,12 +506,18 @@ if __name__ == "__main__":
     asyncio.run(main())
 async def reset_channel_indexes():
     """
-    Сбросить channel_index для всех пользователей на 0
+    Сбросить channel_index для всех пользователей на None
     """
     async with get_db_session() as session:
-        await session.execute(
-            update(User).values(channel_index=0)
-        )
+        try:
+            await session.execute(
+                update(User).values(channel_index=None)
+            )
+            await session.commit()
+            logger.info("Все привязки каналов успешно сброшены")
+        except Exception as e:
+            logger.error(f"Ошибка при сбросе привязок каналов: {e}")
+            raise
 
 
 async def update_user_channel_index(telegram_id: int, channel_index: int):
