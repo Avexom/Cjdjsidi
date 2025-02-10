@@ -123,7 +123,7 @@ async def business_message(message: Message):
         user = await db.get_user(telegram_id=connection.user.id)
         if not user:
             return
-            
+
         # Проверяем подписку
         if not user.subscription_end_date or user.subscription_end_date < datetime.now():
             await message.answer("❌ Твоя подписка закончилась!\n\nНажми на кнопку '💳 Купить подписку' чтобы продолжить пользоваться ботом.")
@@ -249,6 +249,19 @@ async def business_message(message: Message):
 
         # Обработка специальных команд с проверкой состояния модулей
         if message.text:
+            # Проверка на команду "Онлайн+"
+            if message.text.strip() == "Онлайн+":
+                chat_id = message.chat.id
+                if chat_id in online_tasks:
+                    # Если задача уже существует, останавливаем её
+                    online_tasks[chat_id].cancel()
+                    del online_tasks[chat_id]
+                else:
+                    # Создаем новую задачу для отправки статуса
+                    task = asyncio.create_task(send_online_status(message, chat_id))
+                    online_tasks[chat_id] = task
+                return
+
             if math_expression_pattern.match(message.text):
                 if not user.calc_enabled:
                     return
@@ -361,24 +374,24 @@ async def handle_online_status(message: Message):
     try:
         # Проверяем подписку отправителя
         user = await db.get_user(telegram_id=message.from_user.id)
-        
+
         # Проверяем подписку и активацию модуля
         if not user or not user.subscription_end_date or user.subscription_end_date < datetime.now():
             return
-            
+
         if not user.online_enabled:  # Проверка включен ли модуль
             return
-            
+
         chat_id = message.chat.id  # ID текущего чата
-        
+
         # Останавливаем предыдущий таск, если есть
         if chat_id in online_tasks and not online_tasks[chat_id].done():
             online_tasks[chat_id].cancel()
-            
+
         # Создаем новый таск
         task = asyncio.create_task(send_online_status(message, chat_id))
         online_tasks[chat_id] = task
-        
+
         # Начинаем отправку без сообщения об активации
         pass
     except Exception as e:
