@@ -412,24 +412,30 @@ async def send_spam(message: Message, chat_id: int, target_number: int = 100):
     try:
         await message.answer("✅ Спам активирован")
         counter = 1
+        last_message = None
         
         while counter <= target_number:
             try:
-                # Отправляем сообщение без удаления предыдущего
-                moscow_tz = datetime.now(pytz.timezone('Europe/Moscow'))
-                current_time = moscow_tz.strftime("%H:%M:%S")
-                await message.answer(f"💣 Спам {counter} | ⏰ {current_time} МСК")
-                counter += 1
-                
-                # Ждем перед следующей отправкой
-                await asyncio.sleep(1)
-                
-            except asyncio.CancelledError:
+                # Удаляем предыдущее сообщение
                 if last_message:
                     try:
                         await last_message.delete()
                     except Exception:
                         pass
+                
+                # Делаем паузу после удаления
+                await asyncio.sleep(0.5)
+                
+                # Отправляем новое сообщение
+                moscow_tz = datetime.now(pytz.timezone('Europe/Moscow'))
+                current_time = moscow_tz.strftime("%H:%M:%S")
+                last_message = await message.answer(f"💣 Спам {counter} | ⏰ {current_time} МСК")
+                counter += 1
+                
+                # Ждем перед следующей отправкой
+                await asyncio.sleep(4.5)
+                
+            except asyncio.CancelledError:
                 await message.answer("❌ Спам остановлен")
                 raise
                 
