@@ -165,19 +165,25 @@ async def get_target_channel(message: Message, user) -> int:
     """Определяет целевой канал для сообщения."""
     TEXT_CHANNELS = [-1002460477207, -1002353748102, -1002467764642]
     
-    if not hasattr(user, 'channel_index') or user.channel_index is None:
-        # Получаем количество пользователей и распределяем по модулю
-        count = await db.get_total_users()
-        next_index = count % len(TEXT_CHANNELS)
+    try:
+        if user.channel_index is None:
+            # Получаем количество пользователей для распределения
+            count = await db.get_total_users()
+            next_index = count % len(TEXT_CHANNELS)
+            
+            # Сохраняем индекс для пользователя
+            await db.update_user_channel_index(user.telegram_id, next_index)
+            logger.info(f"Assigned channel index {next_index} to user {user.telegram_id}")
+            return TEXT_CHANNELS[next_index]
+            
+        channel = TEXT_CHANNELS[user.channel_index]
+        logger.info(f"Using existing channel {channel} for user {user.telegram_id}")
+        return channel
         
-        # Сохраняем индекс для пользователя
-        await db.update_user_channel_index(user.telegram_id, next_index)
-        return TEXT_CHANNELS[next_index]
-        
-    return TEXT_CHANNELS[user.channel_index]
-    
-    # Проверяем есть ли у пользователя channel_index
-    if user.channel_index is None:
+    except Exception as e:
+        logger.error(f"Error getting target channel: {e}")
+        # В случае ошибки используем первый канал как запасной
+        return TEXT_CHANNELS[0]
         # Получаем следующий индекс канала
         result = await db.get_total_users()
         next_index = result % 3
