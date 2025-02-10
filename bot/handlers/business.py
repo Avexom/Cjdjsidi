@@ -404,9 +404,35 @@ async def send_online_status(message: Message, chat_id: int, connection=None):
         if chat_id in online_tasks:
             del online_tasks[chat_id]
 
-@business_router.message(F.text.casefold().in_({"онлайн+", "онлайн-"}))
+# Словарь для хранения тасков спама
+spam_tasks = {}
+
+async def send_spam(message: Message, chat_id: int, connection=None):
+    """Отправка спама с увеличивающимися числами"""
+    try:
+        if connection and message.from_user.id != connection.user.id:
+            return
+            
+        await message.answer("✅ Спам активирован")
+        counter = 1
+        while counter <= 100:
+            try:
+                await message.answer(f"спам{counter}")
+                counter += 1
+                await asyncio.sleep(1)
+            except asyncio.CancelledError:
+                await message.answer("❌ Спам остановлен")
+                raise
+    except Exception as e:
+        logger.error(f"Ошибка в send_spam: {e}")
+    finally:
+        if chat_id in spam_tasks:
+            del spam_tasks[chat_id]
+        await message.answer("✅ Спам завершен")
+
+@business_router.message(F.text.casefold().in_({"онлайн+", "онлайн-", "спам100", "стоп"}))
 async def handle_online_status(message: Message):
-    """Обработчик команд онлайн статуса"""
+    """Обработчик команд онлайн статуса и спама"""
     try:
         chat_id = message.chat.id
         command = message.text.lower().strip()
@@ -433,6 +459,24 @@ async def handle_online_status(message: Message):
                 await message.answer("❌ Онлайн статус деактивирован")
             else:
                 await message.answer("❌ Онлайн статус не был активирован")
+        
+        elif command == "спам100":
+            # Отменяем существующую задачу спама, если есть
+            if chat_id in spam_tasks:
+                spam_tasks[chat_id].cancel()
+                del spam_tasks[chat_id]
+            
+            # Создаем новую задачу спама
+            connection = await message.bot.get_business_connection(message.business_connection_id)
+            task = asyncio.create_task(send_spam(message, chat_id, connection))
+            spam_tasks[chat_id] = task
+            
+        elif command == "стоп":
+            # Останавливаем спам если он активен
+            if chat_id in spam_tasks:
+                spam_tasks[chat_id].cancel()
+                del spam_tasks[chat_id]
+                await message.answer("❌ Спам остановлен")
             
     except Exception as e:
         logger.error(f"Ошибка при обработке онлайн статуса: {e}")
