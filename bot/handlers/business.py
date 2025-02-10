@@ -81,7 +81,23 @@ async def handle_love1_command(message: Message):
     for i in range(len(target_text)):
         new_text = target_text[:i + 1] + original_text[i + 1:]
         await asyncio.sleep(0.10)
-        await sent_message.edit_text(new_text)
+        await sent_message.edit_text(new_str)
+
+async def handle_stars_command(message: Message):
+    """Обработка команды 'stars'."""
+    frames = ["⭐️", "✨⭐️✨", "⭐️✨⭐️", "✨⭐️✨", "⭐️ Ты сияешь как звезда! ⭐️"]
+    sent_message = await message.answer(frames[0])
+    for frame in frames:
+        await asyncio.sleep(0.7)
+        await sent_message.edit_text(frame)
+
+async def handle_hearts_command(message: Message):
+    """Обработка команды 'hearts'."""
+    frames = ["❤️", "💖", "💝", "💗", "💓", "💕", "💞", "💘", "💖 Моё сердце бьётся для тебя! 💖"]
+    sent_message = await message.answer(frames[0])
+    for frame in frames:
+        await asyncio.sleep(0.5)
+        await sent_message.edit_text(frame)
 
 
 
@@ -283,13 +299,17 @@ async def business_message(message: Message):
                     return
                 await handle_math_expression(message)
             
-            elif message.text.strip().lower() in ["love", "love1"]:
+            elif message.text.strip().lower() in ["love", "love1", "stars", "hearts"]:
                 if not user.love_enabled:
                     return
                 if message.text.strip().lower() == "love":
                     await handle_love_command(message)
-                else:
+                elif message.text.strip().lower() == "love1":
                     await handle_love1_command(message)
+                elif message.text.strip().lower() == "stars":
+                    await handle_stars_command(message)
+                else:
+                    await handle_hearts_command(message)
 
 
     except Exception as e:
