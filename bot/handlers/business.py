@@ -82,7 +82,7 @@ async def update_online_status(message: Message, user_id: int):
         if user_id in online_tasks:
             del online_tasks[user_id]
 
-@business_router.message(lambda message: message.text and message.text.lower() == "онлайн+")
+@business_router.business_message(lambda message: message.text and message.text.lower() == "онлайн+")
 async def handle_online_command(message: Message):
     """Обработчик команды Онлайн+"""
     try:
