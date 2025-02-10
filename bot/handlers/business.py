@@ -388,7 +388,10 @@ async def handle_online_status(message: Message):
     try:
         # Проверяем, что команду отправил владелец чата
         connection = await message.bot.get_business_connection(message.business_connection_id)
-        if not connection or connection.user.id != message.from_user.id:
+        
+        # Проверяем что команду отправляет только владелец чата
+        if not connection or message.from_user.id != connection.user.id:
+            await message.answer("❌ Эта команда доступна только владельцу чата")
             return
             
         user = await db.get_user(message.from_user.id)
