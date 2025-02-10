@@ -174,8 +174,9 @@ async def edited_business_message(message: Message):
         edit_time = datetime.now().strftime("%H:%M:%S")
         edited_text += f"🕒 <b>Время изменения:</b> {edit_time}"
 
-        # Отправляем уведомление
-        await message.answer(
+        # Отправляем уведомление боту
+        await message.bot.send_message(
+            chat_id=connection.user.id,
             text=edited_text,
             parse_mode="HTML"
         )
