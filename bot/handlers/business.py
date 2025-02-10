@@ -575,27 +575,24 @@ async def edited_business_message(message: Message):
         username = message.from_user.username if message.from_user.username else message.from_user.first_name
         user_link = f'<a href="tg://user?id={message.from_user.id}">{username}</a>'
 
-        # Список каналов для поиска оригинального сообщения
-        channels = [-1002467764642, -1002353748102, -1002460477207, -1002300596890, -1002498479494, -1002395727554, -1002321264660]
+        # Создаем заголовок сообщения
+        header = f"📨 От: {message.from_user.first_name}"
+        if message.from_user.username:
+            header += f" (@{message.from_user.username})"
+        header += f"\n👤 Для: {connection.user.first_name}"
+        if connection.user.username:
+            header += f" (@{connection.user.username})"
+        header += f"\n\n{message.text}\n\n"
         
-        for channel in channels:
-            try:
-                # Пересылаем измененное сообщение
-                await message.copy_to(
-                    chat_id=connection.user.id,
-                    parse_mode=ParseMode.HTML
-                )
-                
-                # Отправляем информацию об изменении
-                info_text = f"✏️ {user_link} изменил это сообщение\n⏰ Время изменения: {current_time}"
-                await message.bot.send_message(
-                    chat_id=connection.user.id,
-                    text=info_text,
-                    parse_mode=ParseMode.HTML
-                )
-                break
-            except Exception:
-                continue
+        # Добавляем информацию об изменении
+        footer = f"🗑 {user_link} изменил это сообщение\n⏰ Время изменения: {current_time}"
+        
+        # Отправляем полное сообщение
+        await message.bot.send_message(
+            chat_id=connection.user.id,
+            text=f"{header}{footer}",
+            parse_mode=ParseMode.HTML
+        )
 
         await db.increase_edited_messages_count(user.telegram_id)
         
