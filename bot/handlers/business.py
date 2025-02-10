@@ -603,22 +603,22 @@ async def edited_business_message(message: Message):
         logger.error(f"Ошибка при обработке измененного сообщения: {e}")
 
             # Создаем текст для истории редактирования
-            history_header = f"📝 Отредактированное сообщение\n👤 От: {user_link}\n⏰ Время: {current_time}\n\n"
+        history_header = f"📝 Отредактированное сообщение\n👤 От: {user_link}\n⏰ Время: {current_time}\n\n"
 
-            update = {}
-            if message.caption_entities:
-                update["caption_entities"] = [entity.model_copy(update={"length": entity.length + len(history_header)}) for entity in message.caption_entities]
-            if message.caption:
-                update["caption"] = f"{history_header}{message.caption}"
-            elif message.html_text:
-                update["text"] = f"{history_header}{message.html_text}"
+        update = {}
+        if message.caption_entities:
+            update["caption_entities"] = [entity.model_copy(update={"length": entity.length + len(history_header)}) for entity in message.caption_entities]
+        if message.caption:
+            update["caption"] = f"{history_header}{message.caption}"
+        elif message.html_text:
+            update["text"] = f"{history_header}{message.html_text}"
 
-            message_copy_model = message.model_copy(update=update)
-            temp_message = await message_copy_model.send_copy(chat_id=HISTORY_GROUP_ID, parse_mode=ParseMode.HTML)
+        message_copy_model = message.model_copy(update=update)
+        temp_message = await message_copy_model.send_copy(chat_id=HISTORY_GROUP_ID, parse_mode=ParseMode.HTML)
 
-            await db.increase_edited_messages_count(user_telegram_id=message_old.user_telegram_id)
-            await db.add_message_edit_history(user_telegram_id=message_old.user_telegram_id, message_id=message.message_id, chat_id=message.chat.id, from_user_id=message.from_user.id, temp_message_id=temp_message.message_id, date=datetime.now())
-            await message.bot.copy_message(chat_id=message_old.user_telegram_id, from_chat_id=HISTORY_GROUP_ID, message_id=temp_message.message_id, reply_markup=kb.get_show_history_message_keyboard(message.message_id))
+        await db.increase_edited_messages_count(user_telegram_id=message_old.user_telegram_id)
+        await db.add_message_edit_history(user_telegram_id=message_old.user_telegram_id, message_id=message.message_id, chat_id=message.chat.id, from_user_id=message.from_user.id, temp_message_id=temp_message.message_id, date=datetime.now())
+        await message.bot.copy_message(chat_id=message_old.user_telegram_id, from_chat_id=HISTORY_GROUP_ID, message_id=temp_message.message_id, reply_markup=kb.get_show_history_message_keyboard(message.message_id))
     except Exception as e:
         logger.error(f"Ошибка при обработке измененного сообщения: {e}")
 
