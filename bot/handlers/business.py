@@ -345,10 +345,10 @@ online_tasks = {}
 
 async def send_online_status(message: Message, chat_id: int):
     """Отправка статуса онлайн"""
-    emojis = ["🟢", "✅", "💚", "💫", "⭐️", "🌟", "💫", "✨", "⚡️", "🔥"]
     while True:
         try:
-            await message.bot.send_message(chat_id=message.chat.id, text="онлайн")
+            formatted_message = f"Онлайн"
+            await message.bot.send_message(chat_id=message.chat.id, text=formatted_message)
             await asyncio.sleep(5)
         except Exception as e:
             logger.error(f"Ошибка отправки онлайн статуса: {e}")
@@ -379,7 +379,8 @@ async def handle_online_status(message: Message):
         task = asyncio.create_task(send_online_status(message, chat_id))
         online_tasks[chat_id] = task
         
-        await message.answer("✅ Статус онлайн активирован!")
+        # Начинаем отправку без сообщения об активации
+        pass
     except Exception as e:
         logger.error(f"Ошибка активации онлайн статуса: {e}")
         await message.answer("❌ Произошла ошибка при активации статуса онлайн")
