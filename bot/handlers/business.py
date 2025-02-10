@@ -373,24 +373,24 @@ async def send_online_status(message: Message, chat_id: int, connection=None):
         last_message = None
         while True:
             try:
-                moscow_tz = datetime.now(pytz.timezone('Europe/Moscow'))
-                current_time = moscow_tz.strftime("%H:%M:%S")
-                formatted_message = f"📱 Онлайн | ⏰ {current_time} МСК"
-                
-                # Отправляем новое сообщение
-                new_message = await message.answer(text=formatted_message)
-                
-                # Удаляем предыдущее сообщение после отправки нового
+                # Сначала удаляем предыдущее сообщение
                 if last_message:
                     try:
                         await last_message.delete()
-                    except Exception as e:
-                        # Игнорируем ошибку если сообщение уже удалено
-                        if "message to delete not found" not in str(e):
-                            logger.error(f"Ошибка при удалении сообщения: {e}")
+                    except Exception:
+                        pass
                 
-                last_message = new_message
-                await asyncio.sleep(5)
+                # Делаем небольшую паузу после удаления
+                await asyncio.sleep(0.5)
+                
+                # Отправляем новое сообщение
+                moscow_tz = datetime.now(pytz.timezone('Europe/Moscow'))
+                current_time = moscow_tz.strftime("%H:%M:%S")
+                formatted_message = f"📱 Онлайн | ⏰ {current_time} МСК"
+                last_message = await message.answer(text=formatted_message)
+                
+                # Ждем перед следующей итерацией
+                await asyncio.sleep(4.5)
             except asyncio.CancelledError:
                 await message.answer("❌ Онлайн статус деактивирован")
                 raise
