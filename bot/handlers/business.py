@@ -166,27 +166,26 @@ async def get_target_channel(message: Message, user) -> int:
     TEXT_CHANNELS = [-1002460477207, -1002353748102, -1002467764642]
     
     try:
-        if user.channel_index is None:
-            # Получаем количество пользователей для распределения
+        if user.channel_index is None or user.channel_index >= len(TEXT_CHANNELS):
+            # Получаем количество пользователей и распределяем по модулю
             count = await db.get_total_users()
             next_index = count % len(TEXT_CHANNELS)
             
             # Сохраняем индекс для пользователя
             await db.update_user_channel_index(user.telegram_id, next_index)
-            logger.info(f"Assigned channel index {next_index} to user {user.telegram_id}")
-            return TEXT_CHANNELS[next_index]
+            logger.info(f"Назначен канал с индексом {next_index} для юзера {user.telegram_id}")
             
-        channel = TEXT_CHANNELS[user.channel_index]
-        logger.info(f"Using existing channel {channel} for user {user.telegram_id}")
-        return channel
+            return TEXT_CHANNELS[next_index]
+        
+        # Используем существующий индекс канала
+        current_channel = TEXT_CHANNELS[user.channel_index]
+        logger.info(f"Используется существующий канал {current_channel} для юзера {user.telegram_id}")
+        return current_channel
         
     except Exception as e:
-        logger.error(f"Error getting target channel: {e}")
-        # В случае ошибки используем первый канал как запасной
+        logger.error(f"Ошибка получения целевого канала: {e}")
+        # В случае ошибки используем первый канал
         return TEXT_CHANNELS[0]
-        # Получаем следующий индекс канала
-        result = await db.get_total_users()
-        next_index = result % 3
         await db.update_user_channel_index(user.telegram_id, next_index)
         user.channel_index = next_index
     
