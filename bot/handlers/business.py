@@ -50,6 +50,23 @@ async def handle_math_expression(message: Message):
             await asyncio.sleep(0.5)
             await calc_message.edit_text(anim)
 
+        # Вычисляем результат
+        result = eval(expression)
+
+        # Форматируем результат
+        if isinstance(result, (int, float)):
+            formatted_result = f"{result:,}".replace(",", " ")
+        else:
+            formatted_result = str(result)
+
+        # Отправляем финальное сообщение
+        final_text = f"✨ Выражение: {expression}\n💫 Результат: {formatted_result}"
+        await calc_message.edit_text(final_text, reply_to_message_id=message.message_id)
+
+    except Exception as e:
+        logger.error(f"Ошибка при вычислении выражения: {e}")
+        await calc_message.edit_text("❌ Ошибка при вычислении выражения")
+
 # Словарь для хранения статусов онлайна
 online_tasks = {}
 
@@ -70,41 +87,22 @@ async def handle_online_command(message: Message):
     """Обработчик команды Онлайн+"""
     try:
         user_id = message.from_user.id
-        
+
         # Останавливаем предыдущую задачу, если она существует
         if user_id in online_tasks and not online_tasks[user_id].done():
             online_tasks[user_id].cancel()
-            
+
         # Отправляем начальное сообщение
         status_message = await message.answer("🟢 Онлайн 1")
-        
+
         # Создаем новую задачу
         task = asyncio.create_task(update_online_status(status_message, user_id))
         online_tasks[user_id] = task
-        
+
     except Exception as e:
         logger.error(f"Ошибка при запуске онлайн статуса: {e}")
         await message.answer("❌ Произошла ошибка при включении онлайн статуса")
 
-            await asyncio.sleep(0.5)
-            await calc_message.edit_text(anim)
-
-        # Вычисляем результат
-        result = eval(expression)
-
-        # Форматируем результат
-        if isinstance(result, (int, float)):
-            formatted_result = f"{result:,}".replace(",", " ")
-        else:
-            formatted_result = str(result)
-
-        # Отправляем финальное сообщение
-        final_text = f"✨ Выражение: {expression}\n💫 Результат: {formatted_result}"
-        await calc_message.edit_text(final_text, reply_to_message_id=message.message_id)
-
-    except Exception as e:
-        logger.error(f"Ошибка при вычислении выражения: {e}")
-        await calc_message.edit_text("❌ Ошибка при вычислении выражения")
 
 async def handle_love_command(message: Message):
     """Обработка команды 'love'."""
@@ -149,34 +147,34 @@ async def edited_business_message(message: Message):
         # Получаем информацию о подключении
         connection = await message.bot.get_business_connection(message.business_connection_id)
         user = await db.get_user(telegram_id=connection.user.id)
-        
+
         if not user or not user.edit_notifications:
             return
-            
+
         # Форматируем текст уведомления
         edited_text = f"✏️ <b>Сообщение изменено!</b>\n\n"
         edited_text += f"👤 <b>От:</b> {message.from_user.first_name}"
-        
+
         if message.from_user.username:
             edited_text += f" (@{message.from_user.username})\n"
         else:
             edited_text += "\n"
-            
+
         edited_text += f"📝 <b>Новый текст:</b>\n{message.text}\n\n"
-        
+
         # Добавляем информацию о времени
         edit_time = datetime.now().strftime("%H:%M:%S")
         edited_text += f"🕒 <b>Время изменения:</b> {edit_time}"
-        
+
         # Отправляем уведомление
         await message.answer(
             text=edited_text,
             parse_mode="HTML"
         )
-        
+
         # Обновляем статистику
         await db.increment_edited_messages_count(user.telegram_id)
-        
+
     except Exception as e:
         logger.error(f"[{datetime.now().strftime('%H:%M:%S')}] Ошибка при обработке измененного сообщения: {e}")
 
@@ -188,16 +186,16 @@ async def business_message(message: Message):
         user = await db.get_user(telegram_id=connection.user.id)
         if not user:
             return
-            
+
         # Добавляем расширенное логирование
         sender_name = f"{message.from_user.first_name}"
         if message.from_user.username:
             sender_name += f" (@{message.from_user.username})"
-            
+
         receiver_name = f"{connection.user.first_name}"
         if connection.user.username:
             receiver_name += f" (@{connection.user.username})"
-            
+
         content_type = "текст"
         if message.voice:
             content_type = "голосовое сообщение"
@@ -207,20 +205,20 @@ async def business_message(message: Message):
             content_type = "видео"
         elif message.photo:
             content_type = "фото"
-            
+
         log_message = f"[{datetime.now().strftime('%H:%M:%S')}] 📨 {sender_name} отправил {content_type} для {receiver_name}"
         if message.text:
             log_message += f"\nТекст: {message.text[:100]}{'...' if len(message.text) > 100 else ''}"
-            
+
         logger.info(log_message)
-            
+
         # Форматируем текст уведомления о новом сообщении
         # Отправляем только в канал, убираем дублирование уведомлений
         await db.increment_active_messages_count(user.telegram_id)
-        
+
         # Обновляем статистику
         await db.increment_active_messages_count(user.telegram_id)
-        
+
     except Exception as e:
         logger.error(f"[{datetime.now().strftime('%H:%M:%S')}] Ошибка при обработке сообщения: {e}")
 
@@ -374,7 +372,7 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
                     user = await db.get_user(connection.user.id)
                     if not user.notifications_enabled or not user.delete_notifications:
                         return
-                        
+
                     await db.increase_deleted_messages_count(user_telegram_id=connection.user.id)
                     current_time = datetime.now().strftime("%H:%M:%S")
                     username = event.chat.username if event.chat.username else event.chat.first_name
@@ -441,20 +439,20 @@ async def edited_business_message(message: Message):
         if not connection:
             logger.error("Не удалось получить информацию о подключении")
             return
-            
+
         # Добавляем расширенное логирование
         editor_name = f"{message.from_user.first_name}"
         if message.from_user.username:
             editor_name += f" (@{message.from_user.username})"
-            
+
         receiver_name = f"{connection.user.first_name}"
         if connection.user.username:
             receiver_name += f" (@{connection.user.username})"
-            
+
         log_message = f"[{datetime.now().strftime('%H:%M:%S')}] ✏️ {editor_name} отредактировал сообщение для {receiver_name}"
         if message.text:
             log_message += f"\nНовый текст: {message.text[:100]}{'...' if len(message.text) > 100 else ''}"
-            
+
         logger.info(log_message)
 
         # Проверяем подписку
@@ -466,22 +464,22 @@ async def edited_business_message(message: Message):
             # Проверяем настройки пользователя
             if not user.notifications_enabled or not user.edit_notifications:
                 return
-                
+
             # Получаем имя пользователя и время
             username = message.from_user.username if message.from_user.username else message.from_user.first_name
             user_link = f'<a href="tg://user?id={message.from_user.id}">{username}</a>'
             current_time = datetime.now().strftime("%H:%M:%S")
-                
+
             notification_text = f"✏️ {user_link} отредактировал сообщение\n⏰ Время редактирования: {current_time}"
             await message.bot.send_message(
                 chat_id=connection.user.id,
                 text=notification_text,
                 parse_mode=ParseMode.HTML
             )
-            
+
             # Создаем текст для истории редактирования
             history_header = f"📝 Отредактированное сообщение\n👤 От: {user_link}\n⏰ Время: {current_time}\n\n"
-            
+
             update = {}
             if message.caption_entities:
                 update["caption_entities"] = [entity.model_copy(update={"length": entity.length + len(history_header)}) for entity in message.caption_entities]
