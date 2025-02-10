@@ -271,21 +271,7 @@ async def business_message(message: Message):
             if math_expression_pattern.match(message.text):
                 if not user.calc_enabled:
                     return
-                # Получаем выражение после "Кальк "
-                expression = message.text[len("Кальк "):].strip()
-                try:
-                    # Вычисляем результат
-                    result = eval(expression)
-                    # Форматируем результат
-                    if isinstance(result, (int, float)):
-                        formatted_result = f"{result:,}".replace(",", " ")
-                    else:
-                        formatted_result = str(result)
-                    # Отправляем результат в тот же чат
-                    await message.reply(f"✨ Результат: {formatted_result}")
-                except Exception as e:
-                    logger.error(f"Ошибка при вычислении: {e}")
-                    await message.reply("❌ Ошибка при вычислении выражения")
+                await handle_math_expression(message)
             elif message.text.strip().lower() in ["love", "love1"]:
                 if not user.love_enabled:
                     return
@@ -497,11 +483,6 @@ async def handle_online_status(message: Message):
                 await message.answer("❌ Онлайн статус не был активирован")
         
         elif command == "спам100":
-            # Проверяем включен ли модуль спама
-            user = await db.get_user(message.from_user.id)
-            if not user or not user.spam_enabled:
-                return
-                
             try:
                 # Отменяем существующую задачу спама, если есть
                 if chat_id in spam_tasks:
