@@ -480,3 +480,20 @@ async def process_unban(message: Message, state: FSMContext):
         await message.answer(f"Произошла ошибка при разблокировке: {str(e)}")
     finally:
         await state.clear()
+
+
+@admin_router.message(Command("cleanup_db"))
+async def cleanup_database_handler(message: Message):
+    """Обработчик команды очистки базы данных"""
+    if message.from_user.id not in ADMIN_IDS:
+        await message.answer("Хуй тебе, а не очистка! 🖕 Только для админов!")
+        return
+        
+    try:
+        result = await db.cleanup_database()
+        if result:
+            await message.answer("✅ Заебись! База данных очищена нахуй!")
+        else:
+            await message.answer("❌ Бля, что-то пошло по пизде при очистке...")
+    except Exception as e:
+        await message.answer(f"❌ Пиздец какой-то: {str(e)}")

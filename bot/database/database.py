@@ -791,3 +791,20 @@ async def check_inactive_chats(bot: Bot):
                 )
             except Exception as e:
                 logger.error(f"Ошибка отправки уведомления: {e}")
+
+async def cleanup_database():
+    """Нахуярить чистку всей хуйни из базы данных"""
+    async with get_db_session() as session:
+        try:
+            # Сначала удаляем все подписки, потому что они зависят от юзеров
+            await session.execute(delete(Subscription))
+            
+            # Потом удаляем всех пользователей
+            await session.execute(delete(User))
+            
+            await session.commit()
+            logger.info("🧹 База данных успешно очищена")
+            return True
+        except Exception as e:
+            logger.error(f"🔴 Ошибка при очистке базы данных: {str(e)}")
+            return False
