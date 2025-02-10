@@ -408,9 +408,7 @@ async def handle_online_status(message: Message):
                 del online_tasks[chat_id]
                 await message.answer("❌ Онлайн статус деактивирован")
     except Exception as e:
-        logger.error(f"Ошибка при обработке онлайн статуса: {e}")s(message: Message):
-    """Обработчик команды Онлайн+, Онлайн-, Онл+ и Онл-"""
-    logger.info(f"Получена команда {message.text} от пользователя {message.from_user.id}")
+        logger.error(f"Ошибка при обработке онлайн статуса: {e}")
     try:
         # Проверяем подписку отправителя
         user = await db.get_user(telegram_id=message.from_user.id)
