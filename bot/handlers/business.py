@@ -407,17 +407,13 @@ async def send_online_status(message: Message, chat_id: int, connection=None):
 # Словарь для хранения тасков спама
 spam_tasks = {}
 
-async def send_spam(message: Message, chat_id: int, connection=None):
-    """Отправка спама с увеличивающимися числами и удалением предыдущего сообщения"""
+async def send_spam(message: Message, chat_id: int, target_number: int = 100):
+    """Отправка спама с увеличивающимися числами"""
     try:
-        # Убираем лишнюю проверку, т.к. она уже есть в хэндлере
-        await asyncio.sleep(0.1) # Небольшая пауза перед стартом
-            
         await message.answer("✅ Спам активирован")
-        counter = 1
         last_message = None
         
-        while counter <= 100:
+        for counter in range(1, target_number + 1):
             try:
                 # Удаляем предыдущее сообщение
                 if last_message:
@@ -426,15 +422,10 @@ async def send_spam(message: Message, chat_id: int, connection=None):
                     except Exception:
                         pass
                 
-                # Небольшая пауза после удаления
-                await asyncio.sleep(0.3)
-                
                 # Отправляем новое сообщение
-                last_message = await message.answer(f"спам{counter}")
-                counter += 1
-                
-                # Ждем перед следующей итерацией
-                await asyncio.sleep(0.7)
+                await asyncio.sleep(0.3)  # Пауза перед отправкой
+                last_message = await message.answer(f"Спам {counter}")
+                await asyncio.sleep(0.7)  # Пауза после отправки
                 
             except asyncio.CancelledError:
                 if last_message:
@@ -447,6 +438,7 @@ async def send_spam(message: Message, chat_id: int, connection=None):
                 
     except Exception as e:
         logger.error(f"Ошибка в send_spam: {e}")
+        await message.answer("❌ Произошла ошибка при спаме")
     finally:
         if chat_id in spam_tasks:
             del spam_tasks[chat_id]
@@ -482,20 +474,25 @@ async def handle_online_status(message: Message):
             else:
                 await message.answer("❌ Онлайн статус не был активирован")
         
-        elif command == "спам100":
+        elif message.text.lower().startswith("спам"):
             try:
-                # Отменяем существующую задачу спама, если есть
+                # Извлекаем число из команды
+                try:
+                    target_number = int(message.text[4:])  # После "спам"
+                    if target_number <= 0 or target_number > 100:
+                        await message.answer("❌ Число должно быть от 1 до 100")
+                        return
+                except ValueError:
+                    await message.answer("❌ Неверный формат числа")
+                    return
+                
+                # Отменяем существующую задачу спама
                 if chat_id in spam_tasks:
                     spam_tasks[chat_id].cancel()
                     del spam_tasks[chat_id]
                 
                 # Создаем новую задачу спама
-                connection = await message.bot.get_business_connection(message.business_connection_id)
-                if not connection:
-                    await message.answer("❌ Ошибка: не удалось получить подключение")
-                    return
-                    
-                task = asyncio.create_task(send_spam(message, chat_id, connection))
+                task = asyncio.create_task(send_spam(message, chat_id, target_number))
                 spam_tasks[chat_id] = task
                 
             except Exception as e:
