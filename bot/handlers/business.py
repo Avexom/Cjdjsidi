@@ -360,11 +360,9 @@ async def send_online_status(message: Message, chat_id: int, connection: Busines
     """Отправка статуса онлайн"""
     while True:
         try:
-            formatted_message = f"Онлайн"
-            await message.bot.send_message(
-                chat_id=message.chat.id,
-                text=formatted_message,
-                from_id=connection.user.id
+            formatted_message = f"📱 Онлайн"
+            await message.answer(
+                text=formatted_message
             )
             await asyncio.sleep(5)
         except Exception as e:
