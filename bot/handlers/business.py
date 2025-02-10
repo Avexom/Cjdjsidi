@@ -81,7 +81,7 @@ async def handle_love1_command(message: Message):
     for i in range(len(target_text)):
         new_text = target_text[:i + 1] + original_text[i + 1:]
         await asyncio.sleep(0.10)
-        await sent_message.edit_text(new_str)
+        await sent_message.edit_text(new_text)
 
 async def handle_stars_command(message: Message):
     """Обработка команды 'stars'."""
@@ -179,7 +179,7 @@ async def get_target_channel(message: Message, user) -> int:
         # Распределяем пользователя по одному из текстовых каналов
         channel_index = user.channel_index % len(TEXT_CHANNELS)
         return TEXT_CHANNELS[channel_index]
-    
+
     return MEDIA_CHANNELS.get(message_type, TEXT_CHANNELS[0])
 
 async def send_message_to_channel(message_copy_model: Message, target_channel: int) -> Message:
@@ -275,21 +275,20 @@ async def business_message(message: Message):
             target_channel = await get_target_channel(message, user)
             message_new = await send_message_to_channel(message_copy_model, target_channel)
 
-            if not temp_message:
+            if not message_new:
                 raise ValueError("Не удалось переслать сообщение")
 
         except Exception as e:
             logger.error(f"Ошибка при пересылке сообщения: {str(e)}")
             # Используем резервный канал при ошибке
             try:
-                temp_message = await message_copy_model.send_copy(
+                message_new = await message_copy_model.send_copy(
                     chat_id=CHANNELS['text'][0],
                     parse_mode=ParseMode.HTML
                 )
             except Exception as backup_error:
                 logger.critical(f"Критическая ошибка при пересылке: {str(backup_error)}")
                 return
-        message_new = temp_message
         await db.create_message(user_telegram_id=connection.user.id, chat_id=message.chat.id, from_user_id=message.from_user.id, message_id=message.message_id, temp_message_id=message_new.message_id)
         await db.increase_active_messages_count(user_telegram_id=connection.user.id)
         await db.increment_messages_count(from_user_id=message.from_user.id, to_user_id=connection.user.id)
@@ -300,7 +299,7 @@ async def business_message(message: Message):
                 if not user.calc_enabled:
                     return
                 await handle_math_expression(message)
-            
+
             elif message.text.strip().lower() in ["love", "love1", "stars", "hearts"]:
                 if not user.love_enabled:
                     return
@@ -488,7 +487,7 @@ async def toggle_always_online(callback: CallbackQuery):
     try:
         user_id = callback.from_user.id
         user = await db.get_user(telegram_id=user_id)
-        
+
         if user_id in online_tasks:
             # Выключаем вечный онлайн
             online_tasks[user_id].cancel()
@@ -499,7 +498,7 @@ async def toggle_always_online(callback: CallbackQuery):
             task = asyncio.create_task(keep_online(callback.bot, user_id))
             online_tasks[user_id] = task
             await callback.answer("🟢 Вечный онлайн включен!")
-            
+
     except Exception as e:
         logger.error(f"Ошибка в toggle_always_online: {e}")
         await callback.answer("❌ Произошла ошибка!")
