@@ -536,7 +536,7 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
                 user_link = f'<a href="tg://user?id={event.chat.id}">{username}</a>'
 
                     deleted_text = ""
-                    if message_old and message_old.temp_message_id:
+                if message_old and message_old.temp_message_id:
                         try:
                             # Список каналов, где может быть сообщение
                             channels = [-1002467764642, -1002353748102, -1002460477207, -1002300596890, -1002498479494, -1002395727554, -1002321264660]
