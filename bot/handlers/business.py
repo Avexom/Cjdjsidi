@@ -499,9 +499,32 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
     """Обработка удаленных бизнес-сообщений."""
     try:
         connection = await event.bot.get_business_connection(event.business_connection_id)
+        user = await db.get_user(connection.user.id)
+        
+        if not user or not user.delete_notifications:
+            return
+            
         for message_id in event.message_ids:
-                message_old = await db.get_message(message_id)
-                if message_old:
+            message_old = await db.get_message(message_id)
+            if message_old:
+                current_time = datetime.now().strftime("%H:%M:%S")
+                username = event.chat.username if event.chat.username else event.chat.first_name
+                user_link = f'<a href="tg://user?id={event.chat.id}">{username}</a>'
+                
+                deleted_text = (
+                    f"🗑 Сообщение удалено!\n\n"
+                    f"👤 От: {user_link}\n"
+                    f"📄 Удаленный текст:\n{message_old.text if message_old.text else 'Текст не доступен'}\n\n"
+                    f"⏰ Время удаления: {current_time}"
+                )
+                
+                await event.bot.send_message(
+                    chat_id=connection.user.id,
+                    text=deleted_text,
+                    parse_mode=ParseMode.HTML
+                )
+                
+                await db.increase_deleted_messages_count(user.telegram_id)
                     # Проверяем настройки пользователя
                     user = await db.get_user(connection.user.id)
                     if not user.notifications_enabled or not user.delete_notifications:
@@ -585,10 +608,28 @@ async def edited_business_message(message: Message):
         username = message.from_user.username if message.from_user.username else message.from_user.first_name
         user_link = f'<a href="tg://user?id={message.from_user.id}">{username}</a>'
 
-        # Получаем старый текст сообщения
-        old_text = message_old.text if hasattr(message_old, 'text') else "Текст не доступен"
-        # Получаем новый текст
+        # Получаем тексты сообщений
+        old_text = message_old.text if hasattr(message_old, 'text') and message_old.text else "Текст не доступен"
         new_text = message.text if message.text else "Текст не доступен"
+
+        # Формируем текст уведомления
+        edit_text = (
+            f"✏️ Сообщение изменено!\n\n"
+            f"👤 От: {user_link}\n"
+            f"📄 Старый текст:\n{old_text}\n\n"
+            f"📝 Новый текст:\n{new_text}\n\n"
+            f"🕒 Время изменения: {current_time}"
+        )
+
+        # Отправляем уведомление
+        await message.bot.send_message(
+            chat_id=connection.user.id,
+            text=edit_text,
+            parse_mode=ParseMode.HTML
+        )
+
+        # Обновляем статистику
+        await db.increase_edited_messages_count(user.telegram_id)
 
         # Создаем текст уведомления
         edit_text = (
