@@ -728,10 +728,19 @@ async def toggle_notification(telegram_id: int, notification_type: str) -> bool:
         user = await session.scalar(
             select(User).where(User.telegram_id == telegram_id)
         )
-        if notification_type == "notifications":
-            field = "notifications_enabled"
-        else:
-            field = f"{notification_type}_notifications"
+        
+        # Маппинг типов уведомлений на поля базы данных
+        notification_fields = {
+            "all": "notifications_enabled",
+            "message": "message_notifications",
+            "edit": "edit_notifications",
+            "delete": "delete_notifications"
+        }
+        
+        field = notification_fields.get(notification_type)
+        if not field:
+            logger.error(f"Неизвестный тип уведомления: {notification_type}")
+            return False
 
         current_settings = getattr(user, field, False)
         await session.execute(
