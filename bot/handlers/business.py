@@ -326,7 +326,7 @@ async def business_message(message: Message):
                     from_chat_id=message.chat.id,
                     message_id=message.message_id
                 )
-                logger.info(f"✅ Сообщение успешно переслано в канал {target_channel}"))
+                logger.info(f"✅ Сообщение успешно переслано в канал {target_channel}")
 
             try:
                 # Пересылаем через Router_business
