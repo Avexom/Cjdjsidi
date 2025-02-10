@@ -44,7 +44,7 @@ class User(Base):
     active_messages_count = Column(Integer, nullable=False, default=0)
     edited_messages_count = Column(Integer, nullable=False, default=0)
     deleted_messages_count = Column(Integer, nullable=False, default=0)
-    channel_index = Column(Integer, nullable=False, default=0)
+    channel_index = Column(Integer, nullable=True, default=None)
     is_banned = Column(Boolean, nullable=False, default=False)
     ban_reason = Column(String, nullable=True)
     username = Column(String, nullable=True)
@@ -506,12 +506,12 @@ if __name__ == "__main__":
     asyncio.run(main())
 async def reset_channel_indexes():
     """
-    Сбросить channel_index для всех пользователей на None
+    Сбросить channel_index для всех пользователей на 0
     """
     async with get_db_session() as session:
         try:
             await session.execute(
-                update(User).values(channel_index=None)
+                update(User).values(channel_index=0)
             )
             await session.commit()
             logger.info("Все привязки каналов успешно сброшены")
