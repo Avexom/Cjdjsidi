@@ -184,7 +184,21 @@ async def check_payment_callback(callback: CallbackQuery):
 
 @user_router.message(F.text == "📱 Модули")
 async def modules_handler(message: Message):
-    await message.answer("Выберите модуль:", reply_markup=kb.modules_keyboard)
+    user = await db.get_user(message.from_user.id)
+    if not user:
+        await message.answer("❌ Профиль не найден")
+        return
+        
+    # Проверяем подписку
+    if not user.subscription_end_date or user.subscription_end_date < datetime.now():
+        await message.answer("❌ Твоя подписка закончилась!\n\nНажми на кнопку '💳 Купить подписку' чтобы получить доступ к модулям.")
+        return
+        
+    user_settings = {
+        'module_calc': user.module_calc_enabled if hasattr(user, 'module_calc_enabled') else False,
+        'module_love': user.module_love_enabled if hasattr(user, 'module_love_enabled') else False
+    }
+    await message.answer("Выберите модуль:", reply_markup=kb.get_modules_keyboard(user_settings))
 async def check_payment_status(message: Message, invoice_id: int):
     """Проверяем статус платежа и выдаем подписку"""
     from bot.services.payments import check_payment, delete_invoice

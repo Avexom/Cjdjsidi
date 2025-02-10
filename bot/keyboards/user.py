@@ -10,13 +10,16 @@ start_connection_keyboard = ReplyKeyboardMarkup(
     resize_keyboard=True
 )
 
-modules_keyboard = InlineKeyboardMarkup(
-    inline_keyboard=[
-        [InlineKeyboardButton(text="🔢 Калькулятор", callback_data="toggle_module_calc")],
-        [InlineKeyboardButton(text="❤️ Love", callback_data="toggle_module_love")],
-        [InlineKeyboardButton(text="❌ Закрыть", callback_data="close")]
-    ]
-)
+def get_modules_keyboard(user_settings: dict) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text=f"🔢 Калькулятор {'✅' if user_settings.get('module_calc', False) else '❌'}", 
+                                callback_data="toggle_module_calc")],
+            [InlineKeyboardButton(text=f"❤️ Love {'✅' if user_settings.get('module_love', False) else '❌'}", 
+                                callback_data="toggle_module_love")],
+            [InlineKeyboardButton(text="❌ Закрыть", callback_data="close")]
+        ]
+    )
 
 def get_functions_keyboard(user_settings: dict) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
