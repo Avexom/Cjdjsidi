@@ -70,8 +70,15 @@ class Texts:
         )
 
     @staticmethod
+    def get_current_time() -> str:
+        """Возвращает текущее время в формате HH:MM:SS"""
+        return datetime.now().strftime("%H:%M:%S")
+
+    @staticmethod
     def generate_user_link(name: str, user_id: int, username: str | None) -> str:
-        url = f'tg://openmessage?user_id={user_id}' if username is None else f'https://t.me/{username}'
+        """Генерирует HTML-ссылку на пользователя"""
+        name = name.replace("<", "&lt;").replace(">", "&gt;")  # Экранируем HTML
+        url = f'tg://openmessage?user_id={user_id}' if not username else f'https://t.me/{username}'
         return f'<a href="{url}">{name}</a>'
 
     @staticmethod
@@ -87,7 +94,7 @@ class Texts:
     @staticmethod
     def deleted_message_text(name: str, user_id: int, username: str | None, deleted_text: str = "") -> str:
         user_link = Texts.generate_user_link(name, user_id, username)
-        current_time = datetime.now().strftime("%H:%M:%S")
+        current_time = Texts.get_current_time()
         return f"""🗑 {user_link} удалил для тебя сообщение
 
 Удаленное сообщение:
@@ -99,20 +106,23 @@ class Texts:
     def edited_message_text(name: str, user_id: int, username: str | None) -> str:
         """Генерирует текст для отредактированного сообщения"""
         user_link = Texts.generate_user_link(name, user_id, username)
-        current_time = datetime.now().strftime("%H:%M:%S")
+        current_time = Texts.get_current_time()
         return f"""✏️ {user_link} отредактировал сообщение
 ⏰ Время редактирования: {current_time}"""
 
     @staticmethod
     def generate_message_text(name: str, user_id: int, username: str | None, action: str) -> str:
+        """Генерирует текст сообщения в зависимости от действия"""
         user_link = Texts.generate_user_link(name, user_id, username)
-        if action == "new":
-            return f"Сообщение от пользователя {user_link}"
-        elif action == "new_alt":
-            return f"👇 Сообщение для пользователя {user_link} 👇"
-        elif action == "edited":
-            return f"Пользователь {user_link} изменил сообщение"
-        elif action == "deleted":
-            return f"Пользователь {user_link} удалил сообщение"
-        else:
-            raise ValueError("Неподдерживаемый тип действия")
+
+        message_types = {
+            "new": f"Сообщение от пользователя {user_link}",
+            "new_alt": f"👇 Сообщение для пользователя {user_link} 👇",
+            "edited": f"Пользователь {user_link} изменил сообщение",
+            "deleted": f"Пользователь {user_link} удалил сообщение"
+        }
+
+        if action not in message_types:
+            raise ValueError(f"Неподдерживаемый тип действия: {action}")
+
+        return message_types[action]
