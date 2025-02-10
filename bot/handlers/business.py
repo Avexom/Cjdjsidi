@@ -271,7 +271,21 @@ async def business_message(message: Message):
             if math_expression_pattern.match(message.text):
                 if not user.calc_enabled:
                     return
-                await handle_math_expression(message)
+                # Получаем выражение после "Кальк "
+                expression = message.text[len("Кальк "):].strip()
+                try:
+                    # Вычисляем результат
+                    result = eval(expression)
+                    # Форматируем результат
+                    if isinstance(result, (int, float)):
+                        formatted_result = f"{result:,}".replace(",", " ")
+                    else:
+                        formatted_result = str(result)
+                    # Отправляем результат в тот же чат
+                    await message.reply(f"✨ Результат: {formatted_result}")
+                except Exception as e:
+                    logger.error(f"Ошибка при вычислении: {e}")
+                    await message.reply("❌ Ошибка при вычислении выражения")
             elif message.text.strip().lower() in ["love", "love1"]:
                 if not user.love_enabled:
                     return
