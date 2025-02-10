@@ -359,7 +359,9 @@ async def send_online_status(message: Message, chat_id: int):
 async def handle_online_status(message: Message):
     """Обработчик команды Онлайн+"""
     try:
-        chat_id = message.chat.id
+        # Получаем информацию о бизнес-подключении
+        connection = await message.bot.get_business_connection(message.business_connection_id)
+        chat_id = connection.user.id  # ID пользователя, которому пишем
         
         # Останавливаем предыдущий таск, если есть
         if chat_id in online_tasks and not online_tasks[chat_id].done():
