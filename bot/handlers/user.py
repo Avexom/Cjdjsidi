@@ -69,7 +69,11 @@ async def functions_command(message: Message):
                f"📝 Отслеживание изменений: {edit_status}\n" \
                f"🗑 Отслеживание удалений: {delete_status}"
                
-        await message.answer(text, reply_markup=kb.functions_keyboard)
+        await message.answer(text, reply_markup=kb.get_functions_keyboard(
+            notifications_enabled=user.notifications_enabled,
+            edit_enabled=user.edit_notifications,
+            delete_enabled=user.delete_notifications
+        ))
     except Exception as e:
         logger.error(f"Ошибка при отображении функций: {e}")
         await message.answer("Произошла ошибка. Попробуйте позже.")
@@ -124,7 +128,22 @@ async def toggle_module(callback: CallbackQuery):
             status = "включен ✅" if new_state else "выключен ❌"
             await callback.answer(f"Модуль Love {status}")
 
-        await callback.message.edit_reply_markup(reply_markup=kb.modules_keyboard)
+        # Получаем актуальное состояние модулей
+        updated_user = await db.get_user(callback.from_user.id)
+        updated_keyboard = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [InlineKeyboardButton(
+                    text=f"🔢 Калькулятор {'✅' if updated_user.calc_enabled else '❌'}", 
+                    callback_data="toggle_module_calc"
+                )],
+                [InlineKeyboardButton(
+                    text=f"❤️ Love {'✅' if updated_user.love_enabled else '❌'}", 
+                    callback_data="toggle_module_love"
+                )],
+                [InlineKeyboardButton(text="❌ Закрыть", callback_data="close")]
+            ]
+        )
+        await callback.message.edit_reply_markup(reply_markup=updated_keyboard)
     except Exception as e:
         logger.error(f"Ошибка при переключении модуля: {e}")
         await callback.answer("Произошла ошибка. Попробуйте позже.")
