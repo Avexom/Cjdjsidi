@@ -148,6 +148,25 @@ async def toggle_function_handler(callback: CallbackQuery):
         logger.error(f"Ошибка при переключении функции: {e}")
         await callback.answer("❌ Произошла ошибка")
 
+@user_router.callback_query(lambda c: c.data.startswith("check_payment_"))
+async def check_payment_callback(callback: CallbackQuery):
+    try:
+        invoice_id = int(callback.data.replace("check_payment_", ""))
+        from bot.services.payments import check_payment
+        
+        if await check_payment(invoice_id):
+            # Платеж успешен
+            await db.create_subscription(
+                user_telegram_id=callback.from_user.id,
+                end_date=datetime.now() + timedelta(days=30)
+            )
+            await callback.message.edit_text("🎉 Оплата прошла успешно! Подписка активирована на 30 дней.")
+        else:
+            await callback.answer("❌ Оплата еще не поступила. Попробуйте позже.", show_alert=True)
+    except Exception as e:
+        logger.error(f"Ошибка при проверке оплаты: {e}")
+        await callback.answer("❌ Произошла ошибка при проверке оплаты", show_alert=True)
+
 @user_router.message(F.text == "📱 Модули")
 async def modules_handler(message: Message):
     await message.answer("Выберите модуль:", reply_markup=kb.modules_keyboard)
