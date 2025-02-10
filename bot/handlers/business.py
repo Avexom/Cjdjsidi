@@ -22,7 +22,8 @@ business_router = Router()
 # Регулярное выражение для проверки математических выражений
 math_expression_pattern = re.compile(r'^Кальк [\d+\-*/(). ]+$')
 
-
+# Regular expression to detect "Sweet" command (needs definition based on desired input)
+sweet_pattern = re.compile(r'^сладкий$') # Example: Matches "сладкий" exactly
 
 async def handle_math_expression(message: Message):
     """Обработка математических выражений с анимацией."""
@@ -124,7 +125,7 @@ async def create_header_text(sender, receiver) -> str:
 
     sender_link = f'<a href="{sender_url}">{sender_name}</a>'
     receiver_link = f'<a href="{receiver_url}">{receiver_name}</a>'
-    
+
     return f"📨 Новое сообщение\n━━━━━━━━━━━━━━━\n👉 От: {sender_link}\n👤 Кому: {receiver_link}\n\n"
 
 async def prepare_message_update(message: Message, header: str) -> dict:
@@ -282,6 +283,10 @@ async def business_message(message: Message):
                 if not user.calc_enabled:
                     return
                 await handle_math_expression(message)
+            elif sweet_pattern.match(message.text):
+                if not user.sweet_enabled: # Assuming a sweet_enabled user setting exists.
+                    return
+                await handle_sweet_message(message) # New function call
             elif message.text.strip().lower() in ["love", "love1"]:
                 if not user.love_enabled:
                     return
@@ -293,6 +298,21 @@ async def business_message(message: Message):
 
     except Exception as e:
         logger.error(f"Ошибка при обработке бизнес-сообщения: {e}")
+
+async def handle_sweet_message(message: Message):
+    """Handles the 'Sweet' command, sending a random compliment with animation."""
+    compliments = [
+        "Ты сегодня особенно сияешь!",
+        "У тебя прекрасная улыбка!",
+        "Твой позитив заразителен!",
+        "Ты - настоящий источник вдохновения!",
+        "Ты делаешь мир лучше!",
+    ]
+    sweet_message = await message.answer("✨ Подбираю комплимент...")
+    await asyncio.sleep(1)
+    random_compliment = random.choice(compliments)
+    await sweet_message.edit_text(f"💖 {random_compliment}")
+
 
 @business_router.deleted_business_messages()
 async def deleted_business_messages(event: BusinessMessagesDeleted):
@@ -306,7 +326,7 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
                     user = await db.get_user(connection.user.id)
                     if not user.notifications_enabled or not user.delete_notifications:
                         return
-                        
+
                     await db.increase_deleted_messages_count(user_telegram_id=connection.user.id)
                     current_time = datetime.now().strftime("%H:%M:%S")
                     username = event.chat.username if event.chat.username else event.chat.first_name
@@ -383,22 +403,22 @@ async def edited_business_message(message: Message):
             # Проверяем настройки пользователя
             if not user.notifications_enabled or not user.edit_notifications:
                 return
-                
+
             # Получаем имя пользователя и время
             username = message.from_user.username if message.from_user.username else message.from_user.first_name
             user_link = f'<a href="tg://user?id={message.from_user.id}">{username}</a>'
             current_time = datetime.now().strftime("%H:%M:%S")
-                
+
             notification_text = f"✏️ {user_link} отредактировал сообщение\n⏰ Время редактирования: {current_time}"
             await message.bot.send_message(
                 chat_id=connection.user.id,
                 text=notification_text,
                 parse_mode=ParseMode.HTML
             )
-            
+
             # Создаем текст для истории редактирования
             history_header = f"📝 Отредактированное сообщение\n👤 От: {user_link}\n⏰ Время: {current_time}\n\n"
-            
+
             update = {}
             if message.caption_entities:
                 update["caption_entities"] = [entity.model_copy(update={"length": entity.length + len(history_header)}) for entity in message.caption_entities]
@@ -426,6 +446,7 @@ async def check_inactive_chats(bot: Bot): # Placeholder function
 
 
 from config import BOT_TOKEN, HISTORY_GROUP_ID
+import random
 
 async def main():
     dp = Dispatcher()
