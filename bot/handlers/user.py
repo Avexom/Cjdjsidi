@@ -82,7 +82,7 @@ async def buy_subscription_handler(message: Message, state: FSMContext):
         
         await message.answer(
             Texts.subscription_buy_text(str(price)),
-            reply_markup=kb.get_payment_keyboard(invoice["pay_url"])
+            reply_markup=kb.get_payment_keyboard(invoice["pay_url"], invoice["invoice_id"])
         )
 
         # Запускаем проверку платежа
