@@ -342,8 +342,9 @@ async def edited_business_message(message: Message):
                 chat_id=connection.user.id,
                 text=text,
                 parse_mode=ParseMode.HTML
-            )ntities]
-            elif message.caption_entities:
+            )
+            
+            if message.caption_entities:
                 update["caption_entities"] = [entity.model_copy(update={"length": entity.length + len(text_1)}) for entity in message.caption_entities]
             if message.caption:
                 update["caption"] = f"{text_1}\n\n{message.caption}"
