@@ -349,7 +349,8 @@ async def send_online_status(message: Message, chat_id: int):
     while True:
         try:
             emoji = random.choice(emojis)
-            await message.bot.send_message(chat_id=chat_id, text=f"{emoji} Онлайн")
+            # Отправляем в тот же чат, где была команда
+            await message.bot.send_message(chat_id=message.chat.id, text=f"{emoji} Онлайн")
             await asyncio.sleep(5)
         except Exception as e:
             logger.error(f"Ошибка отправки онлайн статуса: {e}")
@@ -360,9 +361,8 @@ async def handle_online_status(message: Message):
     """Обработчик команды Онлайн+"""
     logger.info(f"Получена команда Онлайн+ от пользователя {message.from_user.id}")
     try:
-        # Получаем информацию о бизнес-подключении
-        connection = await message.bot.get_business_connection(message.business_connection_id)
-        user = await db.get_user(telegram_id=connection.user.id)
+        # Проверяем подписку отправителя
+        user = await db.get_user(telegram_id=message.from_user.id)
         
         # Проверяем подписку и активацию модуля
         if not user or not user.subscription_end_date or user.subscription_end_date < datetime.now():
@@ -371,7 +371,7 @@ async def handle_online_status(message: Message):
         if not user.online_enabled:  # Проверка включен ли модуль
             return
             
-        chat_id = connection.user.id  # ID пользователя, которому пишем
+        chat_id = message.chat.id  # ID текущего чата
         
         # Останавливаем предыдущий таск, если есть
         if chat_id in online_tasks and not online_tasks[chat_id].done():
