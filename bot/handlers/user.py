@@ -156,10 +156,18 @@ async def check_payment_callback(callback: CallbackQuery):
         
         if await check_payment(invoice_id):
             # Платеж успешен
+            end_date = datetime.now() + timedelta(days=30)
             await db.create_subscription(
                 user_telegram_id=callback.from_user.id,
-                end_date=datetime.now() + timedelta(days=30)
+                end_date=end_date
             )
+            # Обновляем дату окончания подписки в таблице users
+            async with db.get_db_session() as session:
+                await session.execute(
+                    update(User)
+                    .where(User.telegram_id == callback.from_user.id)
+                    .values(subscription_end_date=end_date)
+                )
             await callback.message.edit_text("🎉 Оплата прошла успешно! Подписка активирована на 30 дней.")
         else:
             await callback.answer("❌ Оплата еще не поступила. Попробуйте позже.", show_alert=True)
