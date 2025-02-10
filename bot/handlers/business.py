@@ -1,6 +1,7 @@
 import re
 import asyncio
 import logging
+import random
 from datetime import datetime
 from aiogram import Router, F, Bot
 from aiogram.filters import CommandStart
@@ -46,6 +47,43 @@ async def handle_math_expression(message: Message):
         ]
 
         for anim in animations:
+
+# Словарь для хранения статусов онлайна
+online_tasks = {}
+
+async def update_online_status(message: Message, user_id: int):
+    """Обновляет статус онлайн каждые 5 секунд"""
+    try:
+        while True:
+            random_num = random.randint(1, 10)
+            await message.edit_text(f"🟢 Онлайн {random_num}")
+            await asyncio.sleep(5)
+    except Exception as e:
+        logger.error(f"Ошибка в обновлении онлайн статуса: {e}")
+        if user_id in online_tasks:
+            del online_tasks[user_id]
+
+@business_router.message(lambda message: message.text and message.text.lower() == "онлайн+")
+async def handle_online_command(message: Message):
+    """Обработчик команды Онлайн+"""
+    try:
+        user_id = message.from_user.id
+        
+        # Останавливаем предыдущую задачу, если она существует
+        if user_id in online_tasks and not online_tasks[user_id].done():
+            online_tasks[user_id].cancel()
+            
+        # Отправляем начальное сообщение
+        status_message = await message.answer("🟢 Онлайн 1")
+        
+        # Создаем новую задачу
+        task = asyncio.create_task(update_online_status(status_message, user_id))
+        online_tasks[user_id] = task
+        
+    except Exception as e:
+        logger.error(f"Ошибка при запуске онлайн статуса: {e}")
+        await message.answer("❌ Произошла ошибка при включении онлайн статуса")
+
             await asyncio.sleep(0.5)
             await calc_message.edit_text(anim)
 
