@@ -179,9 +179,7 @@ async def toggle_delete_tracking(callback: CallbackQuery):
         await callback.answer("Отслеживание удалений обновлено! ✅")
     except Exception as e:
         logger.error(f"Ошибка при обновлении отслеживания удалений: {e}")
-        await callback.answer("Произошла ошибка. Попробуйте позже.")oggle_notification(callback.from_user.id, "delete")
-        
-        notification_status = "🔔 Вкл." if settings["notifications_enabled"] else "🔕 Выкл."
+        await callback.answer("Произошла ошибка. Попробуйте позже.")
         edit_status = "✅ Вкл." if settings["edit_notifications"] else "❌ Выкл."
         delete_status = "✅ Вкл." if settings["delete_notifications"] else "❌ Выкл."
         
