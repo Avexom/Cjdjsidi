@@ -362,9 +362,13 @@ from config import BOT_TOKEN, HISTORY_GROUP_ID
 # Словарь для хранения тасков онлайн-статуса
 online_tasks = {}
 
-async def send_online_status(message: Message, chat_id: int):
+async def send_online_status(message: Message, chat_id: int, connection=None):
     """Отправка статуса онлайн"""
     try:
+        # Проверяем владельца
+        if connection and message.from_user.id != connection.user.id:
+            return
+            
         await message.answer("✅ Онлайн статус активирован")
         while True:
             try:
@@ -380,6 +384,8 @@ async def send_online_status(message: Message, chat_id: int):
                 logger.error(f"Ошибка отправки онлайн статуса: {e}")
                 await message.answer("❌ Ошибка отправки статуса")
                 raise
+    except Exception as e:
+        logger.error(f"Ошибка в send_online_status: {e}")
     finally:
         if chat_id in online_tasks:
             del online_tasks[chat_id]
