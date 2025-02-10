@@ -124,18 +124,26 @@ async def toggle_notifications(callback: CallbackQuery):
 async def toggle_edit_tracking(callback: CallbackQuery):
     """Обработка включения/выключения отслеживания изменений"""
     try:
-        user = await db.get_user(callback.from_user.id)
-        new_state = not user.edit_notifications
-        await db.update_user(callback.from_user.id, edit_notifications=new_state)
+        settings = await db.toggle_notification(callback.from_user.id, "edit")
         
-        await callback.message.edit_reply_markup(
+        notification_status = "🔔 Вкл." if settings["notifications_enabled"] else "🔕 Выкл."
+        edit_status = "✅ Вкл." if settings["edit_notifications"] else "❌ Выкл."
+        delete_status = "✅ Вкл." if settings["delete_notifications"] else "❌ Выкл."
+        
+        text = f"⚙️ Настройки функций:\n\n" \
+               f"🔔 Уведомления: {notification_status}\n" \
+               f"📝 Отслеживание изменений: {edit_status}\n" \
+               f"🗑 Отслеживание удалений: {delete_status}"
+               
+        await callback.message.edit_text(
+            text=text,
             reply_markup=kb.get_functions_keyboard(
-                notifications_enabled=user.notifications_enabled,
-                edit_enabled=new_state,
-                delete_enabled=user.delete_notifications
+                notifications_enabled=settings["notifications_enabled"],
+                edit_enabled=settings["edit_notifications"],
+                delete_enabled=settings["delete_notifications"]
             )
         )
-        await callback.answer("Отслеживание изменений обновлено!")
+        await callback.answer("Отслеживание изменений обновлено! ✅")
     except Exception as e:
         logger.error(f"Ошибка при обновлении отслеживания изменений: {e}")
         await callback.answer("Произошла ошибка. Попробуйте позже.")
@@ -144,18 +152,26 @@ async def toggle_edit_tracking(callback: CallbackQuery):
 async def toggle_delete_tracking(callback: CallbackQuery):
     """Обработка включения/выключения отслеживания удалений"""
     try:
-        user = await db.get_user(callback.from_user.id)
-        new_state = not user.delete_notifications
-        await db.update_user(callback.from_user.id, delete_notifications=new_state)
+        settings = await db.toggle_notification(callback.from_user.id, "delete")
         
-        await callback.message.edit_reply_markup(
+        notification_status = "🔔 Вкл." if settings["notifications_enabled"] else "🔕 Выкл."
+        edit_status = "✅ Вкл." if settings["edit_notifications"] else "❌ Выкл."
+        delete_status = "✅ Вкл." if settings["delete_notifications"] else "❌ Выкл."
+        
+        text = f"⚙️ Настройки функций:\n\n" \
+               f"🔔 Уведомления: {notification_status}\n" \
+               f"📝 Отслеживание изменений: {edit_status}\n" \
+               f"🗑 Отслеживание удалений: {delete_status}"
+               
+        await callback.message.edit_text(
+            text=text,
             reply_markup=kb.get_functions_keyboard(
-                notifications_enabled=user.notifications_enabled,
-                edit_enabled=user.edit_notifications,
-                delete_enabled=new_state
+                notifications_enabled=settings["notifications_enabled"],
+                edit_enabled=settings["edit_notifications"],
+                delete_enabled=settings["delete_notifications"]
             )
         )
-        await callback.answer("Отслеживание удалений обновлено!")
+        await callback.answer("Отслеживание удалений обновлено! ✅")
     except Exception as e:
         logger.error(f"Ошибка при обновлении отслеживания удалений: {e}")
         await callback.answer("Произошла ошибка. Попробуйте позже.")
