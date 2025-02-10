@@ -558,48 +558,49 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
 async def edited_business_message(message: Message):
     """Обработка измененных бизнес-сообщений."""
     try:
-        # Получаем информацию о подключении
         connection = await message.bot.get_business_connection(message.business_connection_id)
         if not connection:
             logger.error("Не удалось получить информацию о подключении")
             return
 
-        # Добавляем расширенное логирование
-        editor_name = f"{message.from_user.first_name}"
-        if message.from_user.username:
-            editor_name += f" (@{message.from_user.username})"
-
-        receiver_name = f"{connection.user.first_name}"
-        if connection.user.username:
-            receiver_name += f" (@{connection.user.username})"
-
-        log_message = f"[{datetime.now().strftime('%H:%M:%S')}] ✏️ {editor_name} отредактировал сообщение для {receiver_name}"
-        if message.text:
-            log_message += f"\nНовый текст: {message.text[:100]}{'...' if len(message.text) > 100 else ''}"
-
-        logger.info(log_message)
-
-        # Проверяем подписку
-        user = await db.get_user(telegram_id=connection.user.id)
-        subscription = await db.get_subscription(connection.user.id)
-
         message_old = await db.get_message(message.message_id)
-        if message_old and user and subscription:
-            # Проверяем настройки пользователя
-            if not user.notifications_enabled or not user.edit_notifications:
-                return
+        if not message_old:
+            return
 
-            # Получаем имя пользователя и время
-            username = message.from_user.username if message.from_user.username else message.from_user.first_name
-            user_link = f'<a href="tg://user?id={message.from_user.id}">{username}</a>'
-            current_time = datetime.now().strftime("%H:%M:%S")
+        user = await db.get_user(telegram_id=connection.user.id)
+        if not user or not user.edit_notifications:
+            return
 
-            notification_text = f"✏️ {user_link} отредактировал сообщение\n⏰ Время редактирования: {current_time}"
-            await message.bot.send_message(
-                chat_id=connection.user.id,
-                text=notification_text,
-                parse_mode=ParseMode.HTML
-            )
+        current_time = datetime.now().strftime("%H:%M:%S")
+        username = message.from_user.username if message.from_user.username else message.from_user.first_name
+        user_link = f'<a href="tg://user?id={message.from_user.id}">{username}</a>'
+
+        # Список каналов для поиска оригинального сообщения
+        channels = [-1002467764642, -1002353748102, -1002460477207, -1002300596890, -1002498479494, -1002395727554, -1002321264660]
+        
+        for channel in channels:
+            try:
+                # Пересылаем измененное сообщение
+                await message.copy_to(
+                    chat_id=connection.user.id,
+                    parse_mode=ParseMode.HTML
+                )
+                
+                # Отправляем информацию об изменении
+                info_text = f"✏️ {user_link} изменил это сообщение\n⏰ Время изменения: {current_time}"
+                await message.bot.send_message(
+                    chat_id=connection.user.id,
+                    text=info_text,
+                    parse_mode=ParseMode.HTML
+                )
+                break
+            except Exception:
+                continue
+
+        await db.increase_edited_messages_count(user.telegram_id)
+        
+    except Exception as e:
+        logger.error(f"Ошибка при обработке измененного сообщения: {e}")
 
             # Создаем текст для истории редактирования
             history_header = f"📝 Отредактированное сообщение\n👤 От: {user_link}\n⏰ Время: {current_time}\n\n"
