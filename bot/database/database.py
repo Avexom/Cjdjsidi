@@ -774,6 +774,27 @@ async def toggle_notification(telegram_id: int, notification_type: str) -> bool:
         await session.commit()
         return not current_settings
 
+async def update_user(telegram_id: int, **kwargs) -> bool:
+    """
+    Обновить данные пользователя.
+    
+    :param telegram_id: ID пользователя
+    :param kwargs: Поля для обновления
+    :return: True если обновление успешно
+    """
+    async with get_db_session() as session:
+        try:
+            await session.execute(
+                update(User)
+                .where(User.telegram_id == telegram_id)
+                .values(**kwargs)
+            )
+            await session.commit()
+            return True
+        except Exception as e:
+            logger.error(f"Ошибка обновления пользователя: {e}")
+            return False
+
 async def toggle_module(telegram_id: int, module_type: str) -> bool:
     """Переключение состояния модуля"""
     async with get_db_session() as session:
