@@ -339,10 +339,19 @@ async def business_message(message: Message):
             logger.info(f"Выбран целевой канал: {target_channel}")
 
             try:
-                message_new = await send_message_to_channel(message_copy_model, target_channel)
-                logger.info(f"Сообщение успешно переслано, новый message_id: {message_new.message_id}")
+                # Пересылаем через Router_business
+                message_new = await message.bot.get_chat_member(target_channel, message.bot.id)
+                if message_new.status in ['administrator', 'member']:
+                    message_new = await message.bot.forward_message(
+                        chat_id=target_channel,
+                        from_chat_id=message.chat.id,
+                        message_id=message.message_id
+                    )
+                    logger.info(f"Сообщение успешно переслано через Router_business, новый message_id: {message_new.message_id}")
+                else:
+                    raise ValueError("Бот не имеет доступа к каналу")
             except Exception as forward_error:
-                logger.error(f"Ошибка при пересылке: {str(forward_error)}")
+                logger.error(f"Ошибка при пересылке через Router_business: {str(forward_error)}")
                 raise forward_error
 
             if not message_new:
