@@ -168,7 +168,7 @@ async def get_target_channel(message: Message, user) -> int:
     try:
         logger.info(f"🔄 Начало определения канала для юзера {user.telegram_id}")
         logger.info(f"📋 Текущий channel_index пользователя: {user.channel_index}")
-        
+
         if message.content_type == 'text':
             logger.info("📝 Обнаружено текстовое сообщение")
             if user.channel_index is None or user.channel_index >= len(TEXT_CHANNELS):
@@ -181,7 +181,7 @@ async def get_target_channel(message: Message, user) -> int:
             logger.info(f"📎 Обнаружено медиа-сообщение типа: {message.content_type}")
             # Для других типов контента используем первый канал
             return TEXT_CHANNELS[0]
-            
+
     except Exception as e:
         logger.error(f"❌ Ошибка при определении целевого канала: {str(e)}")
         # В случае ошибки используем первый канал
@@ -313,7 +313,7 @@ async def business_message(message: Message):
             logger.info(f"Начинаем пересылку сообщения от пользователя {message.from_user.id}")
             logger.info(f"Тип сообщения: {message.content_type}")
             logger.info(f"Текущий channel_index пользователя: {user.channel_index}")
-            
+
             # Определяем целевой канал
             target_channel = await get_target_channel(message, user)
             logger.info(f"Получили целевой канал: {target_channel}")
