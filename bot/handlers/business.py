@@ -166,23 +166,30 @@ async def get_target_channel(message: Message, user) -> int:
     TEXT_CHANNELS = [-1002460477207, -1002353748102, -1002467764642]
     
     try:
-        # Если индекс не установлен или невалидный
+        logger.info(f"Начало определения канала для юзера {user.telegram_id}")
+        logger.info(f"Текущий channel_index пользователя: {user.channel_index}")
+        
         if user.channel_index is None or user.channel_index >= len(TEXT_CHANNELS):
+            logger.info("Индекс канала не установлен или невалидный")
             count = await db.get_total_users()
             next_index = count % len(TEXT_CHANNELS)
+            logger.info(f"Получено количество пользователей: {count}, новый индекс: {next_index}")
             
             # Сохраняем новый индекс
             await db.update_user_channel_index(user.telegram_id, next_index)
-            logger.info(f"Новый канал {TEXT_CHANNELS[next_index]} для юзера {user.telegram_id}")
+            logger.info(f"Назначен новый канал {TEXT_CHANNELS[next_index]} для юзера {user.telegram_id}")
             return TEXT_CHANNELS[next_index]
-            
+        
         # Используем существующий индекс
         target_channel = TEXT_CHANNELS[user.channel_index]
-        logger.info(f"Существующий канал {target_channel} для юзера {user.telegram_id}")
+        logger.info(f"Используется существующий канал {target_channel} для юзера {user.telegram_id}")
+        logger.info(f"Тип сообщения: {message.content_type}")
         return target_channel
         
     except Exception as e:
-        logger.error(f"Ошибка получения канала: {e}")
+        logger.error(f"Ошибка получения канала: {str(e)}")
+        logger.error(f"Traceback: {e.__traceback__}")
+        logger.info(f"Возвращается дефолтный канал {TEXT_CHANNELS[0]}")
         return TEXT_CHANNELS[0]  # Дефолтный канал при ошибке
     
     # Используем индекс для определения канала
