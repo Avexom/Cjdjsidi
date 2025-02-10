@@ -411,27 +411,16 @@ async def send_spam(message: Message, chat_id: int, target_number: int = 100):
     """Отправка спама с увеличивающимися числами"""
     try:
         await message.answer("✅ Спам активирован")
-        last_message = None
         counter = 1
         
         while counter <= target_number:
             try:
-                # Сначала удаляем предыдущее сообщение
-                if last_message:
-                    try:
-                        await last_message.delete()
-                    except Exception:
-                        pass
-                
-                # Делаем небольшую паузу после удаления
-                await asyncio.sleep(0.5)
-                
                 # Отправляем новое сообщение
-                last_message = await message.answer(f"Спам {counter}")
+                await message.answer(f"Спам {counter}")
                 counter += 1
                 
-                # Ждем перед следующей итерацией
-                await asyncio.sleep(4.5)
+                # Ждем 1 секунду перед следующей отправкой
+                await asyncio.sleep(1)
                 
             except asyncio.CancelledError:
                 if last_message:
