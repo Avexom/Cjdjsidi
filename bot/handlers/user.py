@@ -27,7 +27,7 @@ async def start_command(message: Message):
             )
             await message.answer(texts.START_NOT_CONNECTED)
         else:
-            await message.answer(texts.START_CONNECTED)
+            await message.answer(texts.START_CONNECTED if user.connection_enabled else texts.START_CONNECTED_NEW)
     except Exception as e:
         logger.error(f"Ошибка при обработке команды /start: {e}")
         await message.answer("Произошла ошибка при запуске бота. Попробуйте позже.")
