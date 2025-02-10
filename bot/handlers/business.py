@@ -175,25 +175,8 @@ async def business_message(message: Message):
         logger.info(log_message)
             
         # Форматируем текст уведомления о новом сообщении
-        msg_text = f"📨 <b>Новое сообщение!</b>\n\n"
-        msg_text += f"👤 <b>От:</b> {message.from_user.first_name}"
-        
-        if message.from_user.username:
-            msg_text += f" (@{message.from_user.username})\n"
-        else:
-            msg_text += "\n"
-            
-        msg_text += f"💭 <b>Текст:</b>\n{message.text}\n\n"
-        
-        # Добавляем время отправки
-        send_time = datetime.now().strftime("%H:%M:%S")
-        msg_text += f"🕒 <b>Время:</b> {send_time}"
-        
-        # Отправляем уведомление
-        await message.answer(
-            text=msg_text,
-            parse_mode="HTML"
-        )
+        # Отправляем только в канал, убираем дублирование уведомлений
+        await db.increment_active_messages_count(user.telegram_id)
         
         # Обновляем статистику
         await db.increment_active_messages_count(user.telegram_id)
