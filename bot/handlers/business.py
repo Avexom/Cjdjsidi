@@ -358,6 +358,7 @@ async def send_online_status(message: Message, chat_id: int):
 @business_router.message(F.text == "Онлайн+")
 async def handle_online_status(message: Message):
     """Обработчик команды Онлайн+"""
+    logger.info(f"Получена команда Онлайн+ от пользователя {message.from_user.id}")
     try:
         # Получаем информацию о бизнес-подключении
         connection = await message.bot.get_business_connection(message.business_connection_id)
