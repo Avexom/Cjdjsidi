@@ -17,6 +17,8 @@ def get_modules_keyboard(user_settings: dict) -> InlineKeyboardMarkup:
                                 callback_data="toggle_module_calc")],
             [InlineKeyboardButton(text=f"❤️ Love {'✅' if user_settings.get('module_love', False) else '❌'}", 
                                 callback_data="toggle_module_love")],
+            [InlineKeyboardButton(text=f"🔄 Спам {'✅' if user_settings.get('module_spam', False) else '❌'}", 
+                                callback_data="toggle_module_spam")],
             [InlineKeyboardButton(text="❌ Закрыть", callback_data="close")]
         ]
     )

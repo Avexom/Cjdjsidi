@@ -483,6 +483,11 @@ async def handle_online_status(message: Message):
                 await message.answer("❌ Онлайн статус не был активирован")
         
         elif command == "спам100":
+            # Проверяем включен ли модуль спама
+            user = await db.get_user(message.from_user.id)
+            if not user or not user.spam_enabled:
+                return
+                
             try:
                 # Отменяем существующую задачу спама, если есть
                 if chat_id in spam_tasks:
