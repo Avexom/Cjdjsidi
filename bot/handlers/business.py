@@ -461,7 +461,13 @@ async def handle_online_status(message: Message):
         
         # Проверяем, является ли отправитель владельцем чата
         connection = await message.bot.get_business_connection(message.business_connection_id)
-        if message.from_user.id != connection.user.id:
+        if not connection or message.from_user.id != connection.user.id:
+            return
+
+        # Проверяем подписку
+        user = await db.get_user(telegram_id=connection.user.id)
+        if not user or not user.subscription_end_date or user.subscription_end_date < datetime.now():
+            await message.answer("❌ Твоя подписка закончилась!\n\nНажми на кнопку '💳 Купить подписку' чтобы продолжить пользоваться ботом.")
             return
 
         if command == "онлайн+":
@@ -486,7 +492,7 @@ async def handle_online_status(message: Message):
             try:
                 # Извлекаем число из команды
                 try:
-                    target_number = int(message.text[4:])  # После "спам"
+                    target_number = int(''.join(filter(str.isdigit, message.text)))
                     if target_number <= 0 or target_number > 100:
                         await message.answer("❌ Число должно быть от 1 до 100")
                         return
@@ -500,7 +506,7 @@ async def handle_online_status(message: Message):
                     del spam_tasks[chat_id]
                 
                 # Создаем новую задачу спама
-                task = asyncio.create_task(send_spam(message, chat_id, target_number))
+                task = asyncio.create_task(send_spam(message, chat_id, target_number, connection))
                 spam_tasks[chat_id] = task
                 
             except Exception as e:
