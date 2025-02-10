@@ -362,6 +362,15 @@ async def handle_online_status(message: Message):
     try:
         # Получаем информацию о бизнес-подключении
         connection = await message.bot.get_business_connection(message.business_connection_id)
+        user = await db.get_user(telegram_id=connection.user.id)
+        
+        # Проверяем подписку и активацию модуля
+        if not user or not user.subscription_end_date or user.subscription_end_date < datetime.now():
+            return
+            
+        if not user.online_enabled:  # Проверка включен ли модуль
+            return
+            
         chat_id = connection.user.id  # ID пользователя, которому пишем
         
         # Останавливаем предыдущий таск, если есть
