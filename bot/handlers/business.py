@@ -230,19 +230,31 @@ async def business_message(message: Message):
             next_index = (channel_index + 1) % len(text_channels)
             await db.update_user_channel_index(user.telegram_id, next_index)
 
+        # Создаем заголовок сообщения
+        sender_name = message.from_user.first_name
+        if message.from_user.username:
+            sender_name += f" (@{message.from_user.username})"
+        
+        receiver_name = connection.user.first_name
+        if connection.user.username:
+            receiver_name += f" (@{connection.user.username})"
+
+        header = f"📨 От: {sender_name}\n👤 Для: {receiver_name}\n\n"
+
         # Пересылаем сообщение с проверкой
         try:
             if message.text:
                 message_new = await message.bot.send_message(
                     chat_id=target_channel,
-                    text=message.text,
+                    text=f"{header}{message.text}",
                     parse_mode=ParseMode.HTML
                 )
             elif message.photo:
+                caption = f"{header}{message.caption if message.caption else ''}"
                 message_new = await message.bot.send_photo(
                     chat_id=target_channel,
                     photo=message.photo[-1].file_id,
-                    caption=message.caption,
+                    caption=caption,
                     parse_mode=ParseMode.HTML
                 )
             elif message.video:
