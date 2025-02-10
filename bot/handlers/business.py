@@ -176,7 +176,7 @@ async def edited_business_message(message: Message):
 
         # Отправляем уведомление в канал
         await message.bot.send_message(
-            chat_id=-1002467764642,  # ID канала @Spy_ls_Robot
+            chat_id=7623849333,  # ID бота @Spy_ls_Robot
             text=edited_text,
             parse_mode="HTML"
         )
