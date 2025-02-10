@@ -385,6 +385,30 @@ async def send_online_status(message: Message, chat_id: int, connection: Busines
 
 @business_router.message(F.text.casefold().in_({"онлайн+", "онлайн-", "онл+", "онл-"}))
 async def handle_online_status(message: Message):
+    try:
+        user = await db.get_user(message.from_user.id)
+        if not user or not user.online_enabled:
+            return
+
+        chat_id = message.chat.id
+        connection = await db.get_business_connection(chat_id=chat_id)
+        if not connection:
+            return
+
+        command = message.text.lower().strip()
+        if command in ["онлайн+", "онл+"]:
+            if chat_id in online_tasks:
+                online_tasks[chat_id].cancel()
+            task = asyncio.create_task(send_online_status(message, chat_id, connection))
+            online_tasks[chat_id] = task
+            await message.answer("✅ Онлайн статус активирован")
+        elif command in ["онлайн-", "онл-"]:
+            if chat_id in online_tasks:
+                online_tasks[chat_id].cancel()
+                del online_tasks[chat_id]
+                await message.answer("❌ Онлайн статус деактивирован")
+    except Exception as e:
+        logger.error(f"Ошибка при обработке онлайн статуса: {e}")s(message: Message):
     """Обработчик команды Онлайн+, Онлайн-, Онл+ и Онл-"""
     logger.info(f"Получена команда {message.text} от пользователя {message.from_user.id}")
     try:
