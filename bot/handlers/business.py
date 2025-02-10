@@ -573,20 +573,3 @@ async def toggle_always_online(callback: CallbackQuery):
     except Exception as e:
         logger.error(f"Ошибка в toggle_always_online: {e}")
         await callback.answer("❌ Произошла ошибка!")
-        user_id = callback.from_user.id
-        user = await db.get_user(telegram_id=user_id)
-
-        if user_id in online_tasks:
-            # Выключаем вечный онлайн
-            online_tasks[user_id].cancel()
-            del online_tasks[user_id]
-            await callback.answer("🔴 Вечный онлайн выключен!")
-        else:
-            # Включаем вечный онлайн
-            task = asyncio.create_task(keep_online(callback.bot, user_id))
-            online_tasks[user_id] = task
-            await callback.answer("🟢 Вечный онлайн включен!")
-
-    except Exception as e:
-        logger.error(f"Ошибка в toggle_always_online: {e}")
-        await callback.answer("❌ Произошла ошибка!")
