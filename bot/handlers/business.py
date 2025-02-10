@@ -370,12 +370,20 @@ async def send_online_status(message: Message, chat_id: int, connection=None):
             return
             
         await message.answer("✅ Онлайн статус активирован")
+        last_message = None
         while True:
             try:
+                # Удаляем предыдущее сообщение
+                if last_message:
+                    try:
+                        await last_message.delete()
+                    except Exception:
+                        pass
+                        
                 moscow_tz = datetime.now(pytz.timezone('Europe/Moscow'))
                 current_time = moscow_tz.strftime("%H:%M:%S")
                 formatted_message = f"📱 Онлайн | ⏰ {current_time} МСК"
-                await message.answer(text=formatted_message)
+                last_message = await message.answer(text=formatted_message)
                 await asyncio.sleep(5)
             except asyncio.CancelledError:
                 await message.answer("❌ Онлайн статус деактивирован")
