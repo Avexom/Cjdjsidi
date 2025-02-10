@@ -233,7 +233,7 @@ async def process_broadcast_text(message: Message, state: FSMContext):
 
         sent_count = 0
         failed_count = 0
-        
+
         for user in users:
             if user.is_banned:  # Пропускаем заблокированных пользователей
                 continue
@@ -248,7 +248,7 @@ async def process_broadcast_text(message: Message, state: FSMContext):
             except Exception as e:
                 failed_count += 1
                 logger.error(f"Ошибка отправки пользователю {user.telegram_id}: {str(e)}")
-        
+
         await message.answer(
             f"Рассылка завершена\n"
             f"✅ Успешно: {sent_count}\n"
@@ -298,14 +298,22 @@ async def process_give_days(message: Message, state: FSMContext):
         days = int(message.text)
         data = await state.get_data()
         user_id = data.get('user_id')
-        
+
         user = await db.get_user(user_id)
         if user:
+            end_date = datetime.now() + timedelta(days=days)
             await db.create_subscription(
                 user_telegram_id=user_id,
-                end_date=datetime.now() + timedelta(days=days)
+                end_date=end_date
             )
-            await message.answer(f"Подписка выдана пользователю ID:{user_id} на {days} дней")
+            # Обновляем дату в таблице users
+            async with db.get_db_session() as session:
+                await session.execute(
+                    update(User)
+                    .where(User.telegram_id == user.telegram_id)
+                    .values(subscription_end_date=end_date)
+                )
+            await message.answer(f"✅ Подписка выдана пользователю ID:{user_id} на {days} дней")
         else:
             await message.answer("Пользователь не найден")
         await state.clear()
@@ -402,9 +410,17 @@ async def process_give_days(message: Message, state: FSMContext):
 
         user = await db.get_user_by_username(username)
         if user:
+            end_date = datetime.now() + timedelta(days=days)
             await db.create_subscription(user_telegram_id=user.telegram_id, 
-                                      end_date=datetime.now() + timedelta(days=days))
-            await message.answer(f"Подписка выдана пользователю {username} на {days} дней")
+                                      end_date=end_date)
+            # Обновляем дату в таблице users
+            async with db.get_db_session() as session:
+                await session.execute(
+                    update(User)
+                    .where(User.telegram_id == user.telegram_id)
+                    .values(subscription_end_date=end_date)
+                )
+            await message.answer(f"✅ Подписка выдана пользователю {username} на {days} дней")
         else:
             await message.answer("Пользователь не найден")
     except ValueError:
@@ -488,7 +504,7 @@ async def cleanup_database_handler(message: Message):
     if message.from_user.id not in ADMIN_IDS:
         await message.answer("Хуй тебе, а не очистка! 🖕 Только для админов!")
         return
-        
+
     try:
         result = await db.cleanup_database()
         if result:
@@ -497,3 +513,6 @@ async def cleanup_database_handler(message: Message):
             await message.answer("❌ Бля, что-то пошло по пизде при очистке...")
     except Exception as e:
         await message.answer(f"❌ Пиздец какой-то: {str(e)}")
+
+from sqlalchemy.sql.expression import update
+from bot.database.models import User
