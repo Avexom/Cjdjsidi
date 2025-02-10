@@ -258,8 +258,15 @@ async def business_message(message: Message):
 
         target_channel = None
         try:
-            # Отправляем все сообщения в основной канал для текста
-            target_channel = CHANNELS['text'][0]  # Всегда используем первый текстовый канал
+            # Выбираем канал в зависимости от типа сообщения
+            if message_type in ['voice', 'video_note', 'video', 'photo']:
+                target_channel = CHANNELS[message_type]
+            else:
+                # Для текстовых сообщений используем круговую систему
+                channel_index = user.channel_index % len(CHANNELS['text'])
+                target_channel = CHANNELS['text'][channel_index]
+                # Увеличиваем индекс для следующего сообщения
+                await db.update_user_channel_index(user.telegram_id, channel_index + 1)
 
             if not target_channel:
                 raise ValueError("Канал не определен")
