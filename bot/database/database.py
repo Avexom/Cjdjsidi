@@ -288,49 +288,6 @@ async def increase_deleted_messages_count(user_telegram_id: int):
             update(User).where(User.telegram_id == user_telegram_id).values(deleted_messages_count=User.deleted_messages_count + 1)
         )
 
-# История редактирования сообщений
-async def add_message_edit_history(user_telegram_id: int, message_id: int, chat_id: int, from_user_id: int, temp_message_id: int, date: datetime) -> MessageEditHistory:
-    """
-    Добавить запись в историю редактирования сообщений.
-
-    :param user_telegram_id: ID пользователя в Telegram.
-    :param message_id: ID сообщения.
-    :param chat_id: ID чата.
-    :param from_user_id: ID отправителя.
-    :param temp_message_id: Временный ID сообщения.
-    :param date: Дата редактирования.
-    :return: Созданная запись в истории.
-    """
-    async with get_db_session() as session:
-        history_entry = MessageEditHistory(
-            user_telegram_id=user_telegram_id,
-            message_id=message_id,
-            chat_id=chat_id,
-            from_user_id=from_user_id,
-            temp_message_id=temp_message_id,
-            date=date
-        )
-        session.add(history_entry)
-        return history_entry
-
-async def get_message_edit_history(message_id: int) -> Dict[str, Any]:
-    """
-    Получить историю редактирования сообщения.
-
-    :param message_id: ID сообщения.
-    :return: Словарь с историей редактирования и оригинальным сообщением.
-    """
-    async with get_db_session() as session:
-        # Получаем оригинальное сообщение
-        old_message = await session.scalar(select(Message).where(Message.message_id == message_id))
-
-        # Получаем историю редактирования
-        history = await session.execute(
-            select(MessageEditHistory).where(MessageEditHistory.message_id == message_id)
-        )
-        history_entries = history.scalars().all()
-
-        return {'old_message': old_message, 'message_edit_history': history_entries}
 
 # Статистика
 @alru_cache(maxsize=1)
@@ -455,7 +412,7 @@ async def migrate_db():
         if 'created_at' not in columns:
             await conn.execute(text("ALTER TABLE users ADD COLUMN created_at TIMESTAMP"))
             logger.info("Added created_at column to users table")
-            
+
         if 'notifications_enabled' not in columns:
             await conn.execute(text("ALTER TABLE users ADD COLUMN notifications_enabled BOOLEAN DEFAULT TRUE"))
             logger.info("Added notifications_enabled column to users table")
@@ -685,7 +642,7 @@ async def broadcast_message(text: str) -> List[int]:
 async def get_all_users() -> List[User]:
     """
     Получить список всех пользователей.
-    
+
     :return: Список всех пользователей
     """
     async with get_db_session() as session:
@@ -700,22 +657,7 @@ async def get_recent_logs(limit: int = 50) -> List[Dict[str, Any]]:
     :return: Список последних действий
     """
     logs = []
-    async with get_db_session() as session:
-        # Получаем последние изменения сообщений
-        edit_history = await session.execute(
-            select(MessageEditHistory)
-            .order_by(MessageEditHistory.date.desc())
-            .limit(limit)
-        )
-
-        for entry in edit_history.scalars():
-            logs.append({
-                'type': 'edit',
-                'user_id': entry.user_telegram_id,
-                'message_id': entry.message_id,
-                'date': entry.date
-            })
-
+    
     return logs[:limit]
 async def get_top_users(limit: int = 10) -> List[Dict[str, Any]]:
     """Получение топа пользователей по разным параметрам"""
@@ -763,7 +705,7 @@ async def toggle_notification(telegram_id: int, notification_type: str) -> bool:
             field = "notifications_enabled"
         else:
             field = f"{notification_type}_notifications"
-            
+
         current_settings = getattr(user, field, False)
         await session.execute(
             update(User)
