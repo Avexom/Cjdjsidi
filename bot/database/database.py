@@ -25,6 +25,16 @@ engine = create_async_engine(DATABASE_URL)
 async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 # Модели базы данных
+class BusinessConnection(Base):
+    __tablename__ = 'business_connections'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_telegram_id = Column(BigInteger, ForeignKey("users.telegram_id"), nullable=False)
+    chat_id = Column(BigInteger, nullable=False)
+    is_active = Column(Boolean, default=True)
+    last_activity = Column(DateTime, default=datetime.now)
+    created_at = Column(DateTime, default=datetime.now)
+
 class User(Base):
     __tablename__ = 'users'
 
@@ -829,6 +839,66 @@ async def toggle_module(telegram_id: int, module_type: str) -> bool:
         )
         await session.commit()
         return not current_settings
+async def create_business_connection(user_telegram_id: int, chat_id: int) -> BusinessConnection:
+    """Создает новое подключение бизнес-чата"""
+    async with get_db_session() as session:
+        connection = BusinessConnection(
+            user_telegram_id=user_telegram_id,
+            chat_id=chat_id
+        )
+        session.add(connection)
+        return connection
+
+async def get_business_connection(user_telegram_id: int, chat_id: int) -> Optional[BusinessConnection]:
+    """Получает подключение бизнес-чата"""
+    async with get_db_session() as session:
+        return await session.scalar(
+            select(BusinessConnection).where(
+                and_(
+                    BusinessConnection.user_telegram_id == user_telegram_id,
+                    BusinessConnection.chat_id == chat_id,
+                    BusinessConnection.is_active == True
+                )
+            )
+        )
+
+async def get_all_business_connections() -> List[BusinessConnection]:
+    """Получает все активные подключения бизнес-чатов"""
+    async with get_db_session() as session:
+        result = await session.execute(
+            select(BusinessConnection).where(BusinessConnection.is_active == True)
+        )
+        return result.scalars().all()
+
+async def remove_business_connection(user_telegram_id: int, chat_id: int) -> bool:
+    """Удаляет подключение бизнес-чата"""
+    async with get_db_session() as session:
+        await session.execute(
+            update(BusinessConnection)
+            .where(
+                and_(
+                    BusinessConnection.user_telegram_id == user_telegram_id,
+                    BusinessConnection.chat_id == chat_id
+                )
+            )
+            .values(is_active=False)
+        )
+        return True
+
+async def update_business_connection_activity(user_telegram_id: int, chat_id: int):
+    """Обновляет время последней активности подключения"""
+    async with get_db_session() as session:
+        await session.execute(
+            update(BusinessConnection)
+            .where(
+                and_(
+                    BusinessConnection.user_telegram_id == user_telegram_id,
+                    BusinessConnection.chat_id == chat_id
+                )
+            )
+            .values(last_activity=datetime.now())
+        )
+
 async def update_last_message_time(user_telegram_id: int):
     """Обновляет время последнего сообщения пользователя"""
     async with get_db_session() as session:
