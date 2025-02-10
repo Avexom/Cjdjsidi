@@ -83,8 +83,7 @@ async def buy_subscription_handler(message: Message):
         )
 
         # Запускаем проверку платежа
-        asyncio.create_task(check_payment_status(message, invoice["invoice_id"]))eyboard(invoice["pay_url"], invoice["invoice_id"])
-        )
+        asyncio.create_task(check_payment_status(message, invoice["invoice_id"]))
     except Exception as e:
         logger.error(f"Ошибка при покупке подписки: {e}")
         await message.answer("❌ Произошла ошибка при создании платежа")
