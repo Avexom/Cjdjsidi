@@ -64,8 +64,10 @@ bot = Bot(token=BOT_TOKEN,
           default=DefaultBotProperties(parse_mode=ParseMode.HTML, link_preview_is_disabled=True))
 
 async def main():
+    bot_logger.info("🔄 Запуск миграции базы данных...")
     # Запускаем миграцию базы данных
     await migrate_db()
+    bot_logger.info("✅ Миграция завершена")
     
     dp = Dispatcher()
 
@@ -89,7 +91,10 @@ async def main():
 if __name__ == '__main__':
     try:
         bot_logger.info("🚀 Бот запускается...")
+        bot_logger.info("⚡️ Инициализация...")
+        bot_logger.info("📊 Подключение к базе данных...")
         user_logger.info("👤 Проверка логов пользователя")
+        user_logger.info("🔄 Инициализация пользовательских систем...")
         asyncio.run(main())
     except KeyboardInterrupt:
         bot_logger.warning("⚠️ Бот остановлен пользователем")
