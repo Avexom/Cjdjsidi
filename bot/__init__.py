@@ -1,2 +1,0 @@
-
-# Initialize bot package

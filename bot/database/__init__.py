@@ -1,2 +1,0 @@
-
-# Initialize database package
