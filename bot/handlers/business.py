@@ -385,73 +385,41 @@ async def send_online_status(message: Message, chat_id: int, connection: Busines
 
 @business_router.message(F.text.casefold().in_({"онлайн+", "онлайн-", "онл+", "онл-"}))
 async def handle_online_status(message: Message):
+    """Обработчик команд онлайн статуса"""
     try:
-        # Проверяем, что команду отправил владелец чата
+        # Проверяем, что команда от владельца чата
         connection = await message.bot.get_business_connection(message.business_connection_id)
-        
-        # Проверяем что команду отправляет только владелец чата
         if not connection or message.from_user.id != connection.user.id:
             await message.answer("❌ Эта команда доступна только владельцу чата")
             return
-            
-        user = await db.get_user(message.from_user.id)
-        if not user or not user.online_enabled:
+
+        # Проверяем подписку и активацию модуля
+        user = await db.get_user(telegram_id=message.from_user.id)
+        if not user or not user.subscription_end_date or user.subscription_end_date < datetime.now():
+            await message.answer("❌ У вас нет активной подписки!")
+            return
+
+        if not user.online_enabled:
+            await message.answer("❌ Модуль онлайн-статуса отключен!")
             return
 
         chat_id = message.chat.id
-
         command = message.text.lower().strip()
+
         if command in ["онлайн+", "онл+"]:
             if chat_id in online_tasks:
                 online_tasks[chat_id].cancel()
             task = asyncio.create_task(send_online_status(message, chat_id, connection))
             online_tasks[chat_id] = task
-            await message.answer("✅ Онлайн статус активирован")
         elif command in ["онлайн-", "онл-"]:
             if chat_id in online_tasks:
                 online_tasks[chat_id].cancel()
                 del online_tasks[chat_id]
                 await message.answer("❌ Онлайн статус деактивирован")
+
     except Exception as e:
         logger.error(f"Ошибка при обработке онлайн статуса: {e}")
-    try:
-        # Проверяем подписку отправителя
-        user = await db.get_user(telegram_id=message.from_user.id)
-
-        # Проверяем подписку и активацию модуля
-        if not user or not user.subscription_end_date or user.subscription_end_date < datetime.now():
-            await message.answer("❌ У вас нет активной подписки!")
-            return
-
-        if not user.online_enabled:  # Проверка включен ли модуль
-            await message.answer("❌ Модуль онлайн-статуса отключен!")
-            return
-
-        chat_id = message.chat.id  # ID текущего чата
-        connection = await message.bot.get_business_connection(message.business_connection_id)
-
-        if message.text in ["Онлайн+", "Онл+"]:
-            # Останавливаем предыдущий таск, если есть
-            if chat_id in online_tasks and not online_tasks[chat_id].done():
-                online_tasks[chat_id].cancel()
-
-            # Создаем новый таск
-            task = asyncio.create_task(send_online_status(message, chat_id, connection))
-            online_tasks[chat_id] = task
-            await message.answer("✅ Онлайн статус активирован")
-            return  # Добавлен return для предотвращения дальнейшего выполнения
-        
-        elif message.text in ["Онлайн-", "Онл-"]:
-            if chat_id in online_tasks:
-                task = online_tasks[chat_id]
-                task.cancel()  # Сразу отменяем таск
-                del online_tasks[chat_id]  # Сразу удаляем из словаря
-                await message.answer("❌ Онлайн статус деактивирован")
-            return
-
-    except Exception as e:
-        logger.error(f"Ошибка активации онлайн статуса: {e}")
-        await message.answer("❌ Произошла ошибка при активации статуса онлайн")
+        await message.answer("❌ Произошла ошибка при управлении статусом онлайн")
 
 async def main():
     dp = Dispatcher()
