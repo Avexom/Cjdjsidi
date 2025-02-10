@@ -153,6 +153,8 @@ async def check_payment_callback(callback: CallbackQuery):
     try:
         invoice_id = int(callback.data.replace("check_payment_", ""))
         from bot.services.payments import check_payment
+        from sqlalchemy import update
+        from bot.database.database import User
         
         if await check_payment(invoice_id):
             # Платеж успешен
