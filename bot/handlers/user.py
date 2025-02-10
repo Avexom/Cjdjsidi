@@ -6,6 +6,7 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command
 import logging
 import colorlog
+import asyncio
 from bot.assets.texts import Texts
 
 logger = colorlog.getLogger('bot')
@@ -56,8 +57,10 @@ async def profile_handler(message: Message):
         logger.error(f"Ошибка при отображении профиля: {e}")
         await message.answer("❌ Произошла ошибка при загрузке профиля")
 
+from aiogram.fsm.context import FSMContext
+
 @user_router.message(F.text == "💳 Купить подписку")
-async def buy_subscription_handler(message: Message):
+async def buy_subscription_handler(message: Message, state: FSMContext):
     try:
         user = await db.get_user(message.from_user.id)
         if user and user.subscription_end_date and user.subscription_end_date > datetime.now():
