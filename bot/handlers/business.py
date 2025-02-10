@@ -305,6 +305,19 @@ async def business_message(message: Message):
         try:
             logger.info(f"Начинаем пересылку сообщения от пользователя {message.from_user.id}")
             logger.info(f"Тип сообщения: {message.content_type}")
+            logger.info(f"Текущий channel_index пользователя: {user.channel_index}")
+            
+            # Определяем целевой канал
+            if message.content_type == 'text':
+                target_channel = CHANNELS['text'][user.channel_index if user.channel_index is not None else 0]
+                logger.info(f"Выбран текстовый канал: {target_channel}")
+            else:
+                target_channel = CHANNELS.get(message.content_type, CHANNELS['default'])
+                logger.info(f"Выбран канал для {message.content_type}: {target_channel}")
+
+            # Пересылаем сообщение
+            logger.info(f"Пересылаем сообщение в канал {target_channel}")e.from_user.id}")
+            logger.info(f"Тип сообщения: {message.content_type}")
 
             target_channel = await get_target_channel(message, user)
             logger.info(f"Выбран целевой канал: {target_channel}")
