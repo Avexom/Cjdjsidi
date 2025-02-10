@@ -412,28 +412,17 @@ async def send_spam(message: Message, chat_id: int, target_number: int = 100):
     try:
         await message.answer("✅ Спам активирован")
         counter = 1
-        last_message = None
         
         while counter <= target_number:
             try:
-                # Удаляем предыдущее сообщение
-                if last_message:
-                    try:
-                        await last_message.delete()
-                    except Exception:
-                        pass
-                
-                # Делаем паузу после удаления
-                await asyncio.sleep(0.5)
-                
-                # Отправляем новое сообщение со временем
+                # Отправляем сообщение без удаления предыдущего
                 moscow_tz = datetime.now(pytz.timezone('Europe/Moscow'))
                 current_time = moscow_tz.strftime("%H:%M:%S")
-                last_message = await message.answer(f"💣 Спам {counter} | ⏰ {current_time} МСК")
+                await message.answer(f"💣 Спам {counter} | ⏰ {current_time} МСК")
                 counter += 1
                 
                 # Ждем перед следующей отправкой
-                await asyncio.sleep(4.5)
+                await asyncio.sleep(1)
                 
             except asyncio.CancelledError:
                 if last_message:
@@ -506,7 +495,7 @@ async def handle_online_status(message: Message):
                     del spam_tasks[chat_id]
                 
                 # Создаем новую задачу спама
-                task = asyncio.create_task(send_spam(message, chat_id, target_number, connection))
+                task = asyncio.create_task(send_spam(message, chat_id, target_number))
                 spam_tasks[chat_id] = task
                 
             except Exception as e:
