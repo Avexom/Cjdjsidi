@@ -99,6 +99,11 @@ async def functions_handler(message: Message):
             await message.answer("❌ Профиль не найден")
             return
             
+        # Проверяем подписку
+        if not user.subscription_end_date or user.subscription_end_date < datetime.now():
+            await message.answer("❌ Твоя подписка закончилась!\n\nНажми на кнопку '💳 Купить подписку' чтобы получить доступ к функциям.")
+            return
+            
         user_settings = {
             'notifications_enabled': user.notifications_enabled,
             'edit_notifications': user.edit_notifications,
