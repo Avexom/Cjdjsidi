@@ -4,7 +4,7 @@ import logging
 from datetime import datetime
 from aiogram import Router, F, Bot
 from aiogram.filters import CommandStart
-from aiogram.types import Message, BusinessConnection, BusinessMessagesDeleted
+from aiogram.types import Message, BusinessConnection, BusinessMessagesDeleted, InlineKeyboardMarkup
 from aiogram.enums.parse_mode import ParseMode
 from aiogram.fsm.context import FSMContext
 from apscheduler.schedulers.asyncio import AsyncIOScheduler # Added import for scheduler
@@ -171,7 +171,7 @@ async def business_message(message: Message):
         )
         
         # Обновляем статистику
-        await db.increment_active_messages_count(user.telegram_id)
+        await db.increase_active_messages_count(user.telegram_id)
         
     except Exception as e:
         logger.error(f"[{datetime.now().strftime('%H:%M:%S')}] Ошибка при обработке сообщения: {e}")
