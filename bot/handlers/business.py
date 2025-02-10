@@ -333,7 +333,11 @@ async def edited_business_message(message: Message):
 
         message_old = await db.get_message(message.message_id)
         if message_old and user and subscription:
-            text_1 = texts.edited_message_text(name=message.from_user.first_name, user_id=message_old.from_user_id, username=message.from_user.username)
+            # Проверяем настройки пользователя
+            if not user.notifications_enabled or not user.edit_notifications:
+                return
+                
+            text_1 = texts.Texts.edited_message_text(name=message.from_user.first_name, user_id=message_old.from_user_id, username=message.from_user.username)
             update = {}
             if message.entities:
                 update["entities"] = [entity.model_copy(update={"length": entity.length + len(text_1)}) for entity in message.entities]

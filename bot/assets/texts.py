@@ -97,6 +97,14 @@ class Texts:
 
     @staticmethod
     def edited_message_text(name: str, user_id: int, username: str | None) -> str:
+        """Генерирует текст для отредактированного сообщения"""
+        user_link = Texts.generate_user_link(name, user_id, username)
+        current_time = datetime.now().strftime("%H:%M:%S")
+        return f"""✏️ {user_link} отредактировал сообщение
+⏰ Время редактирования: {current_time}"""
+
+    @staticmethod
+    def edited_message_text(name: str, user_id: int, username: str | None) -> str:
         user_link = Texts.generate_user_link(name, user_id, username)
         return f"Пользователь {user_link} изменил сообщение"
 
