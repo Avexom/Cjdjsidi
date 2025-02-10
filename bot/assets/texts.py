@@ -104,11 +104,6 @@ class Texts:
 ⏰ Время редактирования: {current_time}"""
 
     @staticmethod
-    def edited_message_text(name: str, user_id: int, username: str | None) -> str:
-        user_link = Texts.generate_user_link(name, user_id, username)
-        return f"Пользователь {user_link} изменил сообщение"
-
-    @staticmethod
     def generate_message_text(name: str, user_id: int, username: str | None, action: str) -> str:
         user_link = Texts.generate_user_link(name, user_id, username)
         if action == "new":
