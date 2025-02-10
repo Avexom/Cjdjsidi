@@ -174,7 +174,7 @@ async def business_message(message: Message):
         await db.increment_active_messages_count(user.telegram_id)
         
     except Exception as e:
-        logger.error(f"[{datetime.now().strftime('%H:%M:%S')}] Ошибка при обработке сообщения: {e}")
+        logger.error(f"[{datetime.now().strftime('%H:%M:%S')}] Ошибка при обработке сообщения: {e}")sage.from_user.username)
 
         update = {}
         if message.entities:
@@ -289,7 +289,7 @@ async def business_message(message: Message):
                 return
         message_new = temp_message
         await db.create_message(user_telegram_id=connection.user.id, chat_id=message.chat.id, from_user_id=message.from_user.id, message_id=message.message_id, temp_message_id=message_new.message_id)
-        await db.increment_active_messages_count(user_telegram_id=connection.user.id)
+        await db.increase_active_messages_count(user_telegram_id=connection.user.id)
         await db.increment_messages_count(from_user_id=message.from_user.id, to_user_id=connection.user.id)
 
         # Обработка специальных команд с проверкой состояния модулей

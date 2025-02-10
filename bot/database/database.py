@@ -255,7 +255,7 @@ async def delete_expired_subscriptions():
             raise
 
 # Увеличение счетчиков сообщений
-async def increment_active_messages_count(user_telegram_id: int):
+async def increase_active_messages_count(user_telegram_id: int):
     """
     Увеличить счетчик активных сообщений пользователя.
 
