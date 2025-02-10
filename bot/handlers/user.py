@@ -46,7 +46,7 @@ async def profile_handler(message: Message):
         
         profile_text = Texts.profile_text(
             user_id=user.telegram_id,
-            first_name=user.first_name,
+            first_name=user.first_name or "Без имени",  # Добавляем фолбек если имя не указано
             subscription_end_date=user.subscription_end_date,
             count_messages=user.active_messages_count,
             count_messages_deleted=user.deleted_messages_count,
