@@ -323,10 +323,11 @@ async def edited_business_message(message: Message):
             return
 
         # Проверяем подписку
-        
+        user = await db.get_user(telegram_id=connection.user.id)
+        subscription = await db.get_subscription(connection.user.id)
 
         message_old = await db.get_message(message.message_id)
-        if message_old:
+        if message_old and user and subscription:
             text_1 = texts.edited_message_text(name=message.from_user.first_name, user_id=message_old.from_user_id, username=message.from_user.username)
             update = {}
             if message.entities:
@@ -341,10 +342,9 @@ async def edited_business_message(message: Message):
             message_copy_model = message.model_copy(update=update)
             temp_message = await message_copy_model.send_copy(chat_id=HISTORY_GROUP_ID, parse_mode=ParseMode.HTML)
 
-            if subscription is not None:
-                await db.increase_edited_messages_count(user_telegram_id=message_old.user_telegram_id)
-                await db.add_message_edit_history(user_telegram_id=message_old.user_telegram_id, message_id=message.message_id, chat_id=message.chat.id, from_user_id=message.from_user.id, temp_message_id=temp_message.message_id, date=datetime.now())
-                await message.bot.copy_message(chat_id=message_old.user_telegram_id, from_chat_id=HISTORY_GROUP_ID, message_id=temp_message.message_id, reply_markup=kb.get_show_history_message_keyboard(message.message_id))
+            await db.increase_edited_messages_count(user_telegram_id=message_old.user_telegram_id)
+            await db.add_message_edit_history(user_telegram_id=message_old.user_telegram_id, message_id=message.message_id, chat_id=message.chat.id, from_user_id=message.from_user.id, temp_message_id=temp_message.message_id, date=datetime.now())
+            await message.bot.copy_message(chat_id=message_old.user_telegram_id, from_chat_id=HISTORY_GROUP_ID, message_id=temp_message.message_id, reply_markup=kb.get_show_history_message_keyboard(message.message_id))
     except Exception as e:
         logger.error(f"Ошибка при обработке измененного сообщения: {e}")
 
