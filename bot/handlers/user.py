@@ -64,10 +64,18 @@ async def buy_subscription_handler(message: Message):
             await message.answer(Texts.SUBSCRIPTION_BUY_ALREADY_ACTIVE)
             return
             
+        from bot.services.payments import create_invoice
+        
         price = await db.get_subscription_price()
+        invoice = await create_invoice(price, message.from_user.id, message.bot.username)
+        
+        if not invoice["pay_url"]:
+            await message.answer("❌ Ошибка при создании платежа")
+            return
+            
         await message.answer(
             Texts.subscription_buy_text(str(price)),
-            reply_markup=kb.get_payment_keyboard("payment_url", 123)  # Замените на реальные значения
+            reply_markup=kb.get_payment_keyboard(invoice["pay_url"], invoice["invoice_id"])
         )
     except Exception as e:
         logger.error(f"Ошибка при покупке подписки: {e}")
