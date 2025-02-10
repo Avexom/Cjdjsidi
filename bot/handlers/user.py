@@ -39,10 +39,10 @@ async def profile_command(message: Message):
         user = await db.get_user(message.from_user.id)
         subscription = await db.get_subscription(message.from_user.id)
         if user:
-            profile_text = await texts.Texts.generate_profile_text(
+            profile_text = texts.Texts.profile_text(
                 name=message.from_user.first_name,
                 user_id=message.from_user.id,
-                subscription_status="Активна" if subscription and subscription.end_date > datetime.now().date() else "Неактивна",
+                subscription_end_date=subscription.end_date if subscription else None,
                 count_messages=user.active_messages_count,
                 count_messages_deleted=user.deleted_messages_count,
                 count_messages_edited=user.edited_messages_count
