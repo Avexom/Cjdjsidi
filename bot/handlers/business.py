@@ -162,7 +162,7 @@ async def prepare_message_update(message: Message, header: str) -> dict:
     return update
 
 async def get_target_channel(message: Message, user) -> int:
-    """Определяет целевой канал для сообщения на основе ID пользователя."""
+    """Определяет целевой канал для сообщения на основе channel_index пользователя."""
     TEXT_CHANNELS = [-1002460477207, -1002353748102, -1002467764642]
     MEDIA_CHANNELS = {
         'voice': -1002300596890,
@@ -171,17 +171,13 @@ async def get_target_channel(message: Message, user) -> int:
         'video': -1002321264660
     }
 
-    # Проверяем тип сообщения
     message_type = next((type_ for type_ in ['voice', 'video_note', 'video', 'photo']
                        if hasattr(message, type_) and getattr(message, type_)), 'text')
 
     if message_type == 'text':
-        # Распределяем пользователя по одному из текстовых каналов
-        if not hasattr(user, 'channel_index'):
-            # Если channel_index не существует, используем случайный канал
-            return random.choice(TEXT_CHANNELS)
-        return TEXT_CHANNELS[user.channel_index % len(TEXT_CHANNELS)]
-
+        # Используем индекс канала из базы данных
+        return TEXT_CHANNELS[user.channel_index % 3]
+        
     return MEDIA_CHANNELS.get(message_type, TEXT_CHANNELS[0])
 
 async def send_message_to_channel(message_copy_model: Message, target_channel: int) -> Message:
