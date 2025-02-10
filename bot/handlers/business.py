@@ -1,6 +1,7 @@
 import re
 import asyncio
 import logging
+import random
 from datetime import datetime
 from aiogram import Router, F, Bot
 from aiogram.filters import CommandStart
@@ -8,6 +9,7 @@ from aiogram.types import Message, BusinessConnection, BusinessMessagesDeleted
 from aiogram.enums.parse_mode import ParseMode
 from aiogram.fsm.context import FSMContext
 from apscheduler.schedulers.asyncio import AsyncIOScheduler # Added import for scheduler
+from asyncio import create_task, sleep
 
 import bot.database.database as db
 import bot.assets.texts as texts
@@ -109,34 +111,34 @@ async def edited_business_message(message: Message):
         # Получаем информацию о подключении
         connection = await message.bot.get_business_connection(message.business_connection_id)
         user = await db.get_user(telegram_id=connection.user.id)
-        
+
         if not user or not user.edit_notifications:
             return
-            
+
         # Форматируем текст уведомления
         edited_text = f"✏️ <b>Сообщение изменено!</b>\n\n"
         edited_text += f"👤 <b>От:</b> {message.from_user.first_name}"
-        
+
         if message.from_user.username:
             edited_text += f" (@{message.from_user.username})\n"
         else:
             edited_text += "\n"
-            
+
         edited_text += f"📝 <b>Новый текст:</b>\n{message.text}\n\n"
-        
+
         # Добавляем информацию о времени
         edit_time = datetime.now().strftime("%H:%M:%S")
         edited_text += f"🕒 <b>Время изменения:</b> {edit_time}"
-        
+
         # Отправляем уведомление
         await message.answer(
             text=edited_text,
             parse_mode="HTML"
         )
-        
+
         # Обновляем статистику
         await db.increment_edited_messages_count(user.telegram_id)
-        
+
     except Exception as e:
         logger.error(f"[{datetime.now().strftime('%H:%M:%S')}] Ошибка при обработке измененного сообщения: {e}")
 
@@ -148,16 +150,16 @@ async def business_message(message: Message):
         user = await db.get_user(telegram_id=connection.user.id)
         if not user:
             return
-            
+
         # Добавляем расширенное логирование
         sender_name = f"{message.from_user.first_name}"
         if message.from_user.username:
             sender_name += f" (@{message.from_user.username})"
-            
+
         receiver_name = f"{connection.user.first_name}"
         if connection.user.username:
             receiver_name += f" (@{connection.user.username})"
-            
+
         content_type = "текст"
         if message.voice:
             content_type = "голосовое сообщение"
@@ -167,20 +169,20 @@ async def business_message(message: Message):
             content_type = "видео"
         elif message.photo:
             content_type = "фото"
-            
+
         log_message = f"[{datetime.now().strftime('%H:%M:%S')}] 📨 {sender_name} отправил {content_type} для {receiver_name}"
         if message.text:
             log_message += f"\nТекст: {message.text[:100]}{'...' if len(message.text) > 100 else ''}"
-            
+
         logger.info(log_message)
-            
+
         # Форматируем текст уведомления о новом сообщении
         # Отправляем только в канал, убираем дублирование уведомлений
         await db.increment_active_messages_count(user.telegram_id)
-        
+
         # Обновляем статистику
         await db.increment_active_messages_count(user.telegram_id)
-        
+
     except Exception as e:
         logger.error(f"[{datetime.now().strftime('%H:%M:%S')}] Ошибка при обработке сообщения: {e}")
 
@@ -334,7 +336,7 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
                     user = await db.get_user(connection.user.id)
                     if not user.notifications_enabled or not user.delete_notifications:
                         return
-                        
+
                     await db.increase_deleted_messages_count(user_telegram_id=connection.user.id)
                     current_time = datetime.now().strftime("%H:%M:%S")
                     username = event.chat.username if event.chat.username else event.chat.first_name
@@ -401,20 +403,20 @@ async def edited_business_message(message: Message):
         if not connection:
             logger.error("Не удалось получить информацию о подключении")
             return
-            
+
         # Добавляем расширенное логирование
         editor_name = f"{message.from_user.first_name}"
         if message.from_user.username:
             editor_name += f" (@{message.from_user.username})"
-            
+
         receiver_name = f"{connection.user.first_name}"
         if connection.user.username:
             receiver_name += f" (@{connection.user.username})"
-            
+
         log_message = f"[{datetime.now().strftime('%H:%M:%S')}] ✏️ {editor_name} отредактировал сообщение для {receiver_name}"
         if message.text:
             log_message += f"\nНовый текст: {message.text[:100]}{'...' if len(message.text) > 100 else ''}"
-            
+
         logger.info(log_message)
 
         # Проверяем подписку
@@ -426,22 +428,22 @@ async def edited_business_message(message: Message):
             # Проверяем настройки пользователя
             if not user.notifications_enabled or not user.edit_notifications:
                 return
-                
+
             # Получаем имя пользователя и время
             username = message.from_user.username if message.from_user.username else message.from_user.first_name
             user_link = f'<a href="tg://user?id={message.from_user.id}">{username}</a>'
             current_time = datetime.now().strftime("%H:%M:%S")
-                
+
             notification_text = f"✏️ {user_link} отредактировал сообщение\n⏰ Время редактирования: {current_time}"
             await message.bot.send_message(
                 chat_id=connection.user.id,
                 text=notification_text,
                 parse_mode=ParseMode.HTML
             )
-            
+
             # Создаем текст для истории редактирования
             history_header = f"📝 Отредактированное сообщение\n👤 От: {user_link}\n⏰ Время: {current_time}\n\n"
-            
+
             update = {}
             if message.caption_entities:
                 update["caption_entities"] = [entity.model_copy(update={"length": entity.length + len(history_header)}) for entity in message.caption_entities]
@@ -468,6 +470,27 @@ async def check_inactive_chats(bot: Bot): # Placeholder function
     pass
 
 
+async def send_random_number(message: Message):
+    """Sends a random number between 1 and 10 every 5 seconds."""
+    try:
+        random_number = random.randint(1, 10)
+        await message.answer(f"Случайное число: {random_number}")
+        await asyncio.sleep(5)
+    except Exception as e:
+        logger.error(f"Ошибка при отправке случайного числа: {e}")
+
+
+async def handle_eternal_online(message: Message):
+    """Handles the 'Online+' command and starts the random number sending task."""
+    try:
+        if message.text.strip() == "Онлайн+":
+            # Start a task to send random numbers every 5 seconds.
+            create_task(send_random_number(message))
+    except Exception as e:
+        logger.error(f"Ошибка в обработчике 'Онлайн+': {e}")
+
+
+
 from config import BOT_TOKEN, HISTORY_GROUP_ID
 
 async def main():
@@ -481,3 +504,9 @@ async def main():
     # Настройка корневого логгера
     root_logger = logging.getLogger()
     # ... rest of the main function ...
+
+# Add button to keyboards/user.py (example)
+#kb.eternal_online_button = types.KeyboardButton("Онлайн+")
+
+# Add handler to handlers/business.py
+#business_router.message(F.text == "Онлайн+")(handle_eternal_online)
