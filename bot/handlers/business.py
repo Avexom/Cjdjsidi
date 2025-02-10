@@ -121,6 +121,11 @@ async def business_message(message: Message):
     """Обработка бизнес-сообщений."""
     try:
         connection = await message.bot.get_business_connection(message.business_connection_id)
+        
+        # Проверяем что команду использует тот же пользователь, который отправил сообщение
+        if message.from_user.id != connection.user.id:
+            return
+            
         user = await db.get_user(telegram_id=connection.user.id)
         if not user:
             return
