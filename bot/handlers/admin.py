@@ -270,7 +270,7 @@ async def admin_price_callback(callback: CallbackQuery, state: FSMContext):
 async def process_price(message: Message, state: FSMContext):
     try:
         price = float(message.text)
-        await db.update_subscription_price(price)
+        await db.set_subscription_price(price)
         await message.answer(f"Цена рассылки обновлена: ${price}")
         await state.clear()
     except ValueError:
