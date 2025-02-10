@@ -478,8 +478,7 @@ async def migrate_db():
             logger.info("Added last_message_time column to users table")
 
         if 'last_farm_time' not in columns:
-            await conn.execute(text("ALTER TABLE users ADD COLUMN last_farm_time TIMESTAMP"))
-            await conn.execute(text("UPDATE users SET last_farm_time = CURRENT_TIMESTAMP"))
+            await conn.execute(text("ALTER TABLE users ADD COLUMN last_farm_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP"))
             logger.info("Added last_farm_time column to users table")
 
 
