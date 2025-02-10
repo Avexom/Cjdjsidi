@@ -171,7 +171,7 @@ async def business_message(message: Message):
         )
         
         # Обновляем статистику
-        await db.increment_active_messages_count(user.telegram_id)
+        await db.increase_active_messages_count(user.telegram_id)
         
     except Exception as e:
         logger.error(f"[{datetime.now().strftime('%H:%M:%S')}] Ошибка при обработке сообщения: {e}")
