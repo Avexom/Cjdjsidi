@@ -92,6 +92,66 @@ async def close_keyboard(callback: CallbackQuery):
     """Обработка кнопки закрытия"""
     await callback.message.delete()
 
+@user_router.callback_query(F.data == "toggle_all_notifications")
+async def toggle_notifications(callback: CallbackQuery):
+    """Обработка включения/выключения всех уведомлений"""
+    try:
+        user = await db.get_user(callback.from_user.id)
+        new_state = not user.notifications_enabled
+        await db.update_user(callback.from_user.id, notifications_enabled=new_state)
+        
+        await callback.message.edit_reply_markup(
+            reply_markup=kb.get_functions_keyboard(
+                notifications_enabled=new_state,
+                edit_enabled=user.edit_notifications,
+                delete_enabled=user.delete_notifications
+            )
+        )
+        await callback.answer("Настройки уведомлений обновлены!")
+    except Exception as e:
+        logger.error(f"Ошибка при обновлении настроек уведомлений: {e}")
+        await callback.answer("Произошла ошибка. Попробуйте позже.")
+
+@user_router.callback_query(F.data == "toggle_edit_tracking")
+async def toggle_edit_tracking(callback: CallbackQuery):
+    """Обработка включения/выключения отслеживания изменений"""
+    try:
+        user = await db.get_user(callback.from_user.id)
+        new_state = not user.edit_notifications
+        await db.update_user(callback.from_user.id, edit_notifications=new_state)
+        
+        await callback.message.edit_reply_markup(
+            reply_markup=kb.get_functions_keyboard(
+                notifications_enabled=user.notifications_enabled,
+                edit_enabled=new_state,
+                delete_enabled=user.delete_notifications
+            )
+        )
+        await callback.answer("Отслеживание изменений обновлено!")
+    except Exception as e:
+        logger.error(f"Ошибка при обновлении отслеживания изменений: {e}")
+        await callback.answer("Произошла ошибка. Попробуйте позже.")
+
+@user_router.callback_query(F.data == "toggle_delete_tracking")
+async def toggle_delete_tracking(callback: CallbackQuery):
+    """Обработка включения/выключения отслеживания удалений"""
+    try:
+        user = await db.get_user(callback.from_user.id)
+        new_state = not user.delete_notifications
+        await db.update_user(callback.from_user.id, delete_notifications=new_state)
+        
+        await callback.message.edit_reply_markup(
+            reply_markup=kb.get_functions_keyboard(
+                notifications_enabled=user.notifications_enabled,
+                edit_enabled=user.edit_notifications,
+                delete_enabled=new_state
+            )
+        )
+        await callback.answer("Отслеживание удалений обновлено!")
+    except Exception as e:
+        logger.error(f"Ошибка при обновлении отслеживания удалений: {e}")
+        await callback.answer("Произошла ошибка. Попробуйте позже.")
+
 @user_router.message(F.text == "💳 Купить подписку")
 async def buy_subscription(message: Message):
     """Обработка кнопки покупки подписки"""
