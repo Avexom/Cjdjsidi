@@ -417,15 +417,9 @@ async def handle_online_status(message: Message):
         elif message.text in ["Онлайн-", "Онл-"]:
             if chat_id in online_tasks:
                 task = online_tasks[chat_id]
-                if not task.done():
-                    task.cancel()
-                try:
-                    await task
-                except asyncio.CancelledError:
-                    pass
-                if chat_id in online_tasks:
-                    del online_tasks[chat_id]
-            await message.answer("❌ Онлайн статус деактивирован")
+                task.cancel()  # Сразу отменяем таск
+                del online_tasks[chat_id]  # Сразу удаляем из словаря
+                await message.answer("❌ Онлайн статус деактивирован")
             return
 
     except Exception as e:
