@@ -597,7 +597,9 @@ async def edited_business_message(message: Message):
             f"📝 Старый текст:\n{old_text}\n\n"
             f"📝 Новый текст:\n{new_text}\n\n"
             f"🕒 Время изменения: {current_time}"
-        ) сообщения
+        )
+
+        # Создаем заголовок сообщения
         header = f"📨 От: {message.from_user.first_name}"
         if message.from_user.username:
             header += f" (@{message.from_user.username})"
