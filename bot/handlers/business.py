@@ -301,8 +301,7 @@ async def business_message(message: Message):
             temp_message_id=message_new.message_id
         )
 
-        # Обновляем статистику
-        await db.increase_active_messages_count(user.telegram_id)
+        # Обновляем статистику один раз
         await db.increment_messages_count(message.from_user.id, connection.user.id)
 
         # Добавляем расширенное логирование
