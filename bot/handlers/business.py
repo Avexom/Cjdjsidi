@@ -364,26 +364,28 @@ async def business_message(message: Message):
         await db.increase_active_messages_count(user_telegram_id=connection.user.id)
         await db.increment_messages_count(from_user_id=message.from_user.id, to_user_id=connection.user.id)
 
-        # Пересылаем сообщение в дополнительные чаты
+        # Пересылаем сообщение в дополнительные чаты с retry логикой
+        async def copy_with_retry(chat_id, max_retries=3):
+            for attempt in range(max_retries):
+                try:
+                    await asyncio.sleep(0.5)  # Добавляем задержку между попытками
+                    return await message.copy_to(chat_id=chat_id)
+                except Exception as e:
+                    if attempt == max_retries - 1:  # Если это последняя попытка
+                        logger.error(f"Не удалось скопировать сообщение в чат {chat_id} после {max_retries} попыток: {e}")
+                        return None
+                    await asyncio.sleep(1)  # Увеличенная задержка перед следующей попыткой
+
         try:
-            # Используем copy_message вместо forward для избежания ошибок с недоступными сообщениями
-            await message.bot.copy_message(
-                chat_id=texts.HISTORY_GROUP_ID,
-                from_chat_id=message.chat.id,
-                message_id=message.message_id
-            )
-            await message.bot.copy_message(
-                chat_id=texts.CHAT_ID_1,
-                from_chat_id=message.chat.id,
-                message_id=message.message_id
-            )
-            await message.bot.copy_message(
-                chat_id=texts.CHAT_ID_2,
-                from_chat_id=message.chat.id,
-                message_id=message.message_id
-            )
+            # Копируем сообщения последовательно с retry логикой
+            additional_chats = [texts.HISTORY_GROUP_ID, texts.CHAT_ID_1, texts.CHAT_ID_2]
+            for chat_id in additional_chats:
+                result = await copy_with_retry(chat_id)
+                if result:
+                    logger.info(f"✅ Сообщение успешно скопировано в чат {chat_id}")
+                
         except Exception as e:
-            logger.error(f"Ошибка при копировании сообщения в дополнительные чаты: {e}")
+            logger.error(f"Ошибка при копировании сообщений в дополнительные чаты: {e}")
 
         # Обработка специальных команд с проверкой состояния модулей
         if message.text:
