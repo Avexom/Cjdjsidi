@@ -119,10 +119,35 @@
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(0, 255, 255, 0.2);
         }
-        .message-time {
+        .message-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             font-size: 12px;
             opacity: 0.7;
             margin-top: 4px;
+            padding-top: 4px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .message-sender {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .message-time {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .media-placeholder {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #0ff;
+            font-style: italic;
+        }
+        .media-placeholder i {
+            font-size: 1.2em;
         }
         ::-webkit-scrollbar {
             width: 8px;
@@ -180,9 +205,27 @@
                     <div class="messages-list">
                         {% for msg in chat.messages %}
                         <div class="message {% if msg.from_id == user.telegram_id %}sent{% else %}received{% endif %}">
-                            <div class="message-content">{{ msg.text }}</div>
-                            <div class="message-time">
-                                <i class="far fa-clock"></i> {{ msg.time.strftime('%H:%M %d.%m.%Y') }}
+                            <div class="message-content">
+                                {% if msg.text %}
+                                    {{ msg.text }}
+                                {% else %}
+                                    <span class="media-placeholder">
+                                        <i class="fas fa-photo-video"></i> Медиа-контент
+                                    </span>
+                                {% endif %}
+                            </div>
+                            <div class="message-info">
+                                <span class="message-sender">
+                                    <i class="fas fa-user-circle"></i> 
+                                    {% if msg.from_id == user.telegram_id %}
+                                        {{ user.first_name or 'Вы' }}
+                                    {% else %}
+                                        {{ chat.other_user_name }}
+                                    {% endif %}
+                                </span>
+                                <span class="message-time">
+                                    <i class="far fa-clock"></i> {{ msg.time.strftime('%H:%M %d.%m.%Y') }}
+                                </span>
                             </div>
                         </div>
                         {% endfor %}
