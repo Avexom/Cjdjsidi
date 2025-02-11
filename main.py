@@ -126,6 +126,14 @@ async def main():
 
 if __name__ == '__main__':
     try:
+        from threading import Thread
+        from bot.web.app import run_webview
+        
+        # Запускаем веб-интерфейс в отдельном потоке
+        web_thread = Thread(target=run_webview)
+        web_thread.daemon = True
+        web_thread.start()
+        
         print("\n🚀 Запуск бота...\n")
         bot_logger.info("⚡️ Инициализация систем...")
         bot_logger.info("📊 Подключение к базе данных...")

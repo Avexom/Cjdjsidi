@@ -1,0 +1,35 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bot Statistics</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background: #f0f2f5;
+        }
+        .stats-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .stat-item {
+            margin: 10px 0;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+    </style>
+</head>
+<body>
+    <div class="stats-container">
+        <h1>Статистика бота</h1>
+        <div class="stat-item">Всего пользователей: {{ stats.total_users }}</div>
+        <div class="stat-item">Активных подписок: {{ stats.total_subscriptions }}</div>
+        <div class="stat-item">Всего сообщений: {{ stats.total_messages }}</div>
+        <div class="stat-item">Отредактировано: {{ stats.total_edited_messages }}</div>
+        <div class="stat-item">Удалено: {{ stats.total_deleted_messages }}</div>
+    </div>
+</body>
+</html>
