@@ -21,16 +21,16 @@ math_expression_pattern = re.compile(r'^Кальк [\d+\-*/(). ]+$')
 
 
 
-async def handle_math_expression(message: Message):
-    """Обработка математических выражений с анимацией."""
-    # Получаем информацию о бизнес-подключении
+async def handle_business_modules(message: Message):
+    """Обработка всех модулей бизнес-бота."""
     connection = await message.bot.get_business_connection(message.business_connection_id)
 
-    # Проверяем, что команду использует тот же пользователь, который отправил сообщение
     if message.from_user.id != connection.user.id:
         return
 
-    expression = message.text[len("Кальк "):].strip()
+    user = await db.get_user(message.from_user.id)
+    if not user or not user.modules_enabled:
+        return
     try:
         # Отправляем начальное сообщение как пользователь
         calc_message = await message.answer("🔄 Считаю...")

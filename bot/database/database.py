@@ -774,8 +774,7 @@ async def update_all_modules(telegram_id: int, state: bool):
             update(User)
             .where(User.telegram_id == telegram_id)
             .values(
-                module_calc_enabled=state,
-                module_love_enabled=state
+                modules_enabled=state
             )
         )
         await session.commit()
