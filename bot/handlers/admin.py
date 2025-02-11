@@ -235,7 +235,8 @@ async def process_broadcast_text(message: Message, state: FSMContext):
         failed_count = 0
 
         for user in users:
-            if user.is_banned:  # Пропускаем заблокированных пользователей
+            # Пропускаем заблокированных и неактивных пользователей
+            if user.is_banned or not user.business_bot_active:
                 continue
             try:
                 await message.bot.send_message(
