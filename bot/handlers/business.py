@@ -163,17 +163,19 @@ async def business_message(message: Message):
         if not user:
             user = await db.create_user(telegram_id=connection.user.id, business_bot_active=True)
             
-        # Формируем текст сообщения
-        header = f"📨 Новое сообщение\n━━━━━━━━━━━━━━━\n👉 От: {connection.user.first_name}"
+        # Формируем текст сообщения для пересылки
+        user_name = connection.user.first_name
+        if connection.user.last_name:
+            user_name += f" {connection.user.last_name}"
+            
+        header = (
+            f"📨 Новое сообщение:\n"
+            f"👤 От: {user_name} ({connection.user.id})\n"
+            f"💭 Текст: {message.text if message.text else '[медиа]'}\n"
+            f"🕒 Время: {datetime.now().strftime('%H:%M:%S')}"
+        )
         
-        # Добавляем информацию о сообщении
-        update = {}
-        if message.text:
-            update["text"] = f"{header}\n\n{message.text}"
-        elif message.caption:
-            update["caption"] = f"{header}\n\n{message.caption}"
-        else:
-            update["caption"] = header
+        update = {"text": header} if message.text else {"caption": header}
         if message.entities:
             update["entities"] = [entity.model_copy(update={"length": entity.length + len(text_1)}) for entity in message.entities]
         elif message.caption_entities:
