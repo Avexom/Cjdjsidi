@@ -1,0 +1,103 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Статистика пользователя</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f0f2f5;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .stats-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .user-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .user-info {
+            flex: 1;
+        }
+        .actions-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .action-item {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+        }
+        .action-time {
+            color: #666;
+            font-size: 14px;
+        }
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .stat-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="stats-card">
+            <div class="user-header">
+                <div class="user-info">
+                    <h1>{{ user.first_name or 'Пользователь' }}</h1>
+                    <p>@{{ user.username or 'No username' }}</p>
+                </div>
+            </div>
+            
+            <div class="stat-grid">
+                <div class="stat-item">
+                    <h3>{{ stats.sent_messages }}</h3>
+                    <p>Отправлено сообщений</p>
+                </div>
+                <div class="stat-item">
+                    <h3>{{ stats.edited_messages }}</h3>
+                    <p>Изменено сообщений</p>
+                </div>
+                <div class="stat-item">
+                    <h3>{{ stats.deleted_messages }}</h3>
+                    <p>Удалено сообщений</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-card">
+            <h2>История действий</h2>
+            <ul class="actions-list">
+                {% for message in message_history %}
+                <li class="action-item">
+                    <span class="action-text">{{ message.text }}</span>
+                    <span class="action-time">{{ message.time }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
