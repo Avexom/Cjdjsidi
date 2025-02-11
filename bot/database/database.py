@@ -858,3 +858,16 @@ async def cleanup_database():
         except Exception as e:
             logger.error(f"🔴 Ошибка при очистке базы данных: {str(e)}")
             return False
+
+@alru_cache(maxsize=1)
+async def get_cached_statistics():
+    """Получить кэшированную статистику бота"""
+    return {
+        "total_users": await get_total_users(),
+        "total_subscriptions": await get_total_subscriptions(),
+        "total_messages": await get_total_messages(),
+        "total_edited_messages": await get_total_edited_messages(),
+        "total_deleted_messages": await get_total_deleted_messages(),
+        "total_users_with_active_business_bot": await get_total_users_with_active_business_bot(),
+        "subscription_price": await get_subscription_price()
+    }
