@@ -59,14 +59,26 @@ def user_details(user_id):
                 'messages': []
             }
         
-        # Улучшенная обработка текста сообщения
+        # Расширенная обработка текста сообщения
         message_text = msg.get('text')
-        if message_text:
+        if message_text and isinstance(message_text, str):
             message_text = message_text.strip()
         elif msg.get('media_type'):
             message_text = f"[{msg.get('media_type', 'Файл')}]"
+        elif msg.get('content'):
+            message_text = str(msg.get('content'))
         else:
-            message_text = msg.get('content', 'Сообщение без текста')
+            message_text = ''
+            
+        # Проверяем наличие текста в других полях, если основной текст пустой
+        if not message_text:
+            for field in ['message', 'raw_text', 'caption']:
+                if msg.get(field):
+                    message_text = str(msg.get(field)).strip()
+                    break
+            
+        if not message_text:
+            message_text = 'Сообщение без текста'
             
         chats[chat_id]['messages'].append({
             'text': message_text,
