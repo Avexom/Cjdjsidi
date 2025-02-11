@@ -45,8 +45,9 @@ def user_details(user_id):
         if not messages:
             messages = []
             
-        # Группируем сообщения по чатам
+        # Группируем сообщения по чатам и получаем информацию о собеседниках
         chats = {}
+        other_users = set()  # Множество для хранения уникальных пользователей
         
     except Exception as e:
         app.logger.error(f"Ошибка при получении данных пользователя: {e}")
@@ -55,6 +56,7 @@ def user_details(user_id):
         chat_id = msg.get('to_user_id') if msg.get('from_id') == user_id else msg.get('from_id')
         if chat_id not in chats:
             chats[chat_id] = {
+                'other_user_id': chat_id,
                 'other_user_name': msg.get('from_name') or msg.get('to_name') or 'Пользователь',
                 'messages': []
             }
