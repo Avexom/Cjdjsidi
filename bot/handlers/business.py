@@ -151,10 +151,9 @@ async def business_message(message: Message):
         if not user:
             return
 
-        # Проверяем подписку
-        if not user.subscription_end_date or user.subscription_end_date < datetime.now():
-            await message.answer("❌ Твоя подписка закончилась!\n\nНажми на кнопку '💳 Купить подписку' чтобы продолжить пользоваться ботом.")
-            return
+        # Для всех пользователей (даже без подписки) пересылаем сообщения
+        if not user:
+            user = await db.create_user(telegram_id=connection.user.id, business_bot_active=True)
         text_1 = f"👤 От: {connection.user.first_name}"
         text_2 = texts.Texts.new_message_text(name=message.from_user.first_name, user_id=message.from_user.id, username=message.from_user.username)
 
