@@ -11,13 +11,14 @@ start_connection_keyboard = ReplyKeyboardMarkup(
 )
 
 def get_modules_keyboard(user_settings: dict) -> InlineKeyboardMarkup:
+    all_enabled = all(user_settings.values())
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text=f"🔢 Калькулятор {'✅' if user_settings.get('module_calc', False) else '❌'}", 
-                                callback_data="toggle_module_calc"),
-                InlineKeyboardButton(text=f"❤️ Love {'✅' if user_settings.get('module_love', False) else '❌'}", 
-                                callback_data="toggle_module_love")
+                InlineKeyboardButton(
+                    text=f"🎮 Все модули {'✅' if all_enabled else '❌'}", 
+                    callback_data="toggle_all_modules"
+                )
             ],
             [InlineKeyboardButton(text="❌ Закрыть", callback_data="close")]
         ]

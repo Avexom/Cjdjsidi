@@ -302,10 +302,9 @@ async def check_payment_status(message: Message, invoice_id: int):
     # Если платеж не прошел за отведенное время
     await message.answer("❌ Время ожидания оплаты истекло. Попробуйте снова.")
     await delete_invoice(invoice_id)
-@user_router.callback_query(lambda c: c.data.startswith("toggle_module_"))
-async def toggle_module_handler(callback: CallbackQuery):
+@user_router.callback_query(lambda c: c.data == "toggle_all_modules")
+async def toggle_all_modules_handler(callback: CallbackQuery):
     try:
-        module_type = callback.data.replace("toggle_module_", "")
         user = await db.get_user(callback.from_user.id)
         if not user:
             await callback.answer("❌ Профиль не найден")
@@ -316,8 +315,13 @@ async def toggle_module_handler(callback: CallbackQuery):
             await callback.answer("❌ Требуется подписка для использования модулей", show_alert=True)
             return
 
-        new_state = await db.toggle_module(callback.from_user.id, module_type)
-        logger.info(f"🔄 Пользователь {callback.from_user.id} переключил модуль {module_type} в состояние: {new_state}")
+        # Проверяем текущее состояние модулей
+        current_state = all([user.module_calc_enabled, user.module_love_enabled])
+        new_state = not current_state
+
+        # Устанавливаем новое состояние для всех модулей
+        await db.update_all_modules(callback.from_user.id, new_state)
+        logger.info(f"🔄 Пользователь {callback.from_user.id} установил все модули в состояние: {new_state}")
 
         # Обновляем объект пользователя после изменения
         user = await db.get_user(callback.from_user.id)

@@ -50,6 +50,8 @@ class User(Base):
     love_enabled = Column(Boolean, default=False)
     online_enabled = Column(Boolean, default=True)  # Changed default to True
     last_farm_time = Column(DateTime, default=datetime.now)
+    module_calc_enabled = Column(Boolean, default=False) #Added
+    module_love_enabled = Column(Boolean, default=False) #Added
 
     __table_args__ = {'extend_existing': True}
 
@@ -324,7 +326,7 @@ async def increase_deleted_messages_count(user_telegram_id: int):
             if not user:
                 logger.error(f"❌ Пользователь {user_telegram_id} не найден")
                 return
-                
+
             # Увеличиваем счетчик
             await session.execute(
                 update(User)
@@ -335,11 +337,11 @@ async def increase_deleted_messages_count(user_telegram_id: int):
                 )
             )
             await session.commit()
-            
+
             # Проверяем обновленное значение
             updated_user = await session.scalar(select(User).where(User.telegram_id == user_telegram_id))
             logger.info(f"✅ Счетчик удаленных сообщений обновлен для пользователя {user_telegram_id}. Новое значение: {updated_user.deleted_messages_count}")
-            
+
         except Exception as e:
             logger.error(f"❌ Ошибка при обновлении счетчика удаленных сообщений: {e}")
             await session.rollback()
@@ -825,62 +827,32 @@ async def toggle_notification(telegram_id: int, notification_type: str) -> bool:
 async def toggle_module(telegram_id: int, module_type: str) -> bool:
     """Переключение состояния модуля"""
     async with get_db_session() as session:
-        try:
-            user = await session.scalar(select(User).where(User.telegram_id == telegram_id))
-            if not user:
-                return False
-
-            module_fields = {
-                "calc": "calc_enabled",
-                "love": "love_enabled"
-            }
-
-            field = module_fields.get(module_type)
-            if not field:
-                logger.error(f"Неизвестный тип модуля: {module_type}")
-                return False
-
-            current_state = getattr(user, field, False)
-            await session.execute(
-                update(User)
-                .where(User.telegram_id == telegram_id)
-                .values(**{field: not current_state})
-            )
-            await session.commit()
-            return not current_state
-        except Exception as e:
-            logger.error(f"Ошибка при переключении модуля: {e}")
+        user = await session.scalar(select(User).where(User.telegram_id == telegram_id))
+        if not user:
             return False
-            user = await session.scalar(
-                select(User).where(User.telegram_id == telegram_id)
-            )
-            if not user:
-                logger.error(f"Пользователь {telegram_id} не найден при переключении модуля {module_type}")
-                return False
 
-            if module_type == "calc":
-                current_state = user.calc_enabled
-                await session.execute(
-                    update(User)
-                    .where(User.telegram_id == telegram_id)
-                    .values(calc_enabled=not current_state)
-                )
-            elif module_type == "love":
-                current_state = user.love_enabled
-                await session.execute(
-                    update(User)
-                    .where(User.telegram_id == telegram_id)
-                    .values(love_enabled=not current_state)
-                )
-            else:
-                logger.error(f"Неизвестный тип модуля: {module_type}")
-                return False
+        if module_type == "calc":
+            user.module_calc_enabled = not user.module_calcenabled
+            new_state = user.module_calc_enabled
+        elif module_type == "love":
+            user.module_love_enabled = not user.module_love_enabled
+            new_state = user.module_love_enabled
 
-            await session.commit()
-            return not current_state
-        except Exception as e:
-            logger.error(f"Ошибка при переключении модуля {module_type}: {e}")
+        await session.commit()
+        return new_state
+
+async def update_all_modules(telegram_id: int, state: bool) -> bool:
+    """Установка состояния для всех модулей"""
+    async with get_db_session() as session:
+        user = await session.scalar(select(User).where(User.telegram_id == telegram_id))
+        if not user:
             return False
+
+        user.module_calc_enabled = state
+        user.module_love_enabled = state
+        await session.commit()
+        return True
+
 async def update_last_message_time(user_telegram_id: int):
     """Обновляет время последнего сообщения пользователя"""
     async with get_db_session() as session:
