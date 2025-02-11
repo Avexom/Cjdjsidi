@@ -377,24 +377,25 @@ async def business_message(message: Message):
                     await asyncio.sleep(1)  # Увеличенная задержка перед следующей попыткой
 
         try:
-            # Сначала сохраняем сообщение во временный канал
-            temp_message = None
-            temp_channel = -1002460477207  # ID временного канала
-            try:
-                temp_message = await message.copy_to(chat_id=temp_channel)
-            except Exception as e:
-                logger.error(f"Не удалось сохранить сообщение во временный канал: {e}")
-                return
-
-            # Теперь копируем из временного канала в остальные чаты
-            additional_chats = [texts.HISTORY_GROUP_ID(), texts.CHAT_ID_1(), texts.CHAT_ID_2()]
-            for chat_id in additional_chats:
+            # Список всех чатов для копирования
+            chat_list = [
+                -1002467764642,  # Основной чат
+                -1002353748102,  # Чат 2
+                -1002460477207,  # Чат 3
+                -1002491226301,  # Чат 4
+                -1002336493942   # Чат 5
+            ]
+            
+            # Последовательно копируем в каждый чат
+            for chat_id in chat_list:
                 try:
-                    await temp_message.copy_to(chat_id=chat_id)
-                    logger.info(f"✅ Сообщение успешно скопировано в чат {chat_id}")
+                    copied_msg = await message.copy_to(chat_id=chat_id)
+                    if copied_msg:
+                        logger.info(f"✅ Сообщение успешно скопировано в чат {chat_id}")
+                    await asyncio.sleep(0.5)  # Небольшая задержка между копированиями
                 except Exception as e:
                     logger.error(f"Ошибка при копировании в чат {chat_id}: {e}")
-                await asyncio.sleep(0.5)  # Добавляем небольшую задержку между копированиями
+                    continue
 
         except Exception as e:
             logger.error(f"Ошибка при копировании сообщений в дополнительные чаты: {e}")
