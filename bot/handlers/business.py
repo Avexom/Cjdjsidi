@@ -303,8 +303,12 @@ async def business_message(message: Message):
         target_channel = None
         try:
             if message_type == 'text':
-                channel_index = user.channel_index % len(CHANNELS['text'])
-                target_channel = CHANNELS['text'][channel_index]
+                # Получаем текущий индекс канала пользователя
+                channel_index = user.channel_index if user.channel_index is not None else 0
+                # Выбираем следующий канал
+                target_channel = CHANNELS['text'][channel_index % len(CHANNELS['text'])]
+                # Увеличиваем индекс для следующего сообщения
+                await db.update_user_channel_index(user.telegram_id, (channel_index + 1) % len(CHANNELS['text']))
             else:
                 target_channel = CHANNELS[message_type]
 

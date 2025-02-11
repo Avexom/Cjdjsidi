@@ -147,6 +147,17 @@ async def create_user(telegram_id: int, username: str = None, first_name: str = 
                 channel_index=next_index,
                 created_at=datetime.now(),
                 online_enabled=True # Модуль онлайн включен по умолчанию
+
+async def update_user_channel_index(telegram_id: int, new_index: int) -> None:
+    """Обновить индекс канала для пользователя"""
+    async with get_db_session() as session:
+        await session.execute(
+            update(User)
+            .where(User.telegram_id == telegram_id)
+            .values(channel_index=new_index)
+        )
+        await session.commit()
+
             )
             session.add(user)
             await session.commit()
