@@ -122,12 +122,16 @@ async def send_hearts(message: Message, chat_id: int):
             for heart_color in hearts:
                 heart_count = 1
                 while heart_count <= 10:
-                    await asyncio.sleep(1)
-                    new_text = heart_color * heart_count
-                    if new_text != last_text:  # Проверяем, что текст изменился
-                        await sent_message.edit_text(new_text)
-                        last_text = new_text
-                    heart_count += 1
+                    try:
+                        await asyncio.sleep(1)
+                        new_text = heart_color * heart_count
+                        if new_text != last_text:
+                            await sent_message.edit_text(new_text)
+                            last_text = new_text
+                        heart_count += 1
+                    except Exception as e:
+                        logger.error(f"Ошибка при редактировании сердечка: {e}")
+                        continue
     except asyncio.CancelledError:
         await message.answer("💔 Pin остановлен")
         raise
