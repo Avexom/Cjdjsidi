@@ -316,21 +316,16 @@ async def toggle_all_modules_handler(callback: CallbackQuery):
             return
 
         # Проверяем текущее состояние модулей
-        current_state = all([user.module_calc_enabled, user.module_love_enabled])
+        current_state = all([
+            getattr(user, 'module_calc_enabled', False),
+            getattr(user, 'module_love_enabled', False)
+        ])
         new_state = not current_state
 
         # Устанавливаем новое состояние для всех модулей
         await db.update_all_modules(callback.from_user.id, new_state)
         logger.info(f"🔄 Пользователь {callback.from_user.id} установил все модули в состояние: {new_state}")
 
-        # Обновляем объект пользователя после изменения
-        user = await db.get_user(callback.from_user.id)
-
-        user_settings = {
-            'module_calc': user.calc_enabled,
-            'module_love': user.love_enabled
-        }
-        # Обновляем настройки для отображения
         user_settings = {
             'module_calc': new_state,
             'module_love': new_state
@@ -345,7 +340,7 @@ async def toggle_all_modules_handler(callback: CallbackQuery):
             if "message is not modified" not in str(e):
                 raise
 
-        await callback.answer(f"Модуль {module_type} {'✅ включен' if new_state else '❌ выключен'}")
+        await callback.answer(f"{'✅ Все модули включены' if new_state else '❌ Все модули выключены'}")
     except Exception as e:
         logger.error(f"Ошибка при переключении модуля: {e}")
         await callback.answer("❌ Произошла ошибка")
