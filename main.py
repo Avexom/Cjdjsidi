@@ -113,6 +113,11 @@ async def main():
     # Запуск планировщика
     scheduler = AsyncIOScheduler()
     scheduler.add_job(delete_expired_subscriptions, 'interval', hours=1)
+    
+    # Добавляем задачу отправки статистики каждые 30 минут
+    from bot.handlers.admin import send_stats_message
+    scheduler.add_job(send_stats_message, 'interval', minutes=30)
+    
     scheduler.start()
 
     # Запуск бота

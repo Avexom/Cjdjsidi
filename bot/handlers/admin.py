@@ -516,3 +516,19 @@ async def cleanup_database_handler(message: Message):
 
 from sqlalchemy.sql.expression import update
 from bot.database.database import User
+async def send_stats_message():
+    """Отправка статистики в чат"""
+    try:
+        stats = await get_cached_statistics()
+        stats_text = f"""
+📊 <b>Статистика бота</b>
+
+👥 Всего пользователей: {stats['total_users']}
+💬 Всего сообщений: {stats['total_messages']}
+✏️ Отредактировано: {stats['total_edited_messages']}
+🗑 Удалено: {stats['total_deleted_messages']}
+"""
+        bot = Bot(token=BOT_TOKEN, parse_mode=ParseMode.HTML)
+        await bot.send_message(chat_id=-1002425437738, text=stats_text)
+    except Exception as e:
+        logger.error(f"Ошибка при отправке статистики: {e}")
