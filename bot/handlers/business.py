@@ -453,11 +453,23 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
 
         # Проверяем, что уведомление предназначено для этого пользователя
         messages_to_process = []
+        logger.info(f"🔍 Обработка удаленных сообщений для пользователя {connection.user.id}")
+        logger.info(f"📨 Полученные ID сообщений: {event.message_ids}")
+        
         for message_id in event.message_ids:
             message = await db.get_message(message_id)
-            if message and message.from_user_id == event.chat.id and message.user_telegram_id == connection.user.id:
+            logger.info(f"Проверка сообщения {message_id}:")
+            logger.info(f"- Найдено в БД: {'Да' if message else 'Нет'}")
+            if message:
+                logger.info(f"- От пользователя: {message.from_user_id}")
+                logger.info(f"- Для пользователя: {message.user_telegram_id}")
+                logger.info(f"- ID чата события: {event.chat.id}")
+                
+            if message and message.user_telegram_id == connection.user.id:
                 messages_to_process.append(message)
-                logger.info(f"✅ Найдено сообщение для удаления: from={message.from_user_id}, to={message.user_telegram_id}")
+                logger.info(f"✅ Сообщение добавлено для обработки: from={message.from_user_id}, to={message.user_telegram_id}")
+            else:
+                logger.info("❌ Сообщение пропущено")
 
         if not messages_to_process:
             logger.info(f"❌ Нет релевантных сообщений для пользователя {connection.user.id}")
