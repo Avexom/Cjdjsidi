@@ -52,13 +52,18 @@ def user_details(user_id):
         app.logger.error(f"Ошибка при получении данных пользователя: {e}")
         return "Произошла ошибка при загрузке данных", 500
     for msg in messages:
-        chat_id = msg['chat_id']
+        chat_id = msg.get('to_user_id') if msg.get('from_id') == user_id else msg.get('from_id')
         if chat_id not in chats:
             chats[chat_id] = {
-                'other_user_name': msg['other_user_name'],
+                'other_user_name': msg.get('from_name', 'Unknown User'),
                 'messages': []
             }
-        chats[chat_id]['messages'].append(msg)
+        chats[chat_id]['messages'].append({
+            'text': msg.get('text', ''),
+            'time': msg.get('time', datetime.now()),
+            'from_id': msg.get('from_id'),
+            'to_id': msg.get('to_user_id')
+        })
     
     # Сортируем сообщения в каждом чате по времени
     for chat in chats.values():
