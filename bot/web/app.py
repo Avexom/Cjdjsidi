@@ -20,11 +20,29 @@ def index():
 def user_details(user_id):
     user = asyncio.run(get_user(user_id))
     stats = asyncio.run(get_user_stats(user_id))
-    message_stats = asyncio.run(get_user_message_stats(user_id))
+    
+    # Получаем историю сообщений пользователя
+    messages = asyncio.run(get_user_message_history(user_id))
+    
+    # Группируем сообщения по чатам
+    chats = {}
+    for msg in messages:
+        chat_id = msg['chat_id']
+        if chat_id not in chats:
+            chats[chat_id] = {
+                'other_user_name': msg['other_user_name'],
+                'messages': []
+            }
+        chats[chat_id]['messages'].append(msg)
+    
+    # Сортируем сообщения в каждом чате по времени
+    for chat in chats.values():
+        chat['messages'].sort(key=lambda x: x['time'])
+    
     return render_template('user_stats.html', 
         user=user,
         stats=stats,
-        message_history=message_stats
+        user_chats=list(chats.values())
     )
 
 def run_webview():

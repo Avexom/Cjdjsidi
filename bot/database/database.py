@@ -61,6 +61,7 @@ class Message(Base):
     from_user_id = Column(BigInteger, nullable=False)
     message_id = Column(BigInteger, nullable=False)
     temp_message_id = Column(BigInteger, nullable=False)
+    created_at = Column(DateTime, default=datetime.now)
 
 class MessageEditHistory(Base):
     __tablename__ = 'message_edit_history'
@@ -576,6 +577,37 @@ async def get_user_by_username(username: str) -> Optional[User]:
                 messages_count=1
             )
             session.add(stats)
+
+async def get_user_message_history(user_id: int) -> List[Dict[str, Any]]:
+    """
+    Получить полную историю сообщений пользователя
+    """
+    async with get_db_session() as session:
+        # Получаем все сообщения пользователя
+        messages = await session.execute(
+            select(Message, User)
+            .join(User, User.telegram_id == Message.from_user_id)
+            .where(
+                or_(
+                    Message.user_telegram_id == user_id,
+                    Message.from_user_id == user_id
+                )
+            )
+            .order_by(Message.id.desc())
+        )
+        
+        result = []
+        for msg, user in messages.fetchall():
+            result.append({
+                'from_id': msg.from_user_id,
+                'chat_id': msg.chat_id,
+                'message_id': msg.message_id,
+                'time': msg.created_at if hasattr(msg, 'created_at') else datetime.now(),
+                'text': f"Message ID: {msg.message_id}",
+                'other_user_name': user.username or user.first_name or f"User {user.telegram_id}"
+            })
+        
+        return result
 
 async def get_user_message_stats(user_id: int) -> List[Dict[str, Any]]:
     """

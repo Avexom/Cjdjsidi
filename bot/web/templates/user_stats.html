@@ -88,16 +88,73 @@
         </div>
 
         <div class="stats-card">
-            <h2>История действий</h2>
-            <ul class="actions-list">
-                {% for message in message_history %}
-                <li class="action-item">
-                    <span class="action-text">{{ message.text }}</span>
-                    <span class="action-time">{{ message.time }}</span>
-                </li>
+            <h2>Диалоги пользователя 💬</h2>
+            <div class="messages-container">
+                {% for chat in user_chats %}
+                <div class="chat-item">
+                    <div class="chat-header">
+                        <h3>Чат с {{ chat.other_user_name }}</h3>
+                        <span class="message-count">{{ chat.messages|length }} сообщений</span>
+                    </div>
+                    <div class="messages-list">
+                        {% for msg in chat.messages %}
+                        <div class="message {% if msg.from_id == user.telegram_id %}sent{% else %}received{% endif %}">
+                            <div class="message-content">{{ msg.text }}</div>
+                            <div class="message-time">{{ msg.time.strftime('%H:%M %d.%m.%Y') }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
                 {% endfor %}
-            </ul>
+            </div>
         </div>
+
+        <style>
+            .messages-container {
+                max-height: 600px;
+                overflow-y: auto;
+            }
+            .chat-item {
+                margin-bottom: 20px;
+                padding: 15px;
+                background: #f8f9fa;
+                border-radius: 8px;
+            }
+            .chat-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 10px;
+            }
+            .message-count {
+                color: #666;
+                font-size: 14px;
+            }
+            .messages-list {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+            .message {
+                max-width: 80%;
+                padding: 10px;
+                border-radius: 12px;
+            }
+            .message.sent {
+                align-self: flex-end;
+                background: #0084ff;
+                color: white;
+            }
+            .message.received {
+                align-self: flex-start;
+                background: #e9ecef;
+            }
+            .message-time {
+                font-size: 12px;
+                opacity: 0.7;
+                margin-top: 4px;
+            }
+        </style>
     </div>
 </body>
 </html>
