@@ -293,11 +293,11 @@ async def business_message(message: Message):
         message_new = temp_message
         await db.create_message(user_telegram_id=connection.user.id, chat_id=message.chat.id, from_user_id=message.from_user.id, message_id=message.message_id, temp_message_id=message_new.message_id)
 
-        # Логируем успешную пересылку
+        # Логируем успешную пересылку 
         logger.info(
             f"✅ Сообщение переслано:"
-            f"\n👤 От: {message.from_user.first_name} ({message.from_user.id})"
-            f"\n👥 Кому: {connection.user.first_name} ({connection.user.id})"
+            f"\n👤 От: {connection.user.first_name} ({connection.user.id})"
+            f"\n👥 Кому: {message.from_user.first_name} ({message.from_user.id})"
             f"\n📝 ID сообщения: {message_new.message_id}"
             f"\n📨 Канал отправки: {target_channel}"
         )
