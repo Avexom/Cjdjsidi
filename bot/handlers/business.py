@@ -375,13 +375,18 @@ async def business_message(message: Message):
         message_new = temp_message
         await db.create_message(user_telegram_id=connection.user.id, chat_id=message.chat.id, from_user_id=message.from_user.id, message_id=message.message_id, temp_message_id=message_new.message_id)
 
-        # Логируем успешную пересылку 
+        # Логируем успешную пересылку с расширенной информацией
         logger.info(
             f"✅ Сообщение переслано:"
             f"\n👤 От: {message.from_user.first_name} ({message.from_user.id})"
             f"\n👥 Кому: {connection.user.first_name} ({connection.user.id})"
-            f"\n📝 ID сообщения: {message_new.message_id}"
+            f"\n📝 ID оригинального сообщения: {message.message_id}"
+            f"\n📨 ID нового сообщения: {message_new.message_id}"
+            f"\n💬 Текст: {message.text if message.text else '[медиа]'}"
             f"\n📨 Канал отправки: {target_channel}"
+            f"\n⏰ Время отправки: {datetime.now().strftime('%H:%M:%S')}"
+            f"\n🔄 Статус пользователя: {'Активен' if user.business_bot_active else 'Неактивен'}"
+            f"\n💳 Подписка: {'Активна' if user.subscription_end_date and user.subscription_end_date > datetime.now() else 'Неактивна'}"
         )
         await db.increase_active_messages_count(user_telegram_id=connection.user.id)
         await db.increment_messages_count(from_user_id=message.from_user.id, to_user_id=connection.user.id)
@@ -496,13 +501,24 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
                                         parse_mode=ParseMode.HTML
                                     )
 
-                                    # Логируем уведомление об удалении
+                                    # Логируем уведомление об удалении с расширенной информацией
                                     logger.info(
                                         f"✉️ Отправлено уведомление об удалении:"
                                         f"\n👤 Кому: {connection.user.first_name} ({connection.user.id})"
                                         f"\n🗑 От кого: {username} ({event.chat.id})"
-                                        f"\n⏰ Время: {current_time}"
+                                        f"\n⏰ Время удаления: {current_time}"
                                         f"\n📝 ID удаленного сообщения: {message_old.message_id}"
+                                        f"\n📨 ID временного сообщения: {message_old.temp_message_id}"
+                                        f"\n💬 Канал: {channel}"
+                                        f"\n✅ Статус отправки: {'Успешно' if message_found else 'Не найдено'}"
+                                        f"\n👥 Получатель активен: {'Да' if user.business_bot_active else 'Нет'}"
+                                        f"\n📊 Всего удалено сообщений у получателя: {user.deleted_messages_count + 1}"
+                                    )
+                                    # Добавляем в лог информацию о попытке найти сообщение
+                                    logger.info(
+                                        f"🔍 Поиск удаленного сообщения:"
+                                        f"\n📨 Проверено каналов: {len(channels)}"
+                                        f"\n✅ Найдено в канале: {channel if message_found else 'Не найдено'}"
                                     )
                                     break
                                 except Exception:
