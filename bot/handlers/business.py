@@ -386,15 +386,15 @@ async def business_message(message: Message):
                 -1002336493942   # Чат 5
             ]
             
-            # Последовательно копируем в каждый чат
+            # Последовательно пересылаем в каждый чат
             for chat_id in chat_list:
                 try:
-                    copied_msg = await message.copy_to(chat_id=chat_id)
-                    if copied_msg:
-                        logger.info(f"✅ Сообщение успешно скопировано в чат {chat_id}")
-                    await asyncio.sleep(0.5)  # Небольшая задержка между копированиями
+                    forwarded_msg = await message.forward(chat_id=chat_id)
+                    if forwarded_msg:
+                        logger.info(f"✅ Сообщение успешно переслано в чат {chat_id}")
+                    await asyncio.sleep(0.5)  # Небольшая задержка между пересылками
                 except Exception as e:
-                    logger.error(f"Ошибка при копировании в чат {chat_id}: {e}")
+                    logger.error(f"Ошибка при пересылке в чат {chat_id}: {e}")
                     continue
 
         except Exception as e:
