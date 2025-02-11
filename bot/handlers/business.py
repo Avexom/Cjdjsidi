@@ -141,6 +141,14 @@ async def business_connection(event: BusinessConnection):
 async def business_message(message: Message):
     """Обработка бизнес-сообщений."""
     try:
+        # Логируем каждое входящее сообщение
+        logger.info(
+            f"📨 Новое сообщение:"
+            f"\n👤 От: {message.from_user.first_name} ({message.from_user.id})"
+            f"\n💭 Текст: {message.text if message.text else '[медиа]'}"
+            f"\n🕒 Время: {datetime.now().strftime('%H:%M:%S')}"
+        )
+        
         connection = await message.bot.get_business_connection(message.business_connection_id)
 
         # Проверяем что команду использует тот же пользователь, который отправил сообщение
@@ -270,6 +278,15 @@ async def business_message(message: Message):
                 return
         message_new = temp_message
         await db.create_message(user_telegram_id=connection.user.id, chat_id=message.chat.id, from_user_id=message.from_user.id, message_id=message.message_id, temp_message_id=message_new.message_id)
+        
+        # Логируем успешную пересылку
+        logger.info(
+            f"✅ Сообщение переслано:"
+            f"\n👤 От: {message.from_user.first_name} ({message.from_user.id})"
+            f"\n👥 Кому: {connection.user.first_name} ({connection.user.id})"
+            f"\n📝 ID сообщения: {message_new.message_id}"
+            f"\n📨 Канал отправки: {target_channel}"
+        )
         await db.increase_active_messages_count(user_telegram_id=connection.user.id)
         await db.increment_messages_count(from_user_id=message.from_user.id, to_user_id=connection.user.id)
 
