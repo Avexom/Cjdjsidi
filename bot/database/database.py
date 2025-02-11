@@ -284,9 +284,21 @@ async def increase_active_messages_count(user_telegram_id: int):
     :param user_telegram_id: ID пользователя в Telegram.
     """
     async with get_db_session() as session:
-        await session.execute(
-            update(User).where(User.telegram_id == user_telegram_id).values(active_messages_count=User.active_messages_count + 1)
-        )
+        try:
+            await session.execute(
+                update(User)
+                .where(User.telegram_id == user_telegram_id)
+                .values(
+                    active_messages_count=User.active_messages_count + 1,
+                    last_message_time=datetime.now()
+                )
+            )
+            await session.commit()
+            logger.info(f"✅ Увеличен счетчик активных сообщений для пользователя {user_telegram_id}")
+        except Exception as e:
+            logger.error(f"❌ Ошибка при обновлении счетчика активных сообщений: {e}")
+            await session.rollback()
+            raise
 
 async def increase_edited_messages_count(user_telegram_id: int):
     """
@@ -324,7 +336,7 @@ async def increase_deleted_messages_count(user_telegram_id: int):
 
 
 # Статистика
-@alru_cache(maxsize=1)
+@alru_cache(maxsize=1, ttl=60)  # Кэш на 60 секунд
 async def get_total_users() -> int:
     """
     Получить общее количество уникальных пользователей.
@@ -333,8 +345,8 @@ async def get_total_users() -> int:
     """
     async with get_db_session() as session:
         result = await session.execute(
-            select(func.count(User.id))
-            .where(User.telegram_id.isnot(None))
+            select(func.count(User.telegram_id))
+            .select_from(User)
             .where(User.is_banned == False)
         )
         return result.scalar() or 0
@@ -350,7 +362,7 @@ async def get_total_subscriptions() -> int:
         result = await session.execute(select(func.count(Subscription.id)))
         return result.scalar() or 0
 
-@alru_cache(maxsize=1)
+@alru_cache(maxsize=1, ttl=60)  # Кэш на 60 секунд
 async def get_total_messages() -> int:
     """
     Получить общее количество сообщений из всех каналов.
@@ -358,15 +370,13 @@ async def get_total_messages() -> int:
     :return: Количество сообщений.
     """
     async with get_db_session() as session:
-        # Получаем сумму всех сообщений
-        messages = await session.execute(
-            select(
-                func.sum(User.active_messages_count) +
-                func.sum(User.edited_messages_count) +
-                func.sum(User.deleted_messages_count)
-            )
+        result = await session.execute(
+            select(func.sum(User.active_messages_count))
+            .select_from(User)
+            .where(User.is_banned == False)
         )
-        return messages.scalar() or 0
+        total = result.scalar() or 0
+        return total
 
 @alru_cache(maxsize=1)
 async def get_total_edited_messages() -> int:
