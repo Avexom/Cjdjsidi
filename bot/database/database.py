@@ -408,7 +408,8 @@ async def migrate_db():
         messages_columns = [col[1] for col in messages_result.fetchall()]
         
         if 'created_at' not in messages_columns:
-            await conn.execute(text("ALTER TABLE messages ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP"))
+            await conn.execute(text("ALTER TABLE messages ADD COLUMN created_at TIMESTAMP"))
+            await conn.execute(text("UPDATE messages SET created_at = DATETIME('now') WHERE created_at IS NULL"))
             logger.info("Added created_at column to messages table")
 
         # Проверяем таблицу users
