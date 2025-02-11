@@ -81,24 +81,24 @@ async def handle_love1_command(message: Message):
     """Обработка команды 'love1'."""
     original_text = "1234567890"
     target_text = "ЯЛюблюТебя"
-    sent_message = await message.bot.send_message(message.chat.id, original_text, from_user_id=message.from_user.id)
+    sent_message = await message.answer(original_text)
     for i in range(len(target_text)):
         new_text = target_text[:i + 1] + original_text[i + 1:]
         await asyncio.sleep(0.10)
-        await message.bot.edit_message_text(new_text, message.chat.id, sent_message.message_id, from_user_id=message.from_user.id)
+        await sent_message.edit_text(new_text)
 
 async def handle_secret_command(message: Message):
     """Обработка команды 'Secret'."""
     emojis = ["🤫", "🤔", "🤭", "😏", "😌", "🥰"]
     text = "Я хочу сказать тебе кое-что..."
-    sent_message = await message.bot.send_message(message.chat.id, "🤫", from_user_id=message.from_user.id)
+    sent_message = await message.answer("🤫")
 
     for emoji in emojis:
         await asyncio.sleep(1)
-        await message.bot.edit_message_text(f"{emoji} {text}", message.chat.id, sent_message.message_id, from_user_id=message.from_user.id)
+        await sent_message.edit_text(f"{emoji} {text}")
 
     final_text = "Ты самый охуенный человек на свете! 💖"
-    await message.bot.edit_message_text(final_text, message.chat.id, sent_message.message_id, from_user_id=message.from_user.id)
+    await sent_message.edit_text(final_text)
 
 async def handle_sexy_command(message: Message):
     """Обработка команды 'sexy'."""
