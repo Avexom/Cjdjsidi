@@ -429,8 +429,17 @@ async def get_total_users_with_active_business_bot() -> int:
     :return: Количество пользователей.
     """
     async with get_db_session() as session:
-        result = await session.execute(select(func.count(User.id)).where(User.business_bot_active == True))
-        return result.scalar() or 0
+        result = await session.execute(
+            select(func.count(User.id))
+            .where(and_(
+                User.business_bot_active == True,
+                User.subscription_end_date > datetime.now(),
+                User.is_banned == False
+            ))
+        )
+        count = result.scalar() or 0
+        logger.info(f"Пользователей с активным бизнес-ботом: {count}")
+        return count
 
 # Операции с настройками
 async def set_subscription_price(price: float):
