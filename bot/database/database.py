@@ -851,7 +851,8 @@ async def toggle_notification(telegram_id: int, notification_type: str) -> bool:
             "all": "notifications_enabled",
             "message": "message_notifications",
             "edit": "edit_notifications",
-            "delete": "delete_notifications"
+            "delete": "delete_notifications",
+            "all_modules": "modules_enabled"  # Добавляем поддержку all_modules
         }
 
         field = notification_fields.get(notification_type)
