@@ -120,7 +120,18 @@ async def business_connection(event: BusinessConnection):
             else:
                 await db.update_user_business_bot_active(telegram_id=event.user.id, business_bot_active=True)
             try:
-                await event.bot.send_message(event.user.id, texts.Texts.CONNECTION_ENABLED, reply_markup=kb.start_connection_keyboard)
+                activation_messages = [
+                    "🚀 Ебать, система активирована! Погнали нахуй! 🔥",
+                    "🎮 Game ON, сучка! Бизнес-бот в деле! 💪",
+                    "🌟 Охуенно! Бизнес-бот врубился на полную! 🚀",
+                    "💎 Заебись! Система готова к работе! 🔥",
+                    "🎯 Бизнес-бот активирован и готов творить дичь! 🚀"
+                ]
+                await event.bot.send_message(
+                    event.user.id,
+                    random.choice(activation_messages),
+                    reply_markup=kb.start_connection_keyboard
+                )
             except Exception as send_error:
                 if "bot was blocked by the user" in str(send_error):
                     await db.update_user_business_bot_active(telegram_id=event.user.id, business_bot_active=False)
@@ -130,7 +141,14 @@ async def business_connection(event: BusinessConnection):
         else:
             await db.update_user_business_bot_active(telegram_id=event.user.id, business_bot_active=False)
             try:
-                await event.bot.send_message(event.user.id, texts.Texts.CONNECTION_DISABLED)
+                deactivation_messages = [
+                    "💤 Пиздец! Система ушла спать... 😴",
+                    "🌙 Бизнес-бот затих, как моя бывшая... 😅",
+                    "🎭 Занавес! Бизнес-бот временно недоступен 🎪",
+                    "📴 Ну всё, пока! Бизнес-бот отключился 👋",
+                    "🌑 Бизнес-бот затаился в темноте... 🦇"
+                ]
+                await event.bot.send_message(event.user.id, random.choice(deactivation_messages))
             except Exception as send_error:
                 if "bot was blocked by the user" not in str(send_error):
                     raise send_error
