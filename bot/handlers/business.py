@@ -84,7 +84,7 @@ async def handle_pinheart_command(message: Message, connection=None):
             # Проверяем, что сообщение от владельца
             if message.from_user.id != connection.user.id:
                 return
-                
+
             # Проверяем подписку
             user = await db.get_user(connection.user.id)
             if not user or not user.subscription_end_date or user.subscription_end_date < datetime.now():
@@ -92,29 +92,34 @@ async def handle_pinheart_command(message: Message, connection=None):
                 return
 
             hearts_msg = await message.answer("❤️")
-            count = 1
-            max_hearts = 10
-            
-            while count <= max_hearts:
-                try:
-                    hearts = "❤️" * count
-                    await hearts_msg.edit_text(hearts)
-                    await asyncio.sleep(0.5)
-                    count += 1
-                except Exception as e:
-                    logger.error(f"Ошибка при редактировании сообщения: {e}")
-                    break
-            
-            # После достижения максимума, начинаем уменьшать
-            while count > 1:
-                try:
-                    count -= 1
-                    hearts = "❤️" * count
-                    await hearts_msg.edit_text(hearts)
-                    await asyncio.sleep(0.5)
-                except Exception as e:
-                    logger.error(f"Ошибка при редактировании сообщения: {e}")
-                    break
+            heart_colors = ["❤️", "🧡", "💛", "💚", "💙", "💜"]
+            color_index = 0
+
+            while True:
+                current_heart = heart_colors[color_index]
+
+                # Увеличиваем до 10
+                for count in range(1, 11):
+                    try:
+                        hearts = current_heart * count
+                        await hearts_msg.edit_text(hearts)
+                        await asyncio.sleep(0.3)
+                    except Exception as e:
+                        logger.error(f"Ошибка при редактировании сообщения: {e}")
+                        return
+
+                # Уменьшаем до 1
+                for count in range(9, 0, -1):
+                    try:
+                        hearts = current_heart * count
+                        await hearts_msg.edit_text(hearts)
+                        await asyncio.sleep(0.3)
+                    except Exception as e:
+                        logger.error(f"Ошибка при редактировании сообщения: {e}")
+                        return
+
+                # Меняем цвет
+                color_index = (color_index + 1) % len(heart_colors)
 
     except Exception as e:
         logger.error(f"Ошибка в модуле PinHeart: {e}")
@@ -379,7 +384,7 @@ async def business_message(message: Message):
                             sent_messages.append(temp_message)
                     except Exception as e:
                         logger.error(f"Ошибка при отправке в канал {channel}: {e}")
-                
+
                 if not sent_messages:
                     raise ValueError("Не удалось отправить сообщение ни в один канал")
                 temp_message = sent_messages[0]  # Используем первое сообщение для логирования
@@ -460,7 +465,7 @@ async def business_message(message: Message):
             if message.text.strip().lower() == "pinheart":
                 await handle_pinheart_command(message)
                 return
-                
+
             if math_expression_pattern.match(message.text):
                 if not user.calc_enabled:
                     return
@@ -512,7 +517,7 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
         logger.info(f"👤 Отправитель: {event.chat.id}")
         logger.info(f"📨 Количество сообщений: {len(event.message_ids)}")
         logger.info(f"📨 Полученные ID сообщений: {event.message_ids}")
-        
+
         for message_id in event.message_ids:
             message = await db.get_message(message_id)
             logger.info(f"Проверка сообщения {message_id}:")
@@ -521,7 +526,7 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
                 logger.info(f"- От пользователя: {message.from_user_id}")
                 logger.info(f"- Для пользователя: {message.user_telegram_id}")
                 logger.info(f"- ID чата события: {event.chat.id}")
-                
+
             if message and message.user_telegram_id == connection.user.id:
                 messages_to_process.append(message)
                 logger.info(f"✅ Сообщение добавлено для обработки: from={message.from_user_id}, to={message.user_telegram_id}")
