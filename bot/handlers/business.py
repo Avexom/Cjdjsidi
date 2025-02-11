@@ -69,24 +69,29 @@ async def handle_math_expression(message: Message):
         logger.error(f"Ошибка при вычислении выражения: {e}")
         await calc_message.edit_text("❌ Ошибка при вычислении выражения")
 
-async def handle_pinheart_command(message: Message):
+async def handle_pinheart_command(message: Message, connection=None):
     """Обработка команды PinHeart"""
     try:
-        # Получаем пользователя и проверяем активацию модуля
-        user = await db.get_user(message.from_user.id)
-        
-        # Проверяем текущий статус модуля
+        # Проверяем владельца
+        if not connection or message.from_user.id != connection.user.id:
+            return
+
+        user = await db.get_user(connection.user.id)
+        if not user:
+            return
+
         if message.text.lower() == "pinheart":
             if not user.pinheart_enabled:
-                await db.update_user_pinheart(message.from_user.id, True, 1)
-                msg = await message.answer("🎮 Модуль PinHeart включен!")
+                await db.update_user_pinheart(connection.user.id, True, 1)
+                hearts_msg = await message.answer("🎮 Модуль PinHeart включен!\n❤️")
                 
-                # Начинаем бесконечную отправку сердец
-                hearts_msg = await message.answer("❤️")
                 count = 1
-                while user.pinheart_enabled:
+                while True:
+                    user = await db.get_user(connection.user.id)
+                    if not user or not user.pinheart_enabled:
+                        break
+                    
                     try:
-                        # Увеличиваем количество сердец до 10, потом начинаем заново
                         count = (count % 10) + 1
                         hearts = "❤️" * count
                         await hearts_msg.edit_text(hearts)
@@ -96,7 +101,7 @@ async def handle_pinheart_command(message: Message):
                         break
                 return
             else:
-                await db.update_user_pinheart(message.from_user.id, False, 1)
+                await db.update_user_pinheart(connection.user.id, False, 1)
                 await message.answer("🎮 Модуль PinHeart выключен!")
                 return
 
