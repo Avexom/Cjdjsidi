@@ -7,17 +7,37 @@ import sys
 from datetime import datetime
 from logging.handlers import RotatingFileHandler
 
-# Настройка основного логгера для записи в файл
-file_handler = RotatingFileHandler(
+# Настройка охуенного логирования
+error_file_handler = RotatingFileHandler(
     'errors.log',
-    maxBytes=1024 * 1024,  # 1MB
+    maxBytes=5 * 1024 * 1024,  # 5MB
+    backupCount=10,
+    encoding='utf-8'
+)
+error_file_handler.setFormatter(logging.Formatter(
+    '='*50 + '\n'
+    '[%(asctime)s] %(levelname)s\n'
+    'В модуле: %(module)s\n'
+    'Функция: %(funcName)s\n'
+    'Строка: %(lineno)d\n'
+    'Сообщение: %(message)s\n'
+    'Стек вызовов:\n%(stack_info)s\n'
+    'Traceback:\n%(exc_info)s\n' +
+    '='*50 + '\n'
+))
+error_file_handler.setLevel(logging.ERROR)
+
+# Отдельный файл для действий бота
+debug_file_handler = RotatingFileHandler(
+    'bot_actions.log',
+    maxBytes=5 * 1024 * 1024,  # 5MB
     backupCount=5,
     encoding='utf-8'
 )
-file_handler.setFormatter(logging.Formatter(
-    '[%(asctime)s] %(levelname)s in %(module)s: %(message)s\nStack trace:\n%(stack_info)s\n'
+debug_file_handler.setFormatter(logging.Formatter(
+    '[%(asctime)s] %(levelname)s - %(message)s'
 ))
-file_handler.setLevel(logging.ERROR)
+debug_file_handler.setLevel(logging.INFO)
 
 # Настройка перехватчика необработанных исключений
 def handle_exception(exc_type, exc_value, exc_traceback):
@@ -66,9 +86,12 @@ bot_logger.handlers.clear()
 bot_logger.addHandler(bot_handler)
 bot_logger.setLevel(logging.INFO)
 bot_logger.propagate = False
-bot_logger.addHandler(file_handler)
+bot_logger.addHandler(error_file_handler)
+bot_logger.addHandler(debug_file_handler)
 
 user_logger = colorlog.getLogger('user')
+user_logger.addHandler(error_file_handler)
+user_logger.addHandler(debug_file_handler)
 user_logger.addHandler(file_handler)
 user_logger.handlers.clear()
 user_logger.addHandler(user_handler)
