@@ -241,7 +241,7 @@
                                         {% endif %}
                                     </span>
                                 {% else %}
-                                    {{ msg.text or '(пустое сообщение)' }}
+                                    {{ msg.text if msg.text else 'Сообщение без текста' }}
                                 {% endif %}
                             </div>
                             <div class="message-info">

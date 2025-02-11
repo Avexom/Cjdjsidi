@@ -60,9 +60,13 @@ def user_details(user_id):
             }
         
         # Улучшенная обработка текста сообщения
-        message_text = msg.get('text', '')
-        if not message_text and msg.get('media_type'):
+        message_text = msg.get('text')
+        if message_text:
+            message_text = message_text.strip()
+        elif msg.get('media_type'):
             message_text = f"[{msg.get('media_type', 'Файл')}]"
+        else:
+            message_text = msg.get('content', 'Сообщение без текста')
             
         chats[chat_id]['messages'].append({
             'text': message_text,
