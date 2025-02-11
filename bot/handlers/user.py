@@ -78,20 +78,6 @@ async def close_callback(callback: CallbackQuery):
         logger.error(f"Ошибка при закрытии сообщения: {e}")
         await callback.answer("Не удалось закрыть сообщение")
 
-    try:
-        user = await db.get_user(message.from_user.id)
-        if not user:
-            await message.answer("❌ Профиль не найден")
-            return
-
-        # Включаем модуль онлайн
-        await db.toggle_module(message.from_user.id, "online")
-        await message.answer("✅ Модуль 'Онлайн' включен!")
-
-    except Exception as e:
-        logger.error(f"Ошибка при включении модуля онлайн: {e}")
-        await message.answer("❌ Произошла ошибка")
-
 @user_router.message(F.text == "👤 Профиль")
 async def profile_handler(message: Message):
     logger.info(f"🔘 Юзер {message.from_user.id} нажал кнопку 'Профиль'")
