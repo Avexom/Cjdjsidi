@@ -1,6 +1,17 @@
 import asyncio
 import logging
 from datetime import datetime
+
+# Настройка логгера
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+# Хендлер для консоли
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+console_handler.setFormatter(formatter)
+logger.addHandler(console_handler)
 from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
 from aiogram.client.default import DefaultBotProperties
