@@ -157,10 +157,39 @@
             box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
             background: rgba(255, 255, 255, 0.1);
         }
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #0ff;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+        }
         .chat-partner-card i {
-            font-size: 24px;
+            font-size: 40px;
             color: #0ff;
             margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            text-align: center;
+        }
+        .user-name {
+            font-size: 16px;
+            font-weight: bold;
+            color: #fff;
+        }
+        .user-username {
+            font-size: 14px;
+            color: #0ff;
+        }
+        .last-activity {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
         }
         .chat-partner-card .message-count {
             font-size: 12px;
@@ -245,11 +274,26 @@
             <div class="chat-partners">
                 <h3><i class="fas fa-comments"></i> Диалоги с пользователями:</h3>
                 <div class="chat-partners-grid">
-                    {% for chat in user_chats %}
+                    {% for chat in user_chats|sort(attribute='last_activity', reverse=True) %}
                         <a href="/user/{{ chat.other_user_id }}" class="chat-partner-card">
-                            <i class="fas fa-user"></i>
-                            <span>{{ chat.other_user_name }}</span>
-                            <span class="message-count">{{ chat.messages|length }} сообщений</span>
+                            {% if chat.other_user_photo %}
+                                <img src="{{ chat.other_user_photo }}" alt="{{ chat.other_user_name }}" class="user-avatar">
+                            {% else %}
+                                <i class="fas fa-user"></i>
+                            {% endif %}
+                            <div class="user-info">
+                                <span class="user-name">{{ chat.other_user_name }}</span>
+                                {% if chat.other_user_username %}
+                                    <span class="user-username">@{{ chat.other_user_username }}</span>
+                                {% endif %}
+                                <span class="message-count">{{ chat.messages|length }} сообщений</span>
+                                {% if chat.last_activity %}
+                                    <span class="last-activity">
+                                        <i class="fas fa-clock"></i> 
+                                        {{ chat.last_activity.strftime('%H:%M %d.%m.%Y') }}
+                                    </span>
+                                {% endif %}
+                            </div>
                         </a>
                     {% endfor %}
                 </div>
