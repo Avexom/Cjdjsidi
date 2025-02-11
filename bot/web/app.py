@@ -55,14 +55,21 @@ def user_details(user_id):
         chat_id = msg.get('to_user_id') if msg.get('from_id') == user_id else msg.get('from_id')
         if chat_id not in chats:
             chats[chat_id] = {
-                'other_user_name': msg.get('from_name', 'Unknown User'),
+                'other_user_name': msg.get('from_name') or msg.get('to_name') or 'Пользователь',
                 'messages': []
             }
+        
+        # Улучшенная обработка текста сообщения
+        message_text = msg.get('text', '')
+        if not message_text and msg.get('media_type'):
+            message_text = f"[{msg.get('media_type', 'Файл')}]"
+            
         chats[chat_id]['messages'].append({
-            'text': msg.get('text', ''),
+            'text': message_text,
             'time': msg.get('time', datetime.now()),
             'from_id': msg.get('from_id'),
-            'to_id': msg.get('to_user_id')
+            'to_id': msg.get('to_user_id'),
+            'media_type': msg.get('media_type')
         })
     
     # Сортируем сообщения в каждом чате по времени

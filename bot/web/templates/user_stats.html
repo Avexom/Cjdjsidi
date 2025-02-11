@@ -226,12 +226,22 @@
                         {% for msg in chat.messages %}
                         <div class="message {% if msg.from_id == user.telegram_id %}sent{% else %}received{% endif %}">
                             <div class="message-content">
-                                {% if msg.text %}
-                                    {{ msg.text }}
-                                {% else %}
+                                {% if msg.media_type %}
                                     <span class="media-placeholder">
-                                        <i class="fas fa-photo-video"></i> Медиа-контент
+                                        {% if msg.media_type == 'photo' %}
+                                            <i class="fas fa-image"></i> Фото
+                                        {% elif msg.media_type == 'video' %}
+                                            <i class="fas fa-video"></i> Видео
+                                        {% elif msg.media_type == 'document' %}
+                                            <i class="fas fa-file"></i> Документ
+                                        {% elif msg.media_type == 'voice' %}
+                                            <i class="fas fa-microphone"></i> Голосовое сообщение
+                                        {% else %}
+                                            <i class="fas fa-file"></i> {{ msg.text or 'Файл' }}
+                                        {% endif %}
                                     </span>
+                                {% else %}
+                                    {{ msg.text or '(пустое сообщение)' }}
                                 {% endif %}
                             </div>
                             <div class="message-info">
