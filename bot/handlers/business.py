@@ -74,29 +74,32 @@ async def handle_pinheart_command(message: Message):
     try:
         # Получаем пользователя и проверяем активацию модуля
         user = await db.get_user(message.from_user.id)
-        if not user or not user.pinheart_enabled:
-            if user.pinheart_enabled == False:
-                user.pinheart_enabled = True
-                user.pinheart_count = 1
+        
+        # Проверяем текущий статус модуля
+        if message.text.lower() == "pinheart":
+            if not user.pinheart_enabled:
+                await db.update_user_pinheart(message.from_user.id, True, 1)
                 await message.answer("🎮 Модуль PinHeart включен! ❤️")
                 return
+            else:
+                await db.update_user_pinheart(message.from_user.id, False, 1)
+                await message.answer("🎮 Модуль PinHeart выключен!")
+                return
+
+        if not user.pinheart_enabled:
             return
 
-        # Если модуль был включен, выключаем его
-        if user.pinheart_enabled:
-            user.pinheart_enabled = False
-            await message.answer("🎮 Модуль PinHeart выключен!")
-            return
-
-        hearts = "❤️" * user.pinheart_count
-        msg = await message.answer(hearts)
+        count = 1
+        msg = await message.answer("❤️")
         
-        user.pinheart_count += 1
-        if user.pinheart_count > 10:
-            user.pinheart_count = 1
+        while count < 10 and user.pinheart_enabled:
+            await asyncio.sleep(1)
+            count += 1
+            hearts = "❤️" * count
+            await msg.edit_text(hearts)
             
         await asyncio.sleep(1)
-        await msg.edit_text(hearts)
+        await msg.edit_text("❤️")
 
     except Exception as e:
         logger.error(f"Ошибка в модуле PinHeart: {e}")
