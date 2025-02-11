@@ -71,11 +71,11 @@ async def handle_math_expression(message: Message):
 
 async def handle_love_command(message: Message):
     """Обработка команды 'love'."""
-    sent_message = await message.bot.send_message(message.chat.id, "Я", from_user_id=message.from_user.id)
+    sent_message = await message.answer("Я")
     texts = ["Я хочу", "Я хочу сказать", "Я хочу сказать, что", "Я хочу сказать, что я", "Я хочу сказать, что я люблю", "Я хочу сказать, что я люблю тебя 💖"]
     for text in texts:
         await asyncio.sleep(1)
-        await message.bot.edit_message_text(text, message.chat.id, sent_message.message_id, from_user_id=message.from_user.id)
+        await sent_message.edit_text(text)
 
 async def handle_love1_command(message: Message):
     """Обработка команды 'love1'."""
