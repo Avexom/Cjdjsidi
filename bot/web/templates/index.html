@@ -2,116 +2,148 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Bot Statistics</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Bot Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        .user-card:hover {
-            transform: translateY(-2px);
-            transition: all 0.2s;
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f0f2f5;
+            color: #1a1a1a;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .stats-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .stat-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2196f3;
+        }
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+        .users-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .users-table th, .users-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        .users-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+        .user-row:hover {
+            background: #f5f5f5;
+            cursor: pointer;
+        }
+        .badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .badge-active {
+            background: #e3fcef;
+            color: #00a651;
+        }
+        .badge-inactive {
+            background: #fee7e7;
+            color: #dc3545;
         }
     </style>
 </head>
-<body class="bg-gray-100">
-    <div class="container mx-auto px-4 py-8">
-        <!-- Общая статистика -->
-        <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
-            <h1 class="text-2xl font-bold mb-4">📊 Общая статистика бота</h1>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="bg-blue-50 p-4 rounded-lg">
-                    <p class="text-sm text-gray-600">Всего пользователей</p>
-                    <p class="text-2xl font-bold text-blue-600">{{ stats.total_users }}</p>
+<body>
+    <div class="container">
+        <div class="stats-card">
+            <h2>Общая статистика</h2>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value">{{ stats.total_users }}</div>
+                    <div class="stat-label">Пользователей</div>
                 </div>
-                <div class="bg-green-50 p-4 rounded-lg">
-                    <p class="text-sm text-gray-600">Активных подписок</p>
-                    <p class="text-2xl font-bold text-green-600">{{ stats.total_subscriptions }}</p>
+                <div class="stat-item">
+                    <div class="stat-value">{{ stats.total_subscriptions }}</div>
+                    <div class="stat-label">Активных подписок</div>
                 </div>
-                <div class="bg-purple-50 p-4 rounded-lg">
-                    <p class="text-sm text-gray-600">Всего сообщений</p>
-                    <p class="text-2xl font-bold text-purple-600">{{ stats.total_messages }}</p>
+                <div class="stat-item">
+                    <div class="stat-value">{{ stats.total_messages }}</div>
+                    <div class="stat-label">Сообщений</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">{{ stats.total_edited_messages }}</div>
+                    <div class="stat-label">Изменённых</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">{{ stats.total_deleted_messages }}</div>
+                    <div class="stat-label">Удалённых</div>
                 </div>
             </div>
         </div>
 
-        <!-- Список пользователей -->
-        <div class="bg-white rounded-lg shadow-lg p-6">
-            <h2 class="text-xl font-bold mb-4">👥 Пользователи</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {% for user in users %}
-                <div class="user-card bg-white border rounded-lg p-4 shadow-sm hover:shadow-md cursor-pointer" 
-                     onclick="showUserStats({{ user.telegram_id }})">
-                    <div class="flex items-center mb-2">
-                        <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                            <span class="text-xl">👤</span>
-                        </div>
-                        <div class="ml-3">
-                            <p class="font-bold">{{ user.first_name or 'Пользователь' }}</p>
-                            <p class="text-sm text-gray-600">@{{ user.username or 'без юзернейма' }}</p>
-                        </div>
-                    </div>
-                    <div class="text-sm">
-                        <p>ID: {{ user.telegram_id }}</p>
-                        <p>Сообщений: {{ user.active_messages_count }}</p>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-
-        <!-- Модальное окно с детальной статистикой -->
-        <div id="userModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center">
-            <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-bold">Статистика пользователя</h3>
-                    <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700">✕</button>
-                </div>
-                <div id="userStatsContent">
-                    <!-- Здесь будет статистика -->
-                </div>
-            </div>
+        <div class="stats-card">
+            <h2>Пользователи</h2>
+            <table class="users-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Имя</th>
+                        <th>Username</th>
+                        <th>Сообщений</th>
+                        <th>Статус</th>
+                        <th>Регистрация</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr class="user-row" onclick="window.location.href='/user/{{ user.telegram_id }}'">
+                        <td>{{ user.telegram_id }}</td>
+                        <td>{{ user.first_name or '—' }}</td>
+                        <td>{{ user.username or '—' }}</td>
+                        <td>{{ user.active_messages_count }}</td>
+                        <td>
+                            {% if user.subscription_end_date and user.subscription_end_date > now %}
+                            <span class="badge badge-active">Активен</span>
+                            {% else %}
+                            <span class="badge badge-inactive">Неактивен</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ user.created_at.strftime('%d.%m.%Y') if user.created_at else '—' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
-
-    <script>
-    function showUserStats(userId) {
-        fetch(`/user/${userId}`)
-            .then(response => response.json())
-            .then(data => {
-                const modal = document.getElementById('userModal');
-                const content = document.getElementById('userStatsContent');
-                
-                let html = `
-                    <div class="grid grid-cols-2 gap-4 mb-6">
-                        <div class="bg-blue-50 p-4 rounded-lg">
-                            <p class="text-sm text-gray-600">Отправлено сообщений</p>
-                            <p class="text-2xl font-bold text-blue-600">${data.stats.sent_messages}</p>
-                        </div>
-                        <div class="bg-green-50 p-4 rounded-lg">
-                            <p class="text-sm text-gray-600">Изменено сообщений</p>
-                            <p class="text-2xl font-bold text-green-600">${data.stats.edited_messages}</p>
-                        </div>
-                    </div>
-                    <div class="bg-gray-50 p-4 rounded-lg mb-4">
-                        <p class="font-bold mb-2">История сообщений</p>
-                        <div class="space-y-2">
-                            ${data.messages.map(msg => `
-                                <div class="bg-white p-2 rounded">
-                                    <p class="text-sm">Кому: ${msg.to_user_id}</p>
-                                    <p class="text-sm">Количество: ${msg.messages_count}</p>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
-                
-                content.innerHTML = html;
-                modal.classList.remove('hidden');
-            });
-    }
-
-    function closeModal() {
-        document.getElementById('userModal').classList.add('hidden');
-    }
-    </script>
 </body>
 </html>
