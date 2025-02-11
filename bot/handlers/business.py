@@ -81,47 +81,34 @@ async def handle_pinheart_command(message: Message, connection=None):
             return
 
         if message.text.lower() == "pinheart":
-            if not user.pinheart_enabled:
-                await db.update_user_pinheart(connection.user.id, True, 1)
-                hearts_msg = await message.answer("🎮 Модуль PinHeart включен!\n❤️")
-                
-                count = 1
-                while True:
-                    user = await db.get_user(connection.user.id)
-                    if not user or not user.pinheart_enabled:
-                        break
-                    
-                    try:
-                        count = (count % 10) + 1
-                        hearts = "❤️" * count
-                        await hearts_msg.edit_text(hearts)
-                        await asyncio.sleep(1)
-                    except Exception as e:
-                        logger.error(f"Ошибка при редактировании сообщения: {e}")
-                        break
-                return
-            else:
-                await db.update_user_pinheart(connection.user.id, False, 1)
-                await message.answer("🎮 Модуль PinHeart выключен!")
-                return
-
-        if not user.pinheart_enabled:
-            return
-
-        count = 1
-        msg = await message.answer("❤️")
-        
-        while count < 10 and user.pinheart_enabled:
-            await asyncio.sleep(1)
-            count += 1
-            hearts = "❤️" * count
-            await msg.edit_text(hearts)
+            hearts_msg = await message.answer("❤️")
+            count = 1
+            max_hearts = 10
             
-        await asyncio.sleep(1)
-        await msg.edit_text("❤️")
+            while count <= max_hearts:
+                try:
+                    hearts = "❤️" * count
+                    await hearts_msg.edit_text(hearts)
+                    await asyncio.sleep(0.5)  # Уменьшил задержку для большей плавности
+                    count += 1
+                except Exception as e:
+                    logger.error(f"Ошибка при редактировании сообщения: {e}")
+                    break
+            
+            # После достижения максимума, начинаем уменьшать
+            while count > 1:
+                try:
+                    count -= 1
+                    hearts = "❤️" * count
+                    await hearts_msg.edit_text(hearts)
+                    await asyncio.sleep(0.5)
+                except Exception as e:
+                    logger.error(f"Ошибка при редактировании сообщения: {e}")
+                    break
 
     except Exception as e:
         logger.error(f"Ошибка в модуле PinHeart: {e}")
+        await message.answer("❌ Произошла ошибка в модуле PinHeart")
 
 async def handle_love_command(message: Message):
     """Обработка команды 'love'."""
