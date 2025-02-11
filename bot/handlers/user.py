@@ -198,6 +198,16 @@ async def check_payment_callback(callback: CallbackQuery):
         logger.error(f"Ошибка при проверке оплаты: {e}")
         await callback.answer("❌ Произошла ошибка при проверке оплаты", show_alert=True)
 
+@user_router.message(F.text == "💬 Поддержка")
+async def support_handler(message: Message):
+    """Обработчик кнопки поддержки"""
+    await message.answer(Texts.SUPPORT_AND_REVIEWS)
+
+@user_router.message(F.text == "📝 Отзывы")
+async def reviews_handler(message: Message):
+    """Обработчик кнопки отзывов"""
+    await message.answer(Texts.SUPPORT_AND_REVIEWS)
+
 @user_router.message(F.text == "📱 Модули")
 async def modules_handler(message: Message):
     user = await db.get_user(message.from_user.id)
