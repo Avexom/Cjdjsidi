@@ -428,15 +428,20 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
         if not user or not user.subscription_end_date or user.subscription_end_date < datetime.now():
             return
 
-        # Проверяем, что удаленное сообщение принадлежит этому пользователю
+        # Сразу получаем все сообщения для проверки
+        messages_to_process = []
         for message_id in event.message_ids:
             message = await db.get_message(message_id)
-            if not message or message.user_telegram_id != connection.user.id:
-                continue
+            if message and message.user_telegram_id == connection.user.id:
+                messages_to_process.append(message)
+
+        if not messages_to_process:
+            return
 
         logger.info(f"✅ Бизнес-подключение получено для пользователя {connection.user.id}")
 
-        for message_id in event.message_ids:
+        # Обрабатываем только валидные сообщения
+        for message_old in messages_to_process:
                 message_old = await db.get_message(message_id)
                 if message_old:
                     await db.increase_deleted_messages_count(user_telegram_id=connection.user.id)
