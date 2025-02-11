@@ -26,6 +26,15 @@
             margin-bottom: 20px;
             backdrop-filter: blur(10px);
             border: 1px solid rgba(0, 255, 255, 0.1);
+            animation: glow 2s infinite alternate;
+        }
+        @keyframes glow {
+            from {
+                box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+            }
+            to {
+                box-shadow: 0 0 25px rgba(0, 255, 255, 0.4);
+            }
         }
         .user-header {
             display: flex;
@@ -75,6 +84,11 @@
             background: rgba(255, 255, 255, 0.05);
             border-radius: 8px;
             border: 1px solid rgba(0, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        .chat-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
         }
         .chat-header {
             display: flex;
@@ -91,10 +105,13 @@
         }
         .chat-header h3 i {
             font-size: 0.8em;
+            color: #0ff;
+            text-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
         }
         .message-count {
             color: rgba(0, 255, 255, 0.7);
             font-size: 14px;
+            text-shadow: 0 0 5px rgba(0, 255, 255, 0.3);
         }
         .messages-list {
             display: flex;
@@ -107,6 +124,11 @@
             border-radius: 12px;
             position: relative;
             overflow: hidden;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         .message.sent {
             align-self: flex-end;
@@ -134,20 +156,18 @@
             align-items: center;
             gap: 4px;
         }
+        .message-sender i {
+            color: #0ff;
+            text-shadow: 0 0 3px rgba(0, 255, 255, 0.5);
+        }
         .message-time {
             display: flex;
             align-items: center;
             gap: 4px;
         }
-        .media-placeholder {
-            display: flex;
-            align-items: center;
-            gap: 8px;
+        .message-time i {
             color: #0ff;
-            font-style: italic;
-        }
-        .media-placeholder i {
-            font-size: 1.2em;
+            text-shadow: 0 0 3px rgba(0, 255, 255, 0.5);
         }
         ::-webkit-scrollbar {
             width: 8px;
@@ -176,17 +196,17 @@
             
             <div class="stat-grid">
                 <div class="stat-item">
-                    <i class="fas fa-paper-plane fa-2x" style="color: #0ff; margin-bottom: 10px;"></i>
+                    <i class="fas fa-paper-plane fa-2x" style="color: #0ff; margin-bottom: 10px; text-shadow: 0 0 5px rgba(0, 255, 255, 0.5);"></i>
                     <h3>{{ stats.sent_messages }}</h3>
                     <p>Отправлено сообщений</p>
                 </div>
                 <div class="stat-item">
-                    <i class="fas fa-edit fa-2x" style="color: #0ff; margin-bottom: 10px;"></i>
+                    <i class="fas fa-edit fa-2x" style="color: #0ff; margin-bottom: 10px; text-shadow: 0 0 5px rgba(0, 255, 255, 0.5);"></i>
                     <h3>{{ stats.edited_messages }}</h3>
                     <p>Изменено сообщений</p>
                 </div>
                 <div class="stat-item">
-                    <i class="fas fa-trash-alt fa-2x" style="color: #0ff; margin-bottom: 10px;"></i>
+                    <i class="fas fa-trash-alt fa-2x" style="color: #0ff; margin-bottom: 10px; text-shadow: 0 0 5px rgba(0, 255, 255, 0.5);"></i>
                     <h3>{{ stats.deleted_messages }}</h3>
                     <p>Удалено сообщений</p>
                 </div>
