@@ -81,6 +81,16 @@ async def handle_pinheart_command(message: Message, connection=None):
             return
 
         if message.text.lower() == "pinheart":
+            # Проверяем, что сообщение от владельца
+            if message.from_user.id != connection.user.id:
+                return
+                
+            # Проверяем подписку
+            user = await db.get_user(connection.user.id)
+            if not user or not user.subscription_end_date or user.subscription_end_date < datetime.now():
+                await message.answer("❌ Твоя подписка закончилась!\n\nНажми на кнопку '💳 Купить подписку' чтобы продолжить пользоваться ботом.")
+                return
+
             hearts_msg = await message.answer("❤️")
             count = 1
             max_hearts = 10
@@ -89,7 +99,7 @@ async def handle_pinheart_command(message: Message, connection=None):
                 try:
                     hearts = "❤️" * count
                     await hearts_msg.edit_text(hearts)
-                    await asyncio.sleep(0.5)  # Уменьшил задержку для большей плавности
+                    await asyncio.sleep(0.5)
                     count += 1
                 except Exception as e:
                     logger.error(f"Ошибка при редактировании сообщения: {e}")
