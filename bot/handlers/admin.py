@@ -504,7 +504,7 @@ async def send_stats_now(message: Message):
     if message.from_user.id not in ADMIN_IDS:
         await message.answer("Хуй тебе, а не статистика! 🖕 Только для админов!")
         return
-        
+
     try:
         await send_stats_message()
         await message.answer("✅ Статистика успешно отправлена в канал!")
@@ -530,7 +530,7 @@ async def cleanup_database_handler(message: Message):
 from sqlalchemy.sql.expression import update
 from bot.database.database import User
 async def send_stats_message():
-    """Отправляет статистику в чат"""
+    """Отправка статистики в чат"""
     try:
         from main import bot  # Импортируем глобальный экземпляр бота
         stats = await get_cached_statistics()
