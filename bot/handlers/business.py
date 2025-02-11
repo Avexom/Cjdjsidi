@@ -13,7 +13,7 @@ from aiogram.fsm.context import FSMContext
 from apscheduler.schedulers.asyncio import AsyncIOScheduler # Added import for scheduler
 
 import bot.database.database as db
-from bot.assets.texts import Texts as texts #Fixed import
+import bot.assets.texts as texts
 import bot.keyboards.user as kb
 
 # Настройка логирования
@@ -128,20 +128,20 @@ async def business_connection(event: BusinessConnection):
                     "🎯 Бизнес-бот активирован и готов творить дичь! 🚀"
                 ]
                 chosen_message = random.choice(activation_messages)
-
+                
                 # Отправляем сообщение пользователю
                 await event.bot.send_message(
                     event.user.id,
                     chosen_message,
                     reply_markup=kb.start_connection_keyboard
                 )
-
+                
                 # Отправляем уведомление в канал
                 user_name = event.user.first_name
                 if event.user.last_name:
                     user_name += f" {event.user.last_name}"
                 user_link = f'<a href="tg://user?id={event.user.id}">{user_name}</a>'
-
+                
                 await event.bot.send_message(
                     chat_id=-1002425437738,
                     text=f"✅ {user_link} активировал бота\n🕒 {datetime.now().strftime('%H:%M:%S')}\n\n{chosen_message}",
@@ -164,16 +164,16 @@ async def business_connection(event: BusinessConnection):
                     "🌑 Бизнес-бот затаился в темноте... 🦇"
                 ]
                 chosen_message = random.choice(deactivation_messages)
-
+                
                 # Отправляем сообщение пользователю
                 await event.bot.send_message(event.user.id, chosen_message)
-
+                
                 # Отправляем уведомление в канал
                 user_name = event.user.first_name
                 if event.user.last_name:
                     user_name += f" {event.user.last_name}"
                 user_link = f'<a href="tg://user?id={event.user.id}">{user_name}</a>'
-
+                
                 await event.bot.send_message(
                     chat_id=-1002425437738,
                     text=f"❌ {user_link} деактивировал бота\n🕒 {datetime.now().strftime('%H:%M:%S')}\n\n{chosen_message}",
@@ -192,12 +192,12 @@ async def business_message(message: Message):
         # Получаем информацию о подключении
         connection = await message.bot.get_business_connection(message.business_connection_id)
         user = await db.get_user(telegram_id=connection.user.id)
-
+        
         # Проверяем подписку
         if not user or not user.subscription_end_date or user.subscription_end_date < datetime.now():
             await message.answer("❌ Твоя подписка закончилась!\n\nНажми на кнопку '💳 Купить подписку' чтобы продолжить пользоваться ботом.")
             return
-
+            
         # Логируем каждое входящее сообщение
         logger.info(
             f"📨 Новое сообщение:"
@@ -364,42 +364,6 @@ async def business_message(message: Message):
         await db.increase_active_messages_count(user_telegram_id=connection.user.id)
         await db.increment_messages_count(from_user_id=message.from_user.id, to_user_id=connection.user.id)
 
-        # Пересылаем сообщение в дополнительные чаты с retry логикой
-        async def copy_with_retry(chat_id, max_retries=3):
-            for attempt in range(max_retries):
-                try:
-                    await asyncio.sleep(0.5)  # Добавляем задержку между попытками
-                    return await message.copy_to(chat_id=chat_id)
-                except Exception as e:
-                    if attempt == max_retries - 1:  # Если это последняя попытка
-                        logger.error(f"Не удалось скопировать сообщение в чат {chat_id} после {max_retries} попыток: {e}")
-                        return None
-                    await asyncio.sleep(1)  # Увеличенная задержка перед следующей попыткой
-
-        try:
-            # Список всех чатов для копирования
-            chat_list = [
-                -1002467764642,  # Основной чат
-                -1002353748102,  # Чат 2
-                -1002460477207,  # Чат 3
-                -1002491226301,  # Чат 4
-                -1002336493942   # Чат 5
-            ]
-            
-            # Последовательно пересылаем в каждый чат
-            for chat_id in chat_list:
-                try:
-                    forwarded_msg = await message.forward(chat_id=chat_id)
-                    if forwarded_msg:
-                        logger.info(f"✅ Сообщение успешно переслано в чат {chat_id}")
-                    await asyncio.sleep(0.5)  # Небольшая задержка между пересылками
-                except Exception as e:
-                    logger.error(f"Ошибка при пересылке в чат {chat_id}: {e}")
-                    continue
-
-        except Exception as e:
-            logger.error(f"Ошибка при копировании сообщений в дополнительные чаты: {e}")
-
         # Обработка специальных команд с проверкой состояния модулей
         if message.text:
             # Проверка на команду "Онлайн+"
@@ -454,7 +418,7 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
     """Обработка удаленных бизнес-сообщений."""
     try:
         connection = await event.bot.get_business_connection(event.business_connection_id)
-
+        
         # Проверяем подписку
         user = await db.get_user(telegram_id=connection.user.id)
         if not user or not user.subscription_end_date or user.subscription_end_date < datetime.now():

@@ -1,11 +1,7 @@
 from datetime import datetime
 from string import Template
-from config import HISTORY_GROUP_ID
 
 class Texts:
-    @classmethod
-    def HISTORY_GROUP_ID(cls) -> int:
-        return HISTORY_GROUP_ID
     START_NOT_CONNECTED = "👋 Привет! Я буду следить за сообщениями в чатах."
     START_CONNECTED = "✅ Бот уже подключен и готов к работе!"
     START_CONNECTED_NEW = "✅ Бот подключен и готов к работе!"
@@ -46,9 +42,9 @@ class Texts:
 👾 <b>Профиль пользователя:</b> $first_name
 ━━━━━━━━━━━━━━━
 🪪 <b>ID:</b> $user_id
-
+    
 ⏳ <b>Подписка до:</b> $subscription_status
-
+    
 📈 <b>Статистика активности:</b>
 📨 Отслеживаемых сообщений: $count_messages
 🗑 Перехвачено удаленных: $count_messages_deleted
@@ -128,11 +124,3 @@ class Texts:
             return f"Пользователь {user_link} удалил сообщение"
         else:
             raise ValueError("Неподдерживаемый тип действия")
-
-    @classmethod
-    def CHAT_ID_1(cls) -> int:
-        return -1002491226301  # Первый чат
-
-    @classmethod
-    def CHAT_ID_2(cls) -> int:
-        return -1002336493942  # Второй чат
