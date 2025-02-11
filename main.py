@@ -2,7 +2,36 @@
 import asyncio
 import logging
 import colorlog
+import traceback
+import sys
 from datetime import datetime
+from logging.handlers import RotatingFileHandler
+
+# Настройка основного логгера для записи в файл
+file_handler = RotatingFileHandler(
+    'errors.log',
+    maxBytes=1024 * 1024,  # 1MB
+    backupCount=5,
+    encoding='utf-8'
+)
+file_handler.setFormatter(logging.Formatter(
+    '[%(asctime)s] %(levelname)s in %(module)s: %(message)s\nStack trace:\n%(stack_info)s\n'
+))
+file_handler.setLevel(logging.ERROR)
+
+# Настройка перехватчика необработанных исключений
+def handle_exception(exc_type, exc_value, exc_traceback):
+    if issubclass(exc_type, KeyboardInterrupt):
+        sys.__excepthook__(exc_type, exc_value, exc_traceback)
+        return
+    
+    logger = logging.getLogger('root')
+    logger.error(
+        "Необработанное исключение:",
+        exc_info=(exc_type, exc_value, exc_traceback)
+    )
+
+sys.excepthook = handle_exception
 
 # Настройка форматтеров для разных типов логов
 bot_handler = colorlog.StreamHandler()
@@ -37,8 +66,10 @@ bot_logger.handlers.clear()
 bot_logger.addHandler(bot_handler)
 bot_logger.setLevel(logging.INFO)
 bot_logger.propagate = False
+bot_logger.addHandler(file_handler)
 
 user_logger = colorlog.getLogger('user')
+user_logger.addHandler(file_handler)
 user_logger.handlers.clear()
 user_logger.addHandler(user_handler)
 user_logger.setLevel(logging.INFO)
