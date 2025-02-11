@@ -95,11 +95,6 @@ bot = Bot(token=BOT_TOKEN,
           default=DefaultBotProperties(parse_mode=ParseMode.HTML, link_preview_is_disabled=True))
 
 async def main():
-    bot_logger.info("🔄 Запуск миграции базы данных...")
-    # Запускаем миграцию базы данных
-    await migrate_db()
-    bot_logger.info("✅ Миграция завершена")
-    
     dp = Dispatcher()
 
     # Подключение роутеров
