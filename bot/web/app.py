@@ -44,9 +44,13 @@ def user_details(user_id):
         
         if not messages:
             messages = []
-    
-    # Группируем сообщения по чатам
-    chats = {}
+            
+        # Группируем сообщения по чатам
+        chats = {}
+        
+    except Exception as e:
+        app.logger.error(f"Ошибка при получении данных пользователя: {e}")
+        return "Произошла ошибка при загрузке данных", 500
     for msg in messages:
         chat_id = msg['chat_id']
         if chat_id not in chats:
