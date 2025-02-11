@@ -52,6 +52,7 @@ class User(Base):
     last_farm_time = Column(DateTime, default=datetime.now)
     module_calc_enabled = Column(Boolean, default=False) #Added
     module_love_enabled = Column(Boolean, default=False) #Added
+    module_pinheart = Column(Boolean, default=False) #Added
     pinheart_enabled = Column(Boolean, default=False) #Added
     pinheart_count = Column(Integer, default=1) #Added
 
@@ -774,7 +775,8 @@ async def update_all_modules(telegram_id: int, state: bool):
             update(User)
             .where(User.telegram_id == telegram_id)
             .values(
-                modules_enabled=state
+                module_calc_enabled=state,
+                module_love_enabled=state
             )
         )
         await session.commit()
@@ -851,8 +853,7 @@ async def toggle_notification(telegram_id: int, notification_type: str) -> bool:
             "all": "notifications_enabled",
             "message": "message_notifications",
             "edit": "edit_notifications",
-            "delete": "delete_notifications",
-            "all_modules": "modules_enabled"  # Добавляем поддержку all_modules
+            "delete": "delete_notifications"
         }
 
         field = notification_fields.get(notification_type)

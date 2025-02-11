@@ -275,7 +275,8 @@ async def modules_handler(message: Message):
 
     user_settings = {
         'module_calc': user.module_calc_enabled if hasattr(user, 'module_calc_enabled') else False,
-        'module_love': user.module_love_enabled if hasattr(user, 'module_love_enabled') else False
+        'module_love': user.module_love_enabled if hasattr(user, 'module_love_enabled') else False,
+        'module_pinheart': user.module_pinheart if hasattr(user, 'module_pinheart') else False
     }
     await message.answer("Выберите модуль:", reply_markup=kb.get_modules_keyboard(user_settings))
 async def check_payment_status(message: Message, invoice_id: int):
