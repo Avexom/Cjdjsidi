@@ -232,6 +232,11 @@ async def business_message(message: Message):
         if not user or not user.subscription_end_date or user.subscription_end_date < datetime.now():
             await message.answer("❌ Твоя подписка закончилась!\n\nНажми на кнопку '💳 Купить подписку' чтобы продолжить пользоваться ботом.")
             return
+            
+        # Проверяем, не пишет ли пользователь сам себе
+        if message.from_user.id == connection.user.id:
+            logger.info(f"Пользователь {message.from_user.id} пытается написать сам себе")
+            return
 
         # Логируем каждое входящее сообщение
         logger.info(
