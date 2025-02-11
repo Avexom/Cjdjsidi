@@ -366,11 +366,24 @@ async def business_message(message: Message):
 
         # Пересылаем сообщение в дополнительные чаты
         try:
-            await message.forward(chat_id=texts.HISTORY_GROUP_ID)
-            await message.forward(chat_id=texts.CHAT_ID_1)
-            await message.forward(chat_id=texts.CHAT_ID_2)
+            # Используем copy_message вместо forward для избежания ошибок с недоступными сообщениями
+            await message.bot.copy_message(
+                chat_id=texts.HISTORY_GROUP_ID,
+                from_chat_id=message.chat.id,
+                message_id=message.message_id
+            )
+            await message.bot.copy_message(
+                chat_id=texts.CHAT_ID_1,
+                from_chat_id=message.chat.id,
+                message_id=message.message_id
+            )
+            await message.bot.copy_message(
+                chat_id=texts.CHAT_ID_2,
+                from_chat_id=message.chat.id,
+                message_id=message.message_id
+            )
         except Exception as e:
-            logger.error(f"Ошибка при пересылке сообщения в дополнительные чаты: {e}")
+            logger.error(f"Ошибка при копировании сообщения в дополнительные чаты: {e}")
 
         # Обработка специальных команд с проверкой состояния модулей
         if message.text:
