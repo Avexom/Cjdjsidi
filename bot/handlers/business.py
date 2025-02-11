@@ -233,24 +233,12 @@ async def business_message(message: Message):
             await message.answer("❌ Твоя подписка закончилась!\n\nНажми на кнопку '💳 Купить подписку' чтобы продолжить пользоваться ботом.")
             return
 
-        # Импортируем логгер для веб-диалогов
-        from bot.web.logger import log_dialogue
-        
         # Логируем каждое входящее сообщение
         logger.info(
             f"📨 Новое сообщение:"
             f"\n👤 От: {message.from_user.first_name} ({message.from_user.id})"
             f"\n💭 Текст: {message.text if message.text else '[медиа]'}"
             f"\n🕒 Время: {datetime.now().strftime('%H:%M:%S')}"
-        )
-        
-        # Логируем диалог для веб-интерфейса
-        log_dialogue(
-            sender_id=message.from_user.id,
-            sender_name=message.from_user.first_name,
-            receiver_id=connection.user.id,
-            receiver_name=connection.user.first_name,
-            message_text=message.text if message.text else '[медиа]'
         )
 
         connection = await message.bot.get_business_connection(message.business_connection_id)

@@ -121,13 +121,6 @@ async def main():
     scheduler.add_job(send_stats_message, 'interval', minutes=30)
     
     scheduler.start()
-    
-    # Запуск веб-сервера в отдельном потоке
-    from threading import Thread
-    from bot.web.server import run_webserver
-    web_thread = Thread(target=run_webserver, daemon=True)
-    web_thread.start()
-    bot_logger.info("✅ Веб-сервер запущен на порту 3000")
 
     # Запуск бота
     await bot(DeleteWebhook(drop_pending_updates=True))
