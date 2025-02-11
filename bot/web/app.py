@@ -118,5 +118,24 @@ def user_details(user_id):
         user_chats=list(chats.values())
     )
 
+@app.route('/webapp')
+def webapp():
+    return render_template('webapp.html')
+
+@app.route('/api/modules')
+def get_modules():
+    # Пример модулей, в реальности брать из базы данных
+    modules = [
+        {"id": "calc", "name": "Калькулятор", "description": "Математические вычисления", "enabled": True},
+        {"id": "stats", "name": "Статистика", "description": "Анализ данных", "enabled": False}
+    ]
+    return jsonify(modules)
+
+@app.route('/api/modules/toggle', methods=['POST'])
+def toggle_module():
+    data = request.json
+    # Здесь логика включения/выключения модуля в базе данных
+    return jsonify({"success": True})
+
 def run_webview():
     app.run(host='0.0.0.0', port=3000, debug=False)

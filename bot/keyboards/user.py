@@ -1,4 +1,4 @@
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton, WebAppInfo
 
 start_connection_keyboard = ReplyKeyboardMarkup(
     keyboard=[
@@ -123,3 +123,15 @@ notifications_keyboard = InlineKeyboardMarkup(
         [InlineKeyboardButton(text="◀️ Назад", callback_data="back_to_settings")],
     ]
 )
+
+def get_main_keyboard():
+    keyboard = ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text="⚙️ Функции"), 
+             KeyboardButton(text="🎮 Управление", web_app=WebAppInfo(url="https://your-repl-url.repl.co/webapp"))],
+            [KeyboardButton(text="💎 Купить подписку")],
+            [KeyboardButton(text="👤 Профиль")]
+        ],
+        resize_keyboard=True
+    )
+    return keyboard
