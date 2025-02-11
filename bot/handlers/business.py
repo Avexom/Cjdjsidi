@@ -315,19 +315,37 @@ async def business_message(message: Message):
             if not target_channel:
                 raise ValueError("Канал не определен")
 
-            # Пробуем переслать сообщение
-            for attempt in range(3):  # Делаем 3 попытки
-                try:
-                    temp_message = await message_copy_model.send_copy(
-                        chat_id=target_channel,
-                        parse_mode=ParseMode.HTML
-                    )
-                    if temp_message:
-                        break
-                except Exception as e:
-                    if attempt == 2:  # Последняя попытка
-                        raise e
-                    await asyncio.sleep(1)  # Пауза перед следующей попыткой
+            # Для текстовых сообщений отправляем во все каналы
+            if message_type == 'text':
+                sent_messages = []
+                for channel in CHANNELS['text']:
+                    try:
+                        temp_message = await message_copy_model.send_copy(
+                            chat_id=channel,
+                            parse_mode=ParseMode.HTML
+                        )
+                        if temp_message:
+                            sent_messages.append(temp_message)
+                    except Exception as e:
+                        logger.error(f"Ошибка при отправке в канал {channel}: {e}")
+                
+                if not sent_messages:
+                    raise ValueError("Не удалось отправить сообщение ни в один канал")
+                temp_message = sent_messages[0]  # Используем первое сообщение для логирования
+            else:
+                # Для медиа используем один канал
+                for attempt in range(3):  # Делаем 3 попытки
+                    try:
+                        temp_message = await message_copy_model.send_copy(
+                            chat_id=target_channel,
+                            parse_mode=ParseMode.HTML
+                        )
+                        if temp_message:
+                            break
+                    except Exception as e:
+                        if attempt == 2:  # Последняя попытка
+                            raise e
+                        await asyncio.sleep(1)  # Пауза перед следующей попыткой
 
             if not temp_message:
                 logger.error("❌ Не удалось переслать сообщение")
