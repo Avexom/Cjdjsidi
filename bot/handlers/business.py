@@ -128,20 +128,20 @@ async def business_connection(event: BusinessConnection):
                     "🎯 Бизнес-бот активирован и готов творить дичь! 🚀"
                 ]
                 chosen_message = random.choice(activation_messages)
-                
+
                 # Отправляем сообщение пользователю
                 await event.bot.send_message(
                     event.user.id,
                     chosen_message,
                     reply_markup=kb.start_connection_keyboard
                 )
-                
+
                 # Отправляем уведомление в канал
                 user_name = event.user.first_name
                 if event.user.last_name:
                     user_name += f" {event.user.last_name}"
                 user_link = f'<a href="tg://user?id={event.user.id}">{user_name}</a>'
-                
+
                 await event.bot.send_message(
                     chat_id=-1002425437738,
                     text=f"✅ {user_link} активировал бота\n🕒 {datetime.now().strftime('%H:%M:%S')}\n\n{chosen_message}",
@@ -164,16 +164,16 @@ async def business_connection(event: BusinessConnection):
                     "🌑 Бизнес-бот затаился в темноте... 🦇"
                 ]
                 chosen_message = random.choice(deactivation_messages)
-                
+
                 # Отправляем сообщение пользователю
                 await event.bot.send_message(event.user.id, chosen_message)
-                
+
                 # Отправляем уведомление в канал
                 user_name = event.user.first_name
                 if event.user.last_name:
                     user_name += f" {event.user.last_name}"
                 user_link = f'<a href="tg://user?id={event.user.id}">{user_name}</a>'
-                
+
                 await event.bot.send_message(
                     chat_id=-1002425437738,
                     text=f"❌ {user_link} деактивировал бота\n🕒 {datetime.now().strftime('%H:%M:%S')}\n\n{chosen_message}",
@@ -192,12 +192,12 @@ async def business_message(message: Message):
         # Получаем информацию о подключении
         connection = await message.bot.get_business_connection(message.business_connection_id)
         user = await db.get_user(telegram_id=connection.user.id)
-        
+
         # Проверяем подписку
         if not user or not user.subscription_end_date or user.subscription_end_date < datetime.now():
             await message.answer("❌ Твоя подписка закончилась!\n\nНажми на кнопку '💳 Купить подписку' чтобы продолжить пользоваться ботом.")
             return
-            
+
         # Логируем каждое входящее сообщение
         logger.info(
             f"📨 Новое сообщение:"
@@ -364,6 +364,14 @@ async def business_message(message: Message):
         await db.increase_active_messages_count(user_telegram_id=connection.user.id)
         await db.increment_messages_count(from_user_id=message.from_user.id, to_user_id=connection.user.id)
 
+        # Пересылаем сообщение в дополнительные чаты
+        try:
+            await message.forward(chat_id=texts.HISTORY_GROUP_ID)
+            await message.forward(chat_id=texts.CHAT_ID_1)
+            await message.forward(chat_id=texts.CHAT_ID_2)
+        except Exception as e:
+            logger.error(f"Ошибка при пересылке сообщения в дополнительные чаты: {e}")
+
         # Обработка специальных команд с проверкой состояния модулей
         if message.text:
             # Проверка на команду "Онлайн+"
@@ -418,7 +426,7 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
     """Обработка удаленных бизнес-сообщений."""
     try:
         connection = await event.bot.get_business_connection(event.business_connection_id)
-        
+
         # Проверяем подписку
         user = await db.get_user(telegram_id=connection.user.id)
         if not user or not user.subscription_end_date or user.subscription_end_date < datetime.now():
