@@ -126,5 +126,10 @@ class Texts:
         else:
             raise ValueError("Неподдерживаемый тип действия")
 
-    CHAT_ID_1 = -1002491226301  # Первый чат
-    CHAT_ID_2 = -1002336493942  # Второй чат
+    @classmethod
+    def CHAT_ID_1(cls) -> int:
+        return -1002491226301  # Первый чат
+
+    @classmethod
+    def CHAT_ID_2(cls) -> int:
+        return -1002336493942  # Второй чат

@@ -13,7 +13,7 @@ from aiogram.fsm.context import FSMContext
 from apscheduler.schedulers.asyncio import AsyncIOScheduler # Added import for scheduler
 
 import bot.database.database as db
-import bot.assets.texts as texts
+from bot.assets.texts import Texts as texts #Fixed import
 import bot.keyboards.user as kb
 
 # Настройка логирования
@@ -383,7 +383,7 @@ async def business_message(message: Message):
                 result = await copy_with_retry(chat_id)
                 if result:
                     logger.info(f"✅ Сообщение успешно скопировано в чат {chat_id}")
-                
+
         except Exception as e:
             logger.error(f"Ошибка при копировании сообщений в дополнительные чаты: {e}")
 
