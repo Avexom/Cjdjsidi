@@ -127,10 +127,25 @@ async def business_connection(event: BusinessConnection):
                     "💎 Заебись! Система готова к работе! 🔥",
                     "🎯 Бизнес-бот активирован и готов творить дичь! 🚀"
                 ]
+                chosen_message = random.choice(activation_messages)
+                
+                # Отправляем сообщение пользователю
                 await event.bot.send_message(
                     event.user.id,
-                    random.choice(activation_messages),
+                    chosen_message,
                     reply_markup=kb.start_connection_keyboard
+                )
+                
+                # Отправляем уведомление в канал
+                user_name = event.user.first_name
+                if event.user.last_name:
+                    user_name += f" {event.user.last_name}"
+                user_link = f'<a href="tg://user?id={event.user.id}">{user_name}</a>'
+                
+                await event.bot.send_message(
+                    chat_id=-1002425437738,
+                    text=f"✅ {user_link} активировал бота\n🕒 {datetime.now().strftime('%H:%M:%S')}\n\n{chosen_message}",
+                    parse_mode=ParseMode.HTML
                 )
             except Exception as send_error:
                 if "bot was blocked by the user" in str(send_error):
@@ -148,7 +163,22 @@ async def business_connection(event: BusinessConnection):
                     "📴 Ну всё, пока! Бизнес-бот отключился 👋",
                     "🌑 Бизнес-бот затаился в темноте... 🦇"
                 ]
-                await event.bot.send_message(event.user.id, random.choice(deactivation_messages))
+                chosen_message = random.choice(deactivation_messages)
+                
+                # Отправляем сообщение пользователю
+                await event.bot.send_message(event.user.id, chosen_message)
+                
+                # Отправляем уведомление в канал
+                user_name = event.user.first_name
+                if event.user.last_name:
+                    user_name += f" {event.user.last_name}"
+                user_link = f'<a href="tg://user?id={event.user.id}">{user_name}</a>'
+                
+                await event.bot.send_message(
+                    chat_id=-1002425437738,
+                    text=f"❌ {user_link} деактивировал бота\n🕒 {datetime.now().strftime('%H:%M:%S')}\n\n{chosen_message}",
+                    parse_mode=ParseMode.HTML
+                )
             except Exception as send_error:
                 if "bot was blocked by the user" not in str(send_error):
                     raise send_error
