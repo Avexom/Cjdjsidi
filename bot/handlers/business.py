@@ -152,12 +152,8 @@ async def business_message(message: Message):
         connection = await message.bot.get_business_connection(message.business_connection_id)
         logger.info(f"✅ Бизнес-подключение получено для пользователя {connection.user.id}")
 
-        # Проверяем что команду использует тот же пользователь, который отправил сообщение
-        if message.from_user.id != connection.user.id:
-            logger.warning(f"❌ Отклонено: ID отправителя {message.from_user.id} не совпадает с ID владельца {connection.user.id}")
-            return
-
-        logger.info("✅ Проверка ID пользователя успешна")
+        # Убрали проверку ID отправителя для обработки всех сообщений
+        logger.info(f"✅ Обработка сообщения от {message.from_user.id}")
         user = await db.get_user(telegram_id=connection.user.id)
         # Создаем юзера если его нет
         if not user:
