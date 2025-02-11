@@ -538,6 +538,14 @@ async def migrate_db():
             await conn.execute(text("ALTER TABLE users ADD COLUMN online_enabled BOOLEAN DEFAULT FALSE"))
             logger.info("Added online_enabled column to users table")
 
+        if 'module_calc_enabled' not in columns:
+            await conn.execute(text("ALTER TABLE users ADD COLUMN module_calc_enabled BOOLEAN DEFAULT FALSE"))
+            logger.info("Added module_calc_enabled column to users table")
+
+        if 'module_love_enabled' not in columns:
+            await conn.execute(text("ALTER TABLE users ADD COLUMN module_love_enabled BOOLEAN DEFAULT FALSE"))
+            logger.info("Added module_love_enabled column to users table")
+
 
 # Запуск инициализации базы данных
 async def main():
