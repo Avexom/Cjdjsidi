@@ -462,7 +462,7 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
 
         # Обрабатываем только валидные сообщения для этого пользователя
         for message_old in messages_to_process:
-            if message_old:
+            if message_old and message_old.user_telegram_id == connection.user.id:
                     await db.increase_deleted_messages_count(user_telegram_id=connection.user.id)
                     current_time = datetime.now().strftime("%H:%M:%S")
                     username = event.chat.username if event.chat.username else event.chat.first_name
