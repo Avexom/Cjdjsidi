@@ -760,18 +760,37 @@ async def toggle_notification(telegram_id: int, notification_type: str) -> bool:
 async def toggle_module(telegram_id: int, module_type: str) -> bool:
     """Переключение состояния модуля"""
     async with get_db_session() as session:
-        user = await session.scalar(
-            select(User).where(User.telegram_id == telegram_id)
-        )
-        field = f"{module_type}_enabled"
-        current_settings = getattr(user, field, False)
-        await session.execute(
-            update(User)
-            .where(User.telegram_id == telegram_id)
-            .values(**{field: not current_settings})
-        )
-        await session.commit()
-        return not current_settings
+        try:
+            user = await session.scalar(
+                select(User).where(User.telegram_id == telegram_id)
+            )
+            if not user:
+                logger.error(f"Пользователь {telegram_id} не найден при переключении модуля {module_type}")
+                return False
+
+            if module_type == "calc":
+                current_state = user.calc_enabled
+                await session.execute(
+                    update(User)
+                    .where(User.telegram_id == telegram_id)
+                    .values(calc_enabled=not current_state)
+                )
+            elif module_type == "love":
+                current_state = user.love_enabled
+                await session.execute(
+                    update(User)
+                    .where(User.telegram_id == telegram_id)
+                    .values(love_enabled=not current_state)
+                )
+            else:
+                logger.error(f"Неизвестный тип модуля: {module_type}")
+                return False
+
+            await session.commit()
+            return not current_state
+        except Exception as e:
+            logger.error(f"Ошибка при переключении модуля {module_type}: {e}")
+            return False
 async def update_last_message_time(user_telegram_id: int):
     """Обновляет время последнего сообщения пользователя"""
     async with get_db_session() as session:

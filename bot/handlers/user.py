@@ -263,14 +263,20 @@ async def toggle_module_handler(callback: CallbackQuery):
             await callback.answer("❌ Профиль не найден")
             return
 
+        # Проверяем подписку
+        if not user.subscription_end_date or user.subscription_end_date < datetime.now():
+            await callback.answer("❌ Требуется подписка для использования модулей", show_alert=True)
+            return
+
         new_state = await db.toggle_module(callback.from_user.id, module_type)
+        logger.info(f"🔄 Пользователь {callback.from_user.id} переключил модуль {module_type} в состояние: {new_state}")
 
         # Обновляем объект пользователя после изменения
         user = await db.get_user(callback.from_user.id)
 
         user_settings = {
-            'module_calc': getattr(user, 'module_calc_enabled', False),
-            'module_love': getattr(user, 'module_love_enabled', False)
+            'module_calc': user.calc_enabled,
+            'module_love': user.love_enabled
         }
         user_settings[f'module_{module_type}'] = new_state
 
