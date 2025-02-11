@@ -54,6 +54,7 @@ async def online_command(message: Message):
 
 @user_router.message(F.text == "👤 Профиль")
 async def profile_handler(message: Message):
+    logger.info(f"🔘 Юзер {message.from_user.id} нажал кнопку 'Профиль'")
     try:
         user = await db.get_user(message.from_user.id)
         if not user:
@@ -77,6 +78,7 @@ from aiogram.fsm.context import FSMContext
 
 @user_router.message(F.text == "💳 Купить подписку")
 async def buy_subscription_handler(message: Message, state: FSMContext):
+    logger.info(f"🔘 Юзер {message.from_user.id} нажал кнопку 'Купить подписку'")
     try:
         user = await db.get_user(message.from_user.id)
         if user and user.subscription_end_date and user.subscription_end_date > datetime.now():
@@ -109,6 +111,7 @@ async def buy_subscription_handler(message: Message, state: FSMContext):
 
 @user_router.message(F.text == "⚙️ Функции")
 async def functions_handler(message: Message):
+    logger.info(f"🔘 Юзер {message.from_user.id} нажал кнопку 'Функции'")
     try:
         user = await db.get_user(message.from_user.id)
         if not user:
@@ -200,16 +203,19 @@ async def check_payment_callback(callback: CallbackQuery):
 
 @user_router.message(F.text == "💬 Поддержка")
 async def support_handler(message: Message):
+    logger.info(f"🔘 Юзер {message.from_user.id} нажал кнопку 'Поддержка'")
     """Обработчик кнопки поддержки"""
     await message.answer(Texts.SUPPORT_TEXT)
 
 @user_router.message(F.text == "📝 Отзывы")
 async def reviews_handler(message: Message):
+    logger.info(f"🔘 Юзер {message.from_user.id} нажал кнопку 'Отзывы'")
     """Обработчик кнопки отзывов"""
     await message.answer(Texts.REVIEWS_TEXT)
 
 @user_router.message(F.text == "📱 Модули")
 async def modules_handler(message: Message):
+    logger.info(f"🔘 Юзер {message.from_user.id} нажал кнопку 'Модули'")
     user = await db.get_user(message.from_user.id)
     if not user:
         await message.answer("❌ Профиль не найден")
