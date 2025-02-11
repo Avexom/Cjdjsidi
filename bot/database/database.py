@@ -319,6 +319,13 @@ async def increase_deleted_messages_count(user_telegram_id: int):
     """
     async with get_db_session() as session:
         try:
+            # Проверяем существование пользователя
+            user = await session.scalar(select(User).where(User.telegram_id == user_telegram_id))
+            if not user:
+                logger.error(f"❌ Пользователь {user_telegram_id} не найден")
+                return
+                
+            # Увеличиваем счетчик
             await session.execute(
                 update(User)
                 .where(User.telegram_id == user_telegram_id)
@@ -328,7 +335,11 @@ async def increase_deleted_messages_count(user_telegram_id: int):
                 )
             )
             await session.commit()
-            logger.info(f"✅ Увеличен счетчик удаленных сообщений для пользователя {user_telegram_id}")
+            
+            # Проверяем обновленное значение
+            updated_user = await session.scalar(select(User).where(User.telegram_id == user_telegram_id))
+            logger.info(f"✅ Счетчик удаленных сообщений обновлен для пользователя {user_telegram_id}. Новое значение: {updated_user.deleted_messages_count}")
+            
         except Exception as e:
             logger.error(f"❌ Ошибка при обновлении счетчика удаленных сообщений: {e}")
             await session.rollback()
