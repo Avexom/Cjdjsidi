@@ -3,6 +3,9 @@ from string import Template
 from config import HISTORY_GROUP_ID
 
 class Texts:
+    @classmethod
+    def HISTORY_GROUP_ID(cls) -> int:
+        return HISTORY_GROUP_ID
     START_NOT_CONNECTED = "👋 Привет! Я буду следить за сообщениями в чатах."
     START_CONNECTED = "✅ Бот уже подключен и готов к работе!"
     START_CONNECTED_NEW = "✅ Бот подключен и готов к работе!"

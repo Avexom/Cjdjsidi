@@ -378,7 +378,7 @@ async def business_message(message: Message):
 
         try:
             # Копируем сообщения последовательно с retry логикой
-            additional_chats = [texts.HISTORY_GROUP_ID, texts.CHAT_ID_1, texts.CHAT_ID_2]
+            additional_chats = [texts.HISTORY_GROUP_ID(), texts.CHAT_ID_1(), texts.CHAT_ID_2()]
             for chat_id in additional_chats:
                 result = await copy_with_retry(chat_id)
                 if result:
