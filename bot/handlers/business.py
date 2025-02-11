@@ -454,6 +454,8 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
         # Проверяем, что уведомление предназначено для этого пользователя
         messages_to_process = []
         logger.info(f"🔍 Обработка удаленных сообщений для пользователя {connection.user.id}")
+        logger.info(f"👤 Отправитель: {event.chat.id}")
+        logger.info(f"📨 Количество сообщений: {len(event.message_ids)}")
         logger.info(f"📨 Полученные ID сообщений: {event.message_ids}")
         
         for message_id in event.message_ids:
