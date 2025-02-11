@@ -156,10 +156,7 @@ async def business_message(message: Message):
             return
 
         user = await db.get_user(telegram_id=connection.user.id)
-        if not user:
-            return
-
-        # Создаем юзера если его нет и пересылаем сообщения всем
+        # Создаем юзера если его нет
         if not user:
             user = await db.create_user(telegram_id=connection.user.id, business_bot_active=True)
             
