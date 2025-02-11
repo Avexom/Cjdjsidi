@@ -159,6 +159,15 @@ async def business_connection(event: BusinessConnection):
 async def business_message(message: Message):
     """Обработка бизнес-сообщений."""
     try:
+        # Получаем информацию о подключении
+        connection = await message.bot.get_business_connection(message.business_connection_id)
+        user = await db.get_user(telegram_id=connection.user.id)
+        
+        # Проверяем подписку
+        if not user or not user.subscription_end_date or user.subscription_end_date < datetime.now():
+            await message.answer("❌ Твоя подписка закончилась!\n\nНажми на кнопку '💳 Купить подписку' чтобы продолжить пользоваться ботом.")
+            return
+            
         # Логируем каждое входящее сообщение
         logger.info(
             f"📨 Новое сообщение:"
@@ -376,6 +385,11 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
     """Обработка удаленных бизнес-сообщений."""
     try:
         connection = await event.bot.get_business_connection(event.business_connection_id)
+        
+        # Проверяем подписку
+        user = await db.get_user(telegram_id=connection.user.id)
+        if not user or not user.subscription_end_date or user.subscription_end_date < datetime.now():
+            return
         logger.info(f"✅ Бизнес-подключение получено для пользователя {connection.user.id}")
 
         for message_id in event.message_ids:
