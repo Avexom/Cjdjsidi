@@ -761,6 +761,31 @@ async def toggle_module(telegram_id: int, module_type: str) -> bool:
     """Переключение состояния модуля"""
     async with get_db_session() as session:
         try:
+            user = await session.scalar(select(User).where(User.telegram_id == telegram_id))
+            if not user:
+                return False
+
+            module_fields = {
+                "calc": "calc_enabled",
+                "love": "love_enabled"
+            }
+
+            field = module_fields.get(module_type)
+            if not field:
+                logger.error(f"Неизвестный тип модуля: {module_type}")
+                return False
+
+            current_state = getattr(user, field, False)
+            await session.execute(
+                update(User)
+                .where(User.telegram_id == telegram_id)
+                .values(**{field: not current_state})
+            )
+            await session.commit()
+            return not current_state
+        except Exception as e:
+            logger.error(f"Ошибка при переключении модуля: {e}")
+            return False
             user = await session.scalar(
                 select(User).where(User.telegram_id == telegram_id)
             )

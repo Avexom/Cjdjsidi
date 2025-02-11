@@ -1,7 +1,7 @@
 import json
 from datetime import datetime, timedelta
 from aiogram import Router, F
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.filters import Command
 import logging
 import colorlog
@@ -225,6 +225,14 @@ async def reviews_handler(message: Message):
     await message.answer(Texts.REVIEWS_TEXT, reply_markup=keyboard)
 
 @user_router.message(F.text == "📱 Модули")
+@user_router.callback_query(F.data == "close")
+async def close_callback(callback: CallbackQuery):
+    try:
+        await callback.message.delete()
+    except Exception as e:
+        logger.error(f"Ошибка при закрытии сообщения: {e}")
+        await callback.answer("Не удалось закрыть сообщение")
+
 async def modules_handler(message: Message):
     logger.info(f"🔘 Юзер {message.from_user.id} нажал кнопку 'Модули'")
     user = await db.get_user(message.from_user.id)
