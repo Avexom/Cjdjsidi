@@ -1,5 +1,4 @@
 
-```python
 import logging
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
@@ -38,4 +37,3 @@ async def handle_business_modules(message: Message):
     except Exception as e:
         logger.error(f"Ошибка в обработке модулей: {e}")
         await message.answer("❌ Произошла ошибка при обработке модулей")
-```
