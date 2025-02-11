@@ -428,22 +428,23 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
         if not user or not user.subscription_end_date or user.subscription_end_date < datetime.now():
             return
 
-        # Сразу получаем все сообщения для проверки
+        # Проверяем, что уведомление предназначено для этого пользователя
         messages_to_process = []
         for message_id in event.message_ids:
             message = await db.get_message(message_id)
-            if message and message.user_telegram_id == connection.user.id:
+            if message and message.from_user_id == event.chat.id and message.user_telegram_id == connection.user.id:
                 messages_to_process.append(message)
+                logger.info(f"✅ Найдено сообщение для удаления: from={message.from_user_id}, to={message.user_telegram_id}")
 
         if not messages_to_process:
+            logger.info(f"❌ Нет релевантных сообщений для пользователя {connection.user.id}")
             return
 
         logger.info(f"✅ Бизнес-подключение получено для пользователя {connection.user.id}")
 
-        # Обрабатываем только валидные сообщения
+        # Обрабатываем только валидные сообщения для этого пользователя
         for message_old in messages_to_process:
-                message_old = await db.get_message(message_id)
-                if message_old:
+            if message_old:
                     await db.increase_deleted_messages_count(user_telegram_id=connection.user.id)
                     current_time = datetime.now().strftime("%H:%M:%S")
                     username = event.chat.username if event.chat.username else event.chat.first_name
