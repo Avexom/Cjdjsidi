@@ -90,10 +90,9 @@ bot_logger.addHandler(error_file_handler)
 bot_logger.addHandler(debug_file_handler)
 
 user_logger = colorlog.getLogger('user')
+user_logger.handlers.clear()
 user_logger.addHandler(error_file_handler)
 user_logger.addHandler(debug_file_handler)
-user_logger.addHandler(file_handler)
-user_logger.handlers.clear()
 user_logger.addHandler(user_handler)
 user_logger.setLevel(logging.INFO)
 user_logger.propagate = False
