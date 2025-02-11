@@ -21,6 +21,9 @@ math_expression_pattern = re.compile(r'^Кальк [\d+\-*/(). ]+$')
 
 
 
+import logging
+logger = logging.getLogger(__name__)
+
 async def handle_business_modules(message: Message):
     """Обработка всех модулей бизнес-бота."""
     try:
@@ -36,20 +39,19 @@ async def handle_business_modules(message: Message):
             await message.answer("❌ Требуется подписка для использования модулей")
             return
 
-        module_state = user.module_calc_enabled or user.module_love_enabled
-        current_state = "✅" if module_state else "❌"
+        # Получаем текущее состояние всех модулей
+        modules_state = {
+            'modules': user.module_calc_enabled and user.module_love_enabled
+        }
         
         await message.answer(
-            f"🎮 Статус модулей: {current_state}\n\n"
-            "Используйте кнопку для включения/отключения всех модулей",
-            reply_markup=kb.get_modules_keyboard({"modules": module_state})
+            f"🎮 Модули: {'✅' if modules_state['modules'] else '❌'}\n\n"
+            "Используйте кнопку для управления всеми модулями",
+            reply_markup=kb.get_modules_keyboard(modules_state)
         )
     except Exception as e:
         logger.error(f"Ошибка в обработке модулей: {e}")
         await message.answer("❌ Произошла ошибка при обработке модулей")
-
-        # Анимация вычисления
-        animations = [
             "🧮 Анализирую выражение...",
             "📊 Выполняю вычисления...",
             "⚡️ Почти готово..."
