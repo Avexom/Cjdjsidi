@@ -40,7 +40,7 @@ def user_details(user_id):
             return "Пользователь не найден", 404
             
         stats = asyncio.run(get_user_stats(user_id))
-        messages = asyncio.run(get_user_message_history(user_id))
+        messages = asyncio.run(get_user_message_stats(user_id))
         
         if not messages:
             messages = []
