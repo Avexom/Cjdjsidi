@@ -204,13 +204,25 @@ async def check_payment_callback(callback: CallbackQuery):
 async def support_handler(message: Message):
     logger.info(f"🔘 Юзер {message.from_user.id} нажал кнопку 'Поддержка'")
     """Обработчик кнопки поддержки"""
-    await message.answer(Texts.SUPPORT_TEXT)
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="💬 Чат поддержки", url="https://t.me/+Q1L5k9NvsRdkNzVi")],
+            [InlineKeyboardButton(text="❌ Закрыть", callback_data="close")]
+        ]
+    )
+    await message.answer(Texts.SUPPORT_TEXT, reply_markup=keyboard)
 
 @user_router.message(F.text == "📝 Отзывы")
 async def reviews_handler(message: Message):
     logger.info(f"🔘 Юзер {message.from_user.id} нажал кнопку 'Отзывы'")
     """Обработчик кнопки отзывов"""
-    await message.answer(Texts.REVIEWS_TEXT)
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="📝 Канал с отзывами", url="https://t.me/+VEgXUlw1NZA1MDcy")],
+            [InlineKeyboardButton(text="❌ Закрыть", callback_data="close")]
+        ]
+    )
+    await message.answer(Texts.REVIEWS_TEXT, reply_markup=keyboard)
 
 @user_router.message(F.text == "📱 Модули")
 async def modules_handler(message: Message):
