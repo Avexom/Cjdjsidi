@@ -18,6 +18,18 @@ user_router = Router()
 async def start_command(message: Message):
     """Обработка команды /start"""
     try:
+        # Проверяем подписку на канал
+        chat_member = await message.bot.get_chat_member(chat_id="@SpyBot_Channel", user_id=message.from_user.id)
+        if chat_member.status in ["left", "kicked", "restricted"]:
+            keyboard = InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [InlineKeyboardButton(text="📢 Подписаться на канал", url="https://t.me/SpyBot_Channel")],
+                    [InlineKeyboardButton(text="🔄 Проверить подписку", callback_data="check_sub")]
+                ]
+            )
+            await message.answer("❌ Для использования бота необходимо подписаться на канал!", reply_markup=keyboard)
+            return
+
         user = await db.get_user(message.from_user.id)
         if not user:
             await db.create_user(
@@ -326,3 +338,27 @@ async def toggle_module_handler(callback: CallbackQuery):
     except Exception as e:
         logger.error(f"Ошибка при переключении модуля: {e}")
         await callback.answer("❌ Произошла ошибка")
+@user_router.callback_query(F.data == "check_sub")
+async def check_subscription(callback: CallbackQuery):
+    try:
+        chat_member = await callback.bot.get_chat_member(chat_id="@SpyBot_Channel", user_id=callback.from_user.id)
+        if chat_member.status in ["left", "kicked", "restricted"]:
+            await callback.answer("❌ Вы не подписаны на канал!", show_alert=True)
+        else:
+            await callback.message.delete()
+            user = await db.get_user(callback.from_user.id)
+            if not user:
+                await db.create_user(
+                    telegram_id=callback.from_user.id,
+                    username=callback.from_user.username,
+                    first_name=callback.from_user.first_name
+                )
+                await callback.message.answer(Texts.START_NOT_CONNECTED, reply_markup=kb.start_connection_keyboard)
+            else:
+                await callback.message.answer(
+                    Texts.START_CONNECTED if user.business_bot_active else Texts.START_CONNECTED_NEW,
+                    reply_markup=kb.start_connection_keyboard
+                )
+    except Exception as e:
+        logger.error(f"Ошибка при проверке подписки: {e}")
+        await callback.answer("❌ Произошла ошибка при проверке подписки")
