@@ -102,11 +102,11 @@ async def handle_secret_command(message: Message):
 
 async def handle_sexy_command(message: Message):
     """Обработка команды 'sexy'."""
-    sent_message = await message.bot.send_message(message.chat.id, "😈", from_user_id=message.from_user.id)
+    sent_message = await message.answer("😈")
     sexy_texts = ["Ты сегодня очень сексуальна!", "Хочу тебя!", "ммм... как горячо!", "Ты сводишь меня с ума!", "Не могу оторвать от тебя взгляд!"]
     for text in sexy_texts:
         await asyncio.sleep(1)
-        await message.bot.edit_message_text(text, message.chat.id, sent_message.message_id, from_user_id=message.from_user.id)
+        await sent_message.edit_text(text)
 
 
 
