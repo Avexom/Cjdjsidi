@@ -167,14 +167,13 @@ async def business_message(message: Message):
         header = f"📨 Новое сообщение\n━━━━━━━━━━━━━━━\n👉 От: {connection.user.first_name}"
         
         # Добавляем информацию о сообщении
-        if message.text:
-            update = {"text": f"{header}\n\n{message.text}"}
-        elif message.caption:
-            update = {"caption": f"{header}\n\n{message.caption}"}
-        else:
-            update = {"caption": header}
-
         update = {}
+        if message.text:
+            update["text"] = f"{header}\n\n{message.text}"
+        elif message.caption:
+            update["caption"] = f"{header}\n\n{message.caption}"
+        else:
+            update["caption"] = header
         if message.entities:
             update["entities"] = [entity.model_copy(update={"length": entity.length + len(text_1)}) for entity in message.entities]
         elif message.caption_entities:
