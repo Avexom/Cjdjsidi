@@ -61,7 +61,6 @@ class Message(Base):
     from_user_id = Column(BigInteger, nullable=False)
     message_id = Column(BigInteger, nullable=False)
     temp_message_id = Column(BigInteger, nullable=False)
-    created_at = Column(DateTime, default=datetime.now)
 
 class MessageEditHistory(Base):
     __tablename__ = 'message_edit_history'
@@ -403,16 +402,6 @@ async def get_subscription_price() -> float:
 async def migrate_db():
     """Добавляет новые колонки в существующие таблицы"""
     async with engine.begin() as conn:
-        # Проверяем таблицу messages
-        messages_result = await conn.execute(text("PRAGMA table_info(messages)"))
-        messages_columns = [col[1] for col in messages_result.fetchall()]
-        
-        if 'created_at' not in messages_columns:
-            await conn.execute(text("ALTER TABLE messages ADD COLUMN created_at TIMESTAMP"))
-            await conn.execute(text("UPDATE messages SET created_at = DATETIME('now') WHERE created_at IS NULL"))
-            logger.info("Added created_at column to messages table")
-
-        # Проверяем таблицу users
         result = await conn.execute(text("PRAGMA table_info(users)"))
         columns = [col[1] for col in result.fetchall()]
 
@@ -587,37 +576,6 @@ async def get_user_by_username(username: str) -> Optional[User]:
                 messages_count=1
             )
             session.add(stats)
-
-async def get_user_message_history(user_id: int) -> List[Dict[str, Any]]:
-    """
-    Получить полную историю сообщений пользователя
-    """
-    async with get_db_session() as session:
-        # Получаем все сообщения пользователя
-        messages = await session.execute(
-            select(Message, User)
-            .join(User, User.telegram_id == Message.from_user_id)
-            .where(
-                or_(
-                    Message.user_telegram_id == user_id,
-                    Message.from_user_id == user_id
-                )
-            )
-            .order_by(Message.id.desc())
-        )
-        
-        result = []
-        for msg, user in messages.fetchall():
-            result.append({
-                'from_id': msg.from_user_id,
-                'chat_id': msg.chat_id,
-                'message_id': msg.message_id,
-                'time': msg.created_at if hasattr(msg, 'created_at') else datetime.now(),
-                'text': f"Message ID: {msg.message_id}",
-                'other_user_name': user.username or user.first_name or f"User {user.telegram_id}"
-            })
-        
-        return result
 
 async def get_user_message_stats(user_id: int) -> List[Dict[str, Any]]:
     """
@@ -900,16 +858,3 @@ async def cleanup_database():
         except Exception as e:
             logger.error(f"🔴 Ошибка при очистке базы данных: {str(e)}")
             return False
-
-@alru_cache(maxsize=1)
-async def get_cached_statistics():
-    """Получить кэшированную статистику бота"""
-    return {
-        "total_users": await get_total_users(),
-        "total_subscriptions": await get_total_subscriptions(),
-        "total_messages": await get_total_messages(),
-        "total_edited_messages": await get_total_edited_messages(),
-        "total_deleted_messages": await get_total_deleted_messages(),
-        "total_users_with_active_business_bot": await get_total_users_with_active_business_bot(),
-        "subscription_price": await get_subscription_price()
-    }
