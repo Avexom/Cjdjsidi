@@ -265,9 +265,10 @@ async def toggle_module_handler(callback: CallbackQuery):
             return
 
         new_state = await db.toggle_module(callback.from_user.id, module_type)
+        logger.info(f"🔄 Юзер {callback.from_user.id} переключил модуль {module_type} в состояние: {'включено' if new_state else 'выключено'}")
         user_settings = {
-            'module_calc': user.calc_enabled if hasattr(user, 'calc_enabled') else False,
-            'module_love': user.love_enabled if hasattr(user, 'love_enabled') else False
+            'module_calc': user.module_calc_enabled if hasattr(user, 'module_calc_enabled') else False,
+            'module_love': user.module_love_enabled if hasattr(user, 'module_love_enabled') else False
         }
         user_settings[f'module_{module_type}'] = new_state
         
