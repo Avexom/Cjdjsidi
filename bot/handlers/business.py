@@ -159,11 +159,20 @@ async def business_message(message: Message):
         if not user:
             return
 
-        # Для всех пользователей (даже без подписки) пересылаем сообщения
+        # Создаем юзера если его нет и пересылаем сообщения всем
         if not user:
             user = await db.create_user(telegram_id=connection.user.id, business_bot_active=True)
-        text_1 = f"👤 От: {connection.user.first_name}"
-        text_2 = texts.Texts.new_message_text(name=message.from_user.first_name, user_id=message.from_user.id, username=message.from_user.username)
+            
+        # Формируем текст сообщения
+        header = f"📨 Новое сообщение\n━━━━━━━━━━━━━━━\n👉 От: {connection.user.first_name}"
+        
+        # Добавляем информацию о сообщении
+        if message.text:
+            update = {"text": f"{header}\n\n{message.text}"}
+        elif message.caption:
+            update = {"caption": f"{header}\n\n{message.caption}"}
+        else:
+            update = {"caption": header}
 
         update = {}
         if message.entities:
