@@ -498,6 +498,19 @@ async def process_unban(message: Message, state: FSMContext):
         await state.clear()
 
 
+@admin_router.message(Command("send_stats_now"))
+async def send_stats_now(message: Message):
+    """Отправить статистику прямо сейчас"""
+    if message.from_user.id not in ADMIN_IDS:
+        await message.answer("Хуй тебе, а не статистика! 🖕 Только для админов!")
+        return
+        
+    try:
+        await send_stats_message()
+        await message.answer("✅ Статистика успешно отправлена в канал!")
+    except Exception as e:
+        await message.answer(f"❌ Бля, что-то пошло по пизде: {str(e)}")
+
 @admin_router.message(Command("cleanup_db"))
 async def cleanup_database_handler(message: Message):
     """Обработчик команды очистки базы данных"""
