@@ -37,6 +37,18 @@ async def start_command(message: Message):
 
 @user_router.message(F.text.casefold() == "онлайн+")
 async def online_command(message: Message):
+    try:
+        user = await db.get_user(message.from_user.id)
+        if not user:
+            await message.answer("❌ Профиль не найден")
+            return
+
+        await db.toggle_module(message.from_user.id, "online")
+        await message.answer("✅ Модуль 'Онлайн' включен!")
+
+    except Exception as e:
+        logger.error(f"Ошибка при включении модуля онлайн: {e}")
+        await message.answer("❌ Произошла ошибка")
 
 @user_router.callback_query(F.data == "close")
 async def close_callback(callback: CallbackQuery):
