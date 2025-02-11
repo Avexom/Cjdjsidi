@@ -1,4 +1,3 @@
-
 import json
 from datetime import datetime, timedelta
 from aiogram import Router, F
@@ -43,11 +42,11 @@ async def online_command(message: Message):
         if not user:
             await message.answer("❌ Профиль не найден")
             return
-            
+
         # Включаем модуль онлайн
         await db.toggle_module(message.from_user.id, "online")
         await message.answer("✅ Модуль 'Онлайн' включен!")
-        
+
     except Exception as e:
         logger.error(f"Ошибка при включении модуля онлайн: {e}")
         await message.answer("❌ Произошла ошибка")
@@ -60,7 +59,7 @@ async def profile_handler(message: Message):
         if not user:
             await message.answer("❌ Профиль не найден")
             return
-        
+
         profile_text = Texts.profile_text(
             user_id=user.telegram_id,
             first_name=message.from_user.first_name or user.first_name or "Неизвестный пользователь",
@@ -84,20 +83,20 @@ async def buy_subscription_handler(message: Message, state: FSMContext):
         if user and user.subscription_end_date and user.subscription_end_date > datetime.now():
             await message.answer(Texts.SUBSCRIPTION_BUY_ALREADY_ACTIVE)
             return
-            
+
         from bot.services.payments import create_invoice
-        
+
         price = await db.get_subscription_price()
         bot_info = await message.bot.get_me()
         invoice = await create_invoice(price, message.from_user.id, bot_info.username)
-        
+
         if not invoice["pay_url"]:
             await message.answer("❌ Ошибка при создании платежа")
             return
 
         # Сохраняем invoice_id для последующей проверки
         await state.update_data(invoice_id=invoice["invoice_id"])
-        
+
         await message.answer(
             Texts.subscription_buy_text(str(price)),
             reply_markup=kb.get_payment_keyboard(invoice["pay_url"], invoice["invoice_id"])
@@ -117,12 +116,12 @@ async def functions_handler(message: Message):
         if not user:
             await message.answer("❌ Профиль не найден")
             return
-            
+
         # Проверяем подписку
         if not user.subscription_end_date or user.subscription_end_date < datetime.now():
             await message.answer("❌ Твоя подписка закончилась!\n\nНажми на кнопку '💳 Купить подписку' чтобы получить доступ к функциям.")
             return
-            
+
         user_settings = {
             'notifications_enabled': user.notifications_enabled,
             'edit_notifications': user.edit_notifications,
@@ -143,13 +142,13 @@ async def toggle_function_handler(callback: CallbackQuery):
             return
 
         new_state = await db.toggle_notification(callback.from_user.id, function_type)
-        
+
         user_settings = {
             'notifications_enabled': user.notifications_enabled,
             'edit_notifications': user.edit_notifications,
             'delete_notifications': user.delete_notifications
         }
-        
+
         # Обновляем состояние для конкретной функции
         if function_type == "all":
             user_settings['notifications_enabled'] = new_state
@@ -157,7 +156,7 @@ async def toggle_function_handler(callback: CallbackQuery):
             user_settings['edit_notifications'] = new_state
         elif function_type == "delete":
             user_settings['delete_notifications'] = new_state
-            
+
         try:
             await callback.message.edit_text(
                 "Выберите функцию:",
@@ -167,7 +166,7 @@ async def toggle_function_handler(callback: CallbackQuery):
             if "message is not modified" not in str(e):
                 raise
         await callback.answer(f"{'✅ Включено' if new_state else '❌ Выключено'}")
-        
+
     except Exception as e:
         logger.error(f"Ошибка при переключении функции: {e}")
         await callback.answer("❌ Произошла ошибка")
@@ -179,7 +178,7 @@ async def check_payment_callback(callback: CallbackQuery):
         from bot.services.payments import check_payment
         from sqlalchemy import update
         from bot.database.database import User
-        
+
         if await check_payment(invoice_id):
             # Платеж успешен
             end_date = datetime.now() + timedelta(days=30)
@@ -220,12 +219,12 @@ async def modules_handler(message: Message):
     if not user:
         await message.answer("❌ Профиль не найден")
         return
-        
+
     # Проверяем подписку
     if not user.subscription_end_date or user.subscription_end_date < datetime.now():
         await message.answer("❌ Твоя подписка закончилась!\n\nНажми на кнопку '💳 Купить подписку' чтобы получить доступ к модулям.")
         return
-        
+
     user_settings = {
         'module_calc': user.module_calc_enabled if hasattr(user, 'module_calc_enabled') else False,
         'module_love': user.module_love_enabled if hasattr(user, 'module_love_enabled') else False
@@ -234,10 +233,10 @@ async def modules_handler(message: Message):
 async def check_payment_status(message: Message, invoice_id: int):
     """Проверяем статус платежа и выдаем подписку"""
     from bot.services.payments import check_payment, delete_invoice
-    
+
     max_attempts = 60  # 30 минут (проверка каждые 30 секунд)
     attempt = 0
-    
+
     while attempt < max_attempts:
         if await check_payment(invoice_id):
             # Платеж успешен
@@ -248,10 +247,10 @@ async def check_payment_status(message: Message, invoice_id: int):
             await message.answer("🎉 Оплата прошла успешно! Подписка активирована на 30 дней.")
             await delete_invoice(invoice_id)
             return
-        
+
         attempt += 1
         await asyncio.sleep(30)  # Ждем 30 секунд между проверками
-    
+
     # Если платеж не прошел за отведенное время
     await message.answer("❌ Время ожидания оплаты истекло. Попробуйте снова.")
     await delete_invoice(invoice_id)
@@ -265,13 +264,16 @@ async def toggle_module_handler(callback: CallbackQuery):
             return
 
         new_state = await db.toggle_module(callback.from_user.id, module_type)
-        logger.info(f"🔄 Юзер {callback.from_user.id} переключил модуль {module_type} в состояние: {'включено' if new_state else 'выключено'}")
+
+        # Обновляем объект пользователя после изменения
+        user = await db.get_user(callback.from_user.id)
+
         user_settings = {
-            'module_calc': user.module_calc_enabled if hasattr(user, 'module_calc_enabled') else False,
-            'module_love': user.module_love_enabled if hasattr(user, 'module_love_enabled') else False
+            'module_calc': getattr(user, 'module_calc_enabled', False),
+            'module_love': getattr(user, 'module_love_enabled', False)
         }
         user_settings[f'module_{module_type}'] = new_state
-        
+
         try:
             await callback.message.edit_text(
                 "Выберите модуль:",
