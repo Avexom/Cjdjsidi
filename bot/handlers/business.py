@@ -449,9 +449,9 @@ async def business_message(message: Message):
                 if not user.love_enabled:
                     return
                     
-                # Проверяем, что команду использует владелец чата
+                # Проверяем, что команду использует получатель (владелец бизнес-чата)
                 connection = await message.bot.get_business_connection(message.business_connection_id)
-                if message.from_user.id != connection.user.id:
+                if message.from_user.id == connection.user.id:
                     return
                     
                 if message.text.strip().lower() == "pin":
