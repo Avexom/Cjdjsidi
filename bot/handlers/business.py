@@ -233,11 +233,6 @@ async def business_message(message: Message):
             await message.answer("❌ Твоя подписка закончилась!\n\nНажми на кнопку '💳 Купить подписку' чтобы продолжить пользоваться ботом.")
             return
 
-        # Проверяем, не пишет ли пользователь сам себе
-        if message.from_user.id == connection.user.id:
-            logger.info(f"Пользователь {message.from_user.id} пытается написать сам себе")
-            return
-
         # Логируем каждое входящее сообщение
         logger.info(
             f"📨 Новое сообщение:"
@@ -454,9 +449,9 @@ async def business_message(message: Message):
                 if not user.love_enabled:
                     return
                     
-                # Проверяем, что команду использует получатель (владелец бизнес-чата)
+                # Проверяем, что команду использует владелец чата
                 connection = await message.bot.get_business_connection(message.business_connection_id)
-                if message.from_user.id == connection.user.id:
+                if message.from_user.id != connection.user.id:
                     return
                     
                 if message.text.strip().lower() == "pin":
