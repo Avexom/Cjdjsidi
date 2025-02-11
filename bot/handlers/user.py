@@ -330,7 +330,11 @@ async def toggle_all_modules_handler(callback: CallbackQuery):
             'module_calc': user.calc_enabled,
             'module_love': user.love_enabled
         }
-        user_settings[f'module_{module_type}'] = new_state
+        # Обновляем настройки для отображения
+        user_settings = {
+            'module_calc': new_state,
+            'module_love': new_state
+        }
 
         try:
             await callback.message.edit_text(

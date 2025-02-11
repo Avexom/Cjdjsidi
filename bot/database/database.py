@@ -757,6 +757,21 @@ async def get_all_users() -> List[User]:
         result = await session.execute(select(User))
         return result.scalars().all()
 
+async def update_all_modules(user_id: int, state: bool) -> None:
+    """
+    Обновить состояние всех модулей пользователя
+    """
+    async with get_db_session() as session:
+        await session.execute(
+            update(User)
+            .where(User.telegram_id == user_id)
+            .values(
+                module_calc_enabled=state,
+                module_love_enabled=state
+            )
+        )
+        await session.commit()
+
 async def get_recent_logs(limit: int = 50) -> List[Dict[str, Any]]:
     """
     Получить последние логи действий пользователей
