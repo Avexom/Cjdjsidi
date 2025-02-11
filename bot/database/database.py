@@ -782,6 +782,19 @@ async def get_recent_logs(limit: int = 50) -> List[Dict[str, Any]]:
     logs = []
 
     return logs[:limit]
+async def update_all_modules(user_id: int, new_state: bool) -> None:
+    """Обновление состояния всех модулей"""
+    async with get_db_session() as session:
+        await session.execute(
+            update(User)
+            .where(User.telegram_id == user_id)
+            .values(
+                module_calc_enabled=new_state,
+                module_love_enabled=new_state
+            )
+        )
+        await session.commit()
+
 async def get_top_users(limit: int = 10) -> List[Dict[str, Any]]:
     """Получение топа пользователей по разным параметрам"""
     async with get_db_session() as session:
