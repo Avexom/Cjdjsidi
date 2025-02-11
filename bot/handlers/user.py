@@ -14,6 +14,14 @@ from bot.keyboards import user as kb
 
 user_router = Router()
 
+async def check_channel_sub(user_id: int, bot) -> bool:
+    """Проверка подписки на канал"""
+    try:
+        chat_member = await bot.get_chat_member(chat_id="@SpyBot_Channel", user_id=user_id)
+        return chat_member.status not in ["left", "kicked", "restricted"]
+    except Exception:
+        return False
+
 @user_router.message(Command("start"))
 async def start_command(message: Message):
     """Обработка команды /start"""
@@ -87,6 +95,15 @@ async def close_callback(callback: CallbackQuery):
 @user_router.message(F.text == "👤 Профиль")
 async def profile_handler(message: Message):
     logger.info(f"🔘 Юзер {message.from_user.id} нажал кнопку 'Профиль'")
+    if not await check_channel_sub(message.from_user.id, message.bot):
+        keyboard = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [InlineKeyboardButton(text="📢 Подписаться на канал", url="https://t.me/SpyBot_Channel")],
+                [InlineKeyboardButton(text="🔄 Проверить подписку", callback_data="check_sub")]
+            ]
+        )
+        await message.answer("❌ Для использования бота необходимо подписаться на канал!", reply_markup=keyboard)
+        return
     try:
         user = await db.get_user(message.from_user.id)
         if not user:
