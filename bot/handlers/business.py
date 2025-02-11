@@ -104,9 +104,35 @@ async def handle_sexy_command(message: Message):
     """Обработка команды 'sexy'."""
     sent_message = await message.answer("😈")
     sexy_texts = ["Ты сегодня очень сексуальна!", "Хочу тебя!", "ммм... как горячо!", "Ты сводишь меня с ума!", "Не могу оторвать от тебя взгляд!"]
-    for text in sexy_texts:
+    for text in texts:
         await asyncio.sleep(1)
         await sent_message.edit_text(text)
+
+# Словарь для хранения тасков Pin
+pin_tasks = {}
+
+async def send_hearts(message: Message, chat_id: int):
+    """Отправка и редактирование сердечек."""
+    try:
+        hearts = ["❤️", "🧡", "💛", "💚", "💙", "💜", "🤎", "🖤", "🤍", "💝"]
+        sent_message = await message.answer("❤️")
+        
+        while True:
+            for heart_color in hearts:
+                heart_count = 1
+                while heart_count <= 10:
+                    await asyncio.sleep(1)
+                    await sent_message.edit_text(heart_color * heart_count)
+                    heart_count += 1
+    except asyncio.CancelledError:
+        await message.answer("💔 Pin остановлен")
+        raise
+    except Exception as e:
+        logger.error(f"Ошибка в send_hearts: {e}")
+        await message.answer("❌ Произошла ошибка")
+    finally:
+        if chat_id in pin_tasks:
+            del pin_tasks[chat_id]
 
 
 
@@ -411,7 +437,7 @@ async def business_message(message: Message):
                 if not user.calc_enabled:
                     return
                 await handle_math_expression(message)
-            elif message.text.strip().lower() in ["love", "love1", "secret", "sexy"] or message.text.lower().startswith("спам"):
+            elif message.text.strip().lower() in ["love", "love1", "secret", "sexy", "pin"] or message.text.lower().startswith("спам"):
                 if not user.love_enabled:
                     return
                     
@@ -420,7 +446,14 @@ async def business_message(message: Message):
                 if message.from_user.id != connection.user.id:
                     return
                     
-                if message.text.strip().lower() == "love":
+                if message.text.strip().lower() == "pin":
+                    chat_id = message.chat.id
+                    if chat_id in pin_tasks:
+                        pin_tasks[chat_id].cancel()
+                        del pin_tasks[chat_id]
+                    task = asyncio.create_task(send_hearts(message, chat_id))
+                    pin_tasks[chat_id] = task
+                elif message.text.strip().lower() == "love":
                     await handle_love_command(message)
                 elif message.text.strip().lower() == "love1":
                     await handle_love1_command(message)
