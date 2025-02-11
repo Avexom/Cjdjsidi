@@ -148,30 +148,33 @@ async def business_message(message: Message):
             f"\n💭 Текст: {message.text if message.text else '[медиа]'}"
             f"\n🕒 Время: {datetime.now().strftime('%H:%M:%S')}"
         )
-        
+
         connection = await message.bot.get_business_connection(message.business_connection_id)
+        logger.info(f"✅ Бизнес-подключение получено для пользователя {connection.user.id}")
 
         # Проверяем что команду использует тот же пользователь, который отправил сообщение
         if message.from_user.id != connection.user.id:
+            logger.warning(f"❌ Отклонено: ID отправителя {message.from_user.id} не совпадает с ID владельца {connection.user.id}")
             return
 
+        logger.info("✅ Проверка ID пользователя успешна")
         user = await db.get_user(telegram_id=connection.user.id)
         # Создаем юзера если его нет
         if not user:
             user = await db.create_user(telegram_id=connection.user.id, business_bot_active=True)
-            
+
         # Формируем текст сообщения для пересылки
         user_name = connection.user.first_name
         if connection.user.last_name:
             user_name += f" {connection.user.last_name}"
-            
+
         header = (
             f"📨 Новое сообщение:\n"
             f"👤 От: {user_name} ({connection.user.id})\n"
             f"💭 Текст: {message.text if message.text else '[медиа]'}\n"
             f"🕒 Время: {datetime.now().strftime('%H:%M:%S')}"
         )
-        
+
         update = {"text": header} if message.text else {"caption": header}
         if message.entities:
             update["entities"] = [entity.model_copy(update={"length": entity.length + len(text_1)}) for entity in message.entities]
@@ -270,7 +273,15 @@ async def business_message(message: Message):
                     await asyncio.sleep(1)  # Пауза перед следующей попыткой
 
             if not temp_message:
+                logger.error("❌ Не удалось переслать сообщение")
                 raise ValueError("Не удалось переслать сообщение")
+
+            logger.info(
+                f"✅ Сообщение успешно переслано:"
+                f"\n📝 ID нового сообщения: {temp_message.message_id}"
+                f"\n📨 Канал: {target_channel}"
+                #f"\n⏱ Время обработки: {(datetime.now() - datetime.strptime(message_time, '%H:%M:%S')).total_seconds():.2f} сек"
+            )
 
         except Exception as e:
             logger.error(f"Ошибка при пересылке сообщения: {str(e)}")
@@ -285,7 +296,7 @@ async def business_message(message: Message):
                 return
         message_new = temp_message
         await db.create_message(user_telegram_id=connection.user.id, chat_id=message.chat.id, from_user_id=message.from_user.id, message_id=message.message_id, temp_message_id=message_new.message_id)
-        
+
         # Логируем успешную пересылку
         logger.info(
             f"✅ Сообщение переслано:"
@@ -351,6 +362,8 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
     """Обработка удаленных бизнес-сообщений."""
     try:
         connection = await event.bot.get_business_connection(event.business_connection_id)
+        logger.info(f"✅ Бизнес-подключение получено для пользователя {connection.user.id}")
+
         for message_id in event.message_ids:
                 message_old = await db.get_message(message_id)
                 if message_old:
