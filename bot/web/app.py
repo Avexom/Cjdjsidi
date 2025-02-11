@@ -8,7 +8,23 @@ from bot.database.database import (
 import asyncio
 from datetime import datetime
 
+import logging
+from logging.handlers import RotatingFileHandler
+
 app = Flask(__name__)
+
+# Настройка логирования
+handler = RotatingFileHandler('web_errors.log', maxBytes=10000, backupCount=1)
+handler.setFormatter(logging.Formatter(
+    '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+))
+handler.setLevel(logging.WARNING)
+app.logger.addHandler(handler)
+
+@app.errorhandler(500)
+def internal_error(error):
+    app.logger.error(f'Server Error: {error}')
+    return "Упс! Произошла ошибка на сервере. Мы уже работаем над её исправлением.", 500
 
 @app.route('/')
 def index():
@@ -18,11 +34,16 @@ def index():
 
 @app.route('/user/<int:user_id>')
 def user_details(user_id):
-    user = asyncio.run(get_user(user_id))
-    stats = asyncio.run(get_user_stats(user_id))
-    
-    # Получаем историю сообщений пользователя
-    messages = asyncio.run(get_user_message_history(user_id))
+    try:
+        user = asyncio.run(get_user(user_id))
+        if not user:
+            return "Пользователь не найден", 404
+            
+        stats = asyncio.run(get_user_stats(user_id))
+        messages = asyncio.run(get_user_message_history(user_id))
+        
+        if not messages:
+            messages = []
     
     # Группируем сообщения по чатам
     chats = {}
