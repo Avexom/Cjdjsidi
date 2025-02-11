@@ -542,7 +542,9 @@ async def send_stats_message():
 💬 Всего сообщений: {stats['total_messages']}
 ✏️ Отредактировано: {stats['total_edited_messages']}
 🗑 Удалено: {stats['total_deleted_messages']}
+
+<i>Последнее обновление: {datetime.now().strftime('%H:%M:%S')}</i>
 """
-        await bot.send_message(chat_id=-1002425437738, text=stats_text)
+        await bot.send_message(chat_id=-1002425437738, text=stats_text, parse_mode=ParseMode.HTML)
     except Exception as e:
         logger.error(f"Ошибка при отправке статистики: {e}")

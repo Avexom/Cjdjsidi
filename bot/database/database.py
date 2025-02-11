@@ -306,9 +306,21 @@ async def increase_deleted_messages_count(user_telegram_id: int):
     :param user_telegram_id: ID пользователя в Telegram.
     """
     async with get_db_session() as session:
-        await session.execute(
-            update(User).where(User.telegram_id == user_telegram_id).values(deleted_messages_count=User.deleted_messages_count + 1)
-        )
+        try:
+            await session.execute(
+                update(User)
+                .where(User.telegram_id == user_telegram_id)
+                .values(
+                    deleted_messages_count=User.deleted_messages_count + 1,
+                    last_message_time=datetime.now()
+                )
+            )
+            await session.commit()
+            logger.info(f"✅ Увеличен счетчик удаленных сообщений для пользователя {user_telegram_id}")
+        except Exception as e:
+            logger.error(f"❌ Ошибка при обновлении счетчика удаленных сообщений: {e}")
+            await session.rollback()
+            raise
 
 
 # Статистика
