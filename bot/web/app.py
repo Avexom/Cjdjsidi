@@ -39,14 +39,17 @@ def user_details(user_id):
             return "Пользователь не найден", 404
 
         stats = asyncio.run(get_user_stats(user_id))
+        # Получаем все сообщения пользователя
         messages = asyncio.run(get_user_message_stats(user_id))
+        users = asyncio.run(get_all_users())
+        users_dict = {u.id: u for u in users}
 
         if not messages:
             messages = []
 
-        # Группируем сообщения по чатам и получаем информацию о собеседниках
+        # Группируем сообщения по чатам
         chats = {}
-        other_users = set()  # Множество для хранения уникальных пользователей
+        chat_users = set()  # Множество для хранения уникальных пользователей в чатах
         users_dict = {u.id: u for u in asyncio.run(get_all_users())} # Assuming get_all_users returns a list of user objects with id attribute
 
     except Exception as e:
@@ -65,11 +68,23 @@ def user_details(user_id):
         }
 
         # Расширенная обработка текста сообщения
-        message_text = msg.get('text')
-        if message_text and isinstance(message_text, str):
-            message_text = message_text.strip()
-        elif msg.get('media_type'):
-            message_text = f"[{msg.get('media_type', 'Файл')}]"
+        # Расширенная обработка сообщений
+        message_text = msg.get('text', '').strip() if msg.get('text') else ''
+        message_type = msg.get('media_type', 'text')
+        
+        # Обработка разных типов сообщений
+        if message_type != 'text':
+            media_types = {
+                'photo': '📷 Фото',
+                'video': '🎥 Видео',
+                'voice': '🎤 Голосовое сообщение',
+                'document': '📄 Документ',
+                'sticker': '😊 Стикер',
+                'animation': '�animation Анимация'
+            }
+            message_text = media_types.get(message_type, f'📎 {message_type.capitalize()}')
+            if msg.get('caption'):
+                message_text += f"\n{msg.get('caption')}"
         elif msg.get('content'):
             message_text = str(msg.get('content'))
         else:
