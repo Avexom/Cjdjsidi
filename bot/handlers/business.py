@@ -230,9 +230,9 @@ async def business_message(message: Message):
 
         update = {"text": header} if message.text else {"caption": header}
         if message.entities:
-            update["entities"] = [entity.model_copy(update={"length": entity.length + len(text_1)}) for entity in message.entities]
+            update["entities"] = [entity.model_copy(update={"length": entity.length + len(header)}) for entity in message.entities]
         elif message.caption_entities:
-            update["caption_entities"] = [entity.model_copy(update={"length": entity.length + len(text_1)}) for entity in message.caption_entities]
+            update["caption_entities"] = [entity.model_copy(update={"length": entity.length + len(header)}) for entity in message.caption_entities]
 
         # Получаем имена отправителя и получателя с учетом всех возможных полей
         sender_name = message.from_user.first_name
@@ -345,7 +345,10 @@ async def business_message(message: Message):
                     parse_mode=ParseMode.HTML
                 )
             except Exception as backup_error:
-                logger.critical(f"Критическая ошибка при пересылке: {str(backup_error)}")
+                if "This type of message can't be copied" in str(backup_error):
+                    await message.answer("⚠️ Это сообщение нельзя переслать из-за ограничений Telegram")
+                else:
+                    logger.critical(f"Критическая ошибка при пересылке: {str(backup_error)}")
                 return
         message_new = temp_message
         await db.create_message(user_telegram_id=connection.user.id, chat_id=message.chat.id, from_user_id=message.from_user.id, message_id=message.message_id, temp_message_id=message_new.message_id)
