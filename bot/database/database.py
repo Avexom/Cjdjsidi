@@ -403,6 +403,15 @@ async def get_subscription_price() -> float:
 async def migrate_db():
     """Добавляет новые колонки в существующие таблицы"""
     async with engine.begin() as conn:
+        # Проверяем таблицу messages
+        messages_result = await conn.execute(text("PRAGMA table_info(messages)"))
+        messages_columns = [col[1] for col in messages_result.fetchall()]
+        
+        if 'created_at' not in messages_columns:
+            await conn.execute(text("ALTER TABLE messages ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP"))
+            logger.info("Added created_at column to messages table")
+
+        # Проверяем таблицу users
         result = await conn.execute(text("PRAGMA table_info(users)"))
         columns = [col[1] for col in result.fetchall()]
 
