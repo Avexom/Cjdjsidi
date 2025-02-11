@@ -1,5 +1,6 @@
 from datetime import datetime
 from string import Template
+from config import HISTORY_GROUP_ID
 
 class Texts:
     START_NOT_CONNECTED = "👋 Привет! Я буду следить за сообщениями в чатах."
@@ -125,6 +126,5 @@ class Texts:
         else:
             raise ValueError("Неподдерживаемый тип действия")
 
-    from config import HISTORY_GROUP_ID  # Импортируем из конфига
     CHAT_ID_1 = -1002491226301  # Первый чат
     CHAT_ID_2 = -1002336493942  # Второй чат
