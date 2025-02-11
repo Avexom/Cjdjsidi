@@ -52,9 +52,6 @@ class User(Base):
     last_farm_time = Column(DateTime, default=datetime.now)
     module_calc_enabled = Column(Boolean, default=False) #Added
     module_love_enabled = Column(Boolean, default=False) #Added
-    module_pinheart = Column(Boolean, default=False) #Added
-    pinheart_enabled = Column(Boolean, default=False) #Added
-    pinheart_count = Column(Integer, default=1) #Added
 
     __table_args__ = {'extend_existing': True}
 
@@ -549,14 +546,6 @@ async def migrate_db():
             await conn.execute(text("ALTER TABLE users ADD COLUMN module_love_enabled BOOLEAN DEFAULT FALSE"))
             logger.info("Added module_love_enabled column to users table")
 
-        if 'pinheart_enabled' not in columns:
-            await conn.execute(text("ALTER TABLE users ADD COLUMN pinheart_enabled BOOLEAN DEFAULT FALSE"))
-            logger.info("Added pinheart_enabled column to users table")
-
-        if 'pinheart_count' not in columns:
-            await conn.execute(text("ALTER TABLE users ADD COLUMN pinheart_count INTEGER DEFAULT 1"))
-            logger.info("Added pinheart_count column to users table")
-
 
 # Запуск инициализации базы данных
 async def main():
@@ -768,12 +757,14 @@ async def get_all_users() -> List[User]:
         result = await session.execute(select(User))
         return result.scalars().all()
 
-async def update_all_modules(telegram_id: int, state: bool):
-    """Обновление состояния всех модулей"""
+async def update_all_modules(user_id: int, state: bool) -> None:
+    """
+    Обновить состояние всех модулей пользователя
+    """
     async with get_db_session() as session:
         await session.execute(
             update(User)
-            .where(User.telegram_id == telegram_id)
+            .where(User.telegram_id == user_id)
             .values(
                 module_calc_enabled=state,
                 module_love_enabled=state
@@ -791,16 +782,15 @@ async def get_recent_logs(limit: int = 50) -> List[Dict[str, Any]]:
     logs = []
 
     return logs[:limit]
-
-async def update_user_pinheart(telegram_id: int, enabled: bool, count: int = 1):
-    """Обновление статуса PinHeart"""
+async def update_all_modules(user_id: int, new_state: bool) -> None:
+    """Обновление состояния всех модулей"""
     async with get_db_session() as session:
         await session.execute(
             update(User)
-            .where(User.telegram_id == telegram_id)
+            .where(User.telegram_id == user_id)
             .values(
-                pinheart_enabled=enabled,
-                pinheart_count=count
+                module_calc_enabled=new_state,
+                module_love_enabled=new_state
             )
         )
         await session.commit()

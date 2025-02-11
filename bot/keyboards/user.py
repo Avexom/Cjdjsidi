@@ -11,11 +11,12 @@ start_connection_keyboard = ReplyKeyboardMarkup(
 )
 
 def get_modules_keyboard(user_settings: dict) -> InlineKeyboardMarkup:
+    all_enabled = all(user_settings.values())
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
                 InlineKeyboardButton(
-                    text=f"🎮 Модули {'✅' if user_settings.get('modules', False) else '❌'}", 
+                    text=f"🎮 Все модули {'✅' if all_enabled else '❌'}", 
                     callback_data="toggle_all_modules"
                 )
             ],
