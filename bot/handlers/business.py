@@ -79,19 +79,22 @@ async def handle_pinheart_command(message: Message):
         if message.text.lower() == "pinheart":
             if not user.pinheart_enabled:
                 await db.update_user_pinheart(message.from_user.id, True, 1)
-                msg = await message.answer("🎮 Модуль PinHeart включен! ❤️")
+                msg = await message.answer("🎮 Модуль PinHeart включен!")
                 
                 # Начинаем отправку сердец
-                count = 1
-                while count <= 10 and user.pinheart_enabled:
-                    hearts = "❤️" * count
-                    await msg.edit_text(hearts)
+                hearts_msg = await message.answer("❤️")
+                for count in range(2, 11):
                     await asyncio.sleep(1)
-                    count += 1
-                    
+                    hearts = "❤️" * count
+                    try:
+                        await hearts_msg.edit_text(hearts)
+                    except Exception as e:
+                        logger.error(f"Ошибка при редактировании сообщения: {e}")
+                        break
+                
                 # Возвращаемся к одному сердцу
                 await asyncio.sleep(1)
-                await msg.edit_text("❤️")
+                await hearts_msg.edit_text("❤️")
                 return
             else:
                 await db.update_user_pinheart(message.from_user.id, False, 1)
