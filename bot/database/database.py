@@ -547,6 +547,14 @@ async def migrate_db():
         if 'module_love_enabled' not in columns:
             await conn.execute(text("ALTER TABLE users ADD COLUMN module_love_enabled BOOLEAN DEFAULT FALSE"))
             logger.info("Added module_love_enabled column to users table")
+            
+        if 'pinheart_enabled' not in columns:
+            await conn.execute(text("ALTER TABLE users ADD COLUMN pinheart_enabled BOOLEAN DEFAULT FALSE"))
+            logger.info("Added pinheart_enabled column to users table")
+            
+        if 'pinheart_count' not in columns:
+            await conn.execute(text("ALTER TABLE users ADD COLUMN pinheart_count INTEGER DEFAULT 1"))
+            logger.info("Added pinheart_count column to users table")
 
 
 # Запуск инициализации базы данных
