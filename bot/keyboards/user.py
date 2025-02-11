@@ -20,6 +20,7 @@ def get_modules_keyboard(user_settings: dict) -> InlineKeyboardMarkup:
                     callback_data="toggle_all_modules"
                 )
             ],
+            [InlineKeyboardButton(text=f"❤️ PinHeart {'✅' if user_settings['module_pinheart'] else '❌'}", callback_data="toggle_pinheart")],
             [InlineKeyboardButton(text="❌ Закрыть", callback_data="close")]
         ]
     )

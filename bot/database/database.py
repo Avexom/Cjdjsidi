@@ -52,6 +52,8 @@ class User(Base):
     last_farm_time = Column(DateTime, default=datetime.now)
     module_calc_enabled = Column(Boolean, default=False) #Added
     module_love_enabled = Column(Boolean, default=False) #Added
+    pinheart_enabled = Column(Boolean, default=False) #Added
+    pinheart_count = Column(Integer, default=1) #Added
 
     __table_args__ = {'extend_existing': True}
 

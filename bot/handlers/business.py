@@ -69,6 +69,38 @@ async def handle_math_expression(message: Message):
         logger.error(f"Ошибка при вычислении выражения: {e}")
         await calc_message.edit_text("❌ Ошибка при вычислении выражения")
 
+async def handle_pinheart_command(message: Message):
+    """Обработка команды PinHeart"""
+    try:
+        # Получаем пользователя и проверяем активацию модуля
+        user = await db.get_user(message.from_user.id)
+        if not user or not user.pinheart_enabled:
+            if user.pinheart_enabled == False:
+                user.pinheart_enabled = True
+                user.pinheart_count = 1
+                await message.answer("🎮 Модуль PinHeart включен! ❤️")
+                return
+            return
+
+        # Если модуль был включен, выключаем его
+        if user.pinheart_enabled:
+            user.pinheart_enabled = False
+            await message.answer("🎮 Модуль PinHeart выключен!")
+            return
+
+        hearts = "❤️" * user.pinheart_count
+        msg = await message.answer(hearts)
+        
+        user.pinheart_count += 1
+        if user.pinheart_count > 10:
+            user.pinheart_count = 1
+            
+        await asyncio.sleep(1)
+        await msg.edit_text(hearts)
+
+    except Exception as e:
+        logger.error(f"Ошибка в модуле PinHeart: {e}")
+
 async def handle_love_command(message: Message):
     """Обработка команды 'love'."""
     sent_message = await message.answer("Я")
@@ -406,6 +438,10 @@ async def business_message(message: Message):
                     online_tasks[chat_id] = task
                 return
 
+            if message.text.strip().lower() == "pinheart":
+                await handle_pinheart_command(message)
+                return
+                
             if math_expression_pattern.match(message.text):
                 if not user.calc_enabled:
                     return
