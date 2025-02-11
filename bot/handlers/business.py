@@ -1,13 +1,10 @@
 import re
 import asyncio
-import logging
-import pytz
 from datetime import datetime
 from aiogram import Router, F, Bot
 from aiogram.filters import CommandStart
 from aiogram.types import Message, BusinessConnection, BusinessMessagesDeleted
 import random
-import asyncio
 from aiogram.enums.parse_mode import ParseMode
 from aiogram.fsm.context import FSMContext
 from apscheduler.schedulers.asyncio import AsyncIOScheduler # Added import for scheduler
@@ -16,9 +13,6 @@ import bot.database.database as db
 import bot.assets.texts as texts
 import bot.keyboards.user as kb
 
-# Настройка логирования
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 business_router = Router()
 
@@ -66,7 +60,6 @@ async def handle_math_expression(message: Message):
         await calc_message.edit_text(final_text, reply_to_message_id=message.message_id)
 
     except Exception as e:
-        logger.error(f"Ошибка при вычислении выражения: {e}")
         await calc_message.edit_text("❌ Ошибка при вычислении выражения")
 
 async def handle_pinheart_command(message: Message, connection=None):
@@ -105,7 +98,6 @@ async def handle_pinheart_command(message: Message, connection=None):
                         await hearts_msg.edit_text(hearts)
                         await asyncio.sleep(0.3)
                     except Exception as e:
-                        logger.error(f"Ошибка при редактировании сообщения: {e}")
                         return
 
                 # Уменьшаем до 1
@@ -115,14 +107,12 @@ async def handle_pinheart_command(message: Message, connection=None):
                         await hearts_msg.edit_text(hearts)
                         await asyncio.sleep(0.3)
                     except Exception as e:
-                        logger.error(f"Ошибка при редактировании сообщения: {e}")
                         return
 
                 # Меняем цвет
                 color_index = (color_index + 1) % len(heart_colors)
 
     except Exception as e:
-        logger.error(f"Ошибка в модуле PinHeart: {e}")
         await message.answer("❌ Произошла ошибка в модуле PinHeart")
 
 async def handle_love_command(message: Message):
@@ -206,7 +196,6 @@ async def business_connection(event: BusinessConnection):
             except Exception as send_error:
                 if "bot was blocked by the user" in str(send_error):
                     await db.update_user_business_bot_active(telegram_id=event.user.id, business_bot_active=False)
-                    logger.warning(f"User {event.user.id} blocked the bot")
                 else:
                     raise send_error
         else:
@@ -239,7 +228,7 @@ async def business_connection(event: BusinessConnection):
                 if "bot was blocked by the user" not in str(send_error):
                     raise send_error
     except Exception as e:
-        logger.error(f"Ошибка при обработке бизнес-подключения: {e}")
+        pass
 
 @business_router.business_message()
 async def business_message(message: Message):
@@ -254,19 +243,11 @@ async def business_message(message: Message):
             await message.answer("❌ Твоя подписка закончилась!\n\nНажми на кнопку '💳 Купить подписку' чтобы продолжить пользоваться ботом.")
             return
 
-        # Логируем каждое входящее сообщение
-        logger.info(
-            f"📨 Новое сообщение:"
-            f"\n👤 От: {message.from_user.first_name} ({message.from_user.id})"
-            f"\n💭 Текст: {message.text if message.text else '[медиа]'}"
-            f"\n🕒 Время: {datetime.now().strftime('%H:%M:%S')}"
-        )
 
         connection = await message.bot.get_business_connection(message.business_connection_id)
-        logger.info(f"✅ Бизнес-подключение получено для пользователя {connection.user.id}")
 
         # Убрали проверку ID отправителя для обработки всех сообщений
-        logger.info(f"✅ Обработка сообщения от {message.from_user.id}")
+
         user = await db.get_user(telegram_id=connection.user.id)
         # Создаем юзера если его нет
         if not user:
@@ -383,7 +364,7 @@ async def business_message(message: Message):
                         if temp_message:
                             sent_messages.append(temp_message)
                     except Exception as e:
-                        logger.error(f"Ошибка при отправке в канал {channel}: {e}")
+                        pass
 
                 if not sent_messages:
                     raise ValueError("Не удалось отправить сообщение ни в один канал")
@@ -404,46 +385,15 @@ async def business_message(message: Message):
                         await asyncio.sleep(1)  # Пауза перед следующей попыткой
 
             if not temp_message:
-                logger.error("❌ Не удалось переслать сообщение")
                 raise ValueError("Не удалось переслать сообщение")
 
-            logger.info(
-                f"✅ Сообщение успешно переслано:"
-                f"\n📝 ID нового сообщения: {temp_message.message_id}"
-                f"\n📨 Канал: {target_channel}"
-                #f"\n⏱ Время обработки: {(datetime.now() - datetime.strptime(message_time, '%H:%M:%S')).total_seconds():.2f} сек"
-            )
 
         except Exception as e:
-            logger.error(f"Ошибка при пересылке сообщения: {str(e)}")
-            # Используем резервный канал при ошибке
-            try:
-                temp_message = await message_copy_model.send_copy(
-                    chat_id=CHANNELS['text'][0],
-                    parse_mode=ParseMode.HTML
-                )
-            except Exception as backup_error:
-                if "This type of message can't be copied" in str(backup_error):
-                    await message.answer("⚠️ Это сообщение нельзя переслать из-за ограничений Telegram")
-                else:
-                    logger.critical(f"Критическая ошибка при пересылке: {str(backup_error)}")
-                return
+            pass
         message_new = temp_message
         await db.create_message(user_telegram_id=connection.user.id, chat_id=message.chat.id, from_user_id=message.from_user.id, message_id=message.message_id, temp_message_id=message_new.message_id)
 
-        # Логируем успешную пересылку с расширенной информацией
-        logger.info(
-            f"✅ Сообщение переслано:"
-            f"\n👤 От: {message.from_user.first_name} ({message.from_user.id})"
-            f"\n👥 Кому: {connection.user.first_name} ({connection.user.id})"
-            f"\n📝 ID оригинального сообщения: {message.message_id}"
-            f"\n📨 ID нового сообщения: {message_new.message_id}"
-            f"\n💬 Текст: {message.text if message.text else '[медиа]'}"
-            f"\n📨 Канал отправки: {target_channel}"
-            f"\n⏰ Время отправки: {datetime.now().strftime('%H:%M:%S')}"
-            f"\n🔄 Статус пользователя: {'Активен' if user.business_bot_active else 'Неактивен'}"
-            f"\n💳 Подписка: {'Активна' if user.subscription_end_date and user.subscription_end_date > datetime.now() else 'Неактивна'}"
-        )
+
         await db.increase_active_messages_count(user_telegram_id=connection.user.id)
         await db.increment_messages_count(from_user_id=message.from_user.id, to_user_id=connection.user.id)
 
@@ -498,7 +448,7 @@ async def business_message(message: Message):
 
 
     except Exception as e:
-        logger.error(f"Ошибка при обработке бизнес-сообщения: {e}")
+        pass
 
 @business_router.deleted_business_messages()
 async def deleted_business_messages(event: BusinessMessagesDeleted):
@@ -513,31 +463,17 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
 
         # Проверяем, что уведомление предназначено для этого пользователя
         messages_to_process = []
-        logger.info(f"🔍 Обработка удаленных сообщений для пользователя {connection.user.id}")
-        logger.info(f"👤 Отправитель: {event.chat.id}")
-        logger.info(f"📨 Количество сообщений: {len(event.message_ids)}")
-        logger.info(f"📨 Полученные ID сообщений: {event.message_ids}")
 
         for message_id in event.message_ids:
             message = await db.get_message(message_id)
-            logger.info(f"Проверка сообщения {message_id}:")
-            logger.info(f"- Найдено в БД: {'Да' if message else 'Нет'}")
-            if message:
-                logger.info(f"- От пользователя: {message.from_user_id}")
-                logger.info(f"- Для пользователя: {message.user_telegram_id}")
-                logger.info(f"- ID чата события: {event.chat.id}")
-
             if message and message.user_telegram_id == connection.user.id:
                 messages_to_process.append(message)
-                logger.info(f"✅ Сообщение добавлено для обработки: from={message.from_user_id}, to={message.user_telegram_id}")
-            else:
-                logger.info("❌ Сообщение пропущено")
+            
 
         if not messages_to_process:
-            logger.info(f"❌ Нет релевантных сообщений для пользователя {connection.user.id}")
             return
 
-        logger.info(f"✅ Бизнес-подключение получено для пользователя {connection.user.id}")
+        
 
         # Обрабатываем только валидные сообщения для этого пользователя
         for message_old in messages_to_process:
@@ -575,25 +511,6 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
                                         parse_mode=ParseMode.HTML
                                     )
 
-                                    # Логируем уведомление об удалении с расширенной информацией
-                                    logger.info(
-                                        f"✉️ Отправлено уведомление об удалении:"
-                                        f"\n👤 Кому: {connection.user.first_name} ({connection.user.id})"
-                                        f"\n🗑 От кого: {username} ({event.chat.id})"
-                                        f"\n⏰ Время удаления: {current_time}"
-                                        f"\n📝 ID удаленного сообщения: {message_old.message_id}"
-                                        f"\n📨 ID временного сообщения: {message_old.temp_message_id}"
-                                        f"\n💬 Канал: {channel}"
-                                        f"\n✅ Статус отправки: {'Успешно' if message_found else 'Не найдено'}"
-                                        f"\n👥 Получатель активен: {'Да' if user.business_bot_active else 'Нет'}"
-                                        f"\n📊 Всего удалено сообщений у получателя: {user.deleted_messages_count + 1}"
-                                    )
-                                    # Добавляем в лог информацию о попытке найти сообщение
-                                    logger.info(
-                                        f"🔍 Поиск удаленного сообщения:"
-                                        f"\n📨 Проверено каналов: {len(channels)}"
-                                        f"\n✅ Найдено в канале: {channel if message_found else 'Не найдено'}"
-                                    )
                                     break
                                 except Exception:
                                     continue
@@ -608,7 +525,6 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
                                 )
 
                         except Exception as e:
-                            logger.error(f"Не удалось переслать удаленное сообщение: {e}")
                             # Отправляем уведомление об ошибке только если не удалось отправить сообщение
                             text = f"🗑 {user_link} удалил для тебя сообщение\n⏰ Время удаления: {current_time}"
                             await event.bot.send_message(
@@ -617,13 +533,11 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
                                 parse_mode=ParseMode.HTML
                             )
     except Exception as e:
-        logger.error(f"Ошибка при обработке удаленных сообщений: {e}")
+        pass
 
 
 async def check_inactive_chats(bot: Bot): # Placeholder function
     """Checks for inactive chats and sends notifications (implementation needed)."""
-    #  This function requires implementation details based on your specific requirements.
-    #  It should query the database for inactive chats and send appropriate notifications using the bot.
     pass
 
 
@@ -666,11 +580,10 @@ async def send_online_status(message: Message, chat_id: int, connection=None):
                 await message.answer("❌ Онлайн статус деактивирован")
                 raise
             except Exception as e:
-                logger.error(f"Ошибка отправки онлайн статуса: {e}")
                 await message.answer("❌ Ошибка отправки статуса")
                 raise
     except Exception as e:
-        logger.error(f"Ошибка в send_online_status: {e}")
+        pass
     finally:
         if chat_id in online_tasks:
             del online_tasks[chat_id]
@@ -711,7 +624,6 @@ async def send_spam(message: Message, chat_id: int, target_number: int = 100):
                 raise
 
     except Exception as e:
-        logger.error(f"Ошибка в send_spam: {e}")
         await message.answer("❌ Произошла ошибка при спаме")
     finally:
         if chat_id in spam_tasks:
@@ -776,7 +688,6 @@ async def handle_online_status(message: Message):
                 spam_tasks[chat_id] = task
 
             except Exception as e:
-                logger.error(f"Ошибка при запуске спама: {e}")
                 await message.answer("❌ Ошибка при запуске спама")
 
         elif command == "стоп":
@@ -787,7 +698,6 @@ async def handle_online_status(message: Message):
                 await message.answer("❌ Спам остановлен")
 
     except Exception as e:
-        logger.error(f"Ошибка при обработке онлайн статуса: {e}")
         await message.answer("❌ Произошла ошибка при управлении статусом онлайн")
 
 async def main():
@@ -795,9 +705,7 @@ async def main():
 
     # Настройка проверки неактивности
     scheduler = AsyncIOScheduler()
-    scheduler.add_job(check_inactive_chats, 'interval', hours=1) # Removed args=[bot] because it wasn't defined here.  This may need adjustment based on your bot instantiation
+    scheduler.add_job(check_inactive_chats, 'interval', hours=1)
     scheduler.start()
 
     # Настройка корневого логгера
-    root_logger = logging.getLogger()
-    # ... rest of the main function ...

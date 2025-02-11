@@ -13,13 +13,7 @@ from bot.handlers.admin import admin_router
 from bot.database.database import init_db, delete_expired_subscriptions, migrate_db
 from config import BOT_TOKEN
 
-# Настройка простого логирования
-logging.basicConfig(
-    level=logging.INFO,
-    format='[%(asctime)s] %(message)s',
-    datefmt='%H:%M:%S'
-)
-logger = logging.getLogger(__name__)
+
 
 # Инициализация бота
 bot = Bot(token=BOT_TOKEN,
