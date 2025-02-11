@@ -327,12 +327,16 @@ async def increase_deleted_messages_count(user_telegram_id: int):
 @alru_cache(maxsize=1)
 async def get_total_users() -> int:
     """
-    Получить общее количество пользователей.
+    Получить общее количество уникальных пользователей.
 
     :return: Количество пользователей.
     """
     async with get_db_session() as session:
-        result = await session.execute(select(func.count(User.id)))
+        result = await session.execute(
+            select(func.count(User.id))
+            .where(User.telegram_id.isnot(None))
+            .where(User.is_banned == False)
+        )
         return result.scalar() or 0
 
 @alru_cache(maxsize=1)
@@ -349,13 +353,20 @@ async def get_total_subscriptions() -> int:
 @alru_cache(maxsize=1)
 async def get_total_messages() -> int:
     """
-    Получить общее количество сообщений.
+    Получить общее количество сообщений из всех каналов.
 
     :return: Количество сообщений.
     """
     async with get_db_session() as session:
-        result = await session.execute(select(func.sum(User.active_messages_count)))
-        return result.scalar() or 0
+        # Получаем сумму всех сообщений
+        messages = await session.execute(
+            select(
+                func.sum(User.active_messages_count) +
+                func.sum(User.edited_messages_count) +
+                func.sum(User.deleted_messages_count)
+            )
+        )
+        return messages.scalar() or 0
 
 @alru_cache(maxsize=1)
 async def get_total_edited_messages() -> int:
