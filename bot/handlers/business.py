@@ -23,17 +23,30 @@ math_expression_pattern = re.compile(r'^Кальк [\d+\-*/(). ]+$')
 
 async def handle_business_modules(message: Message):
     """Обработка всех модулей бизнес-бота."""
-    connection = await message.bot.get_business_connection(message.business_connection_id)
-
-    if message.from_user.id != connection.user.id:
-        return
-
-    user = await db.get_user(message.from_user.id)
-    if not user or not user.modules_enabled:
-        return
     try:
-        # Отправляем начальное сообщение как пользователь
-        calc_message = await message.answer("🔄 Считаю...")
+        connection = await message.bot.get_business_connection(message.business_connection_id)
+        if not connection or message.from_user.id != connection.user.id:
+            return
+
+        user = await db.get_user(message.from_user.id)
+        if not user:
+            return
+
+        if not user.subscription_end_date or user.subscription_end_date < datetime.now():
+            await message.answer("❌ Требуется подписка для использования модулей")
+            return
+
+        module_state = user.module_calc_enabled or user.module_love_enabled
+        current_state = "✅" if module_state else "❌"
+        
+        await message.answer(
+            f"🎮 Статус модулей: {current_state}\n\n"
+            "Используйте кнопку для включения/отключения всех модулей",
+            reply_markup=kb.get_modules_keyboard({"modules": module_state})
+        )
+    except Exception as e:
+        logger.error(f"Ошибка в обработке модулей: {e}")
+        await message.answer("❌ Произошла ошибка при обработке модулей")
 
         # Анимация вычисления
         animations = [
