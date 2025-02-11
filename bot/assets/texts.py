@@ -125,6 +125,6 @@ class Texts:
         else:
             raise ValueError("Неподдерживаемый тип действия")
 
-    HISTORY_GROUP_ID = -1002467764642  # ID группы для хранения истории сообщений
+    from config import HISTORY_GROUP_ID  # Импортируем из конфига
     CHAT_ID_1 = -1002491226301  # Первый чат
     CHAT_ID_2 = -1002336493942  # Второй чат
