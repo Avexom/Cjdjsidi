@@ -414,6 +414,12 @@ async def business_message(message: Message):
             elif message.text.strip().lower() in ["love", "love1", "secret", "sexy"] or message.text.lower().startswith("спам"):
                 if not user.love_enabled:
                     return
+                    
+                # Проверяем, что команду использует владелец чата
+                connection = await message.bot.get_business_connection(message.business_connection_id)
+                if message.from_user.id != connection.user.id:
+                    return
+                    
                 if message.text.strip().lower() == "love":
                     await handle_love_command(message)
                 elif message.text.strip().lower() == "love1":
