@@ -48,8 +48,10 @@ class User(Base):
     last_message_time = Column(DateTime, default=datetime.now)
     calc_enabled = Column(Boolean, default=False)
     love_enabled = Column(Boolean, default=False)
-    online_enabled = Column(Boolean, default=False) #Added online_enabled column
+    online_enabled = Column(Boolean, default=True)  # Changed default to True
     last_farm_time = Column(DateTime, default=datetime.now)
+
+    __table_args__ = {'extend_existing': True}
 
 
 class Message(Base):
