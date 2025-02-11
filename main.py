@@ -106,9 +106,16 @@ async def main():
     for router in [user_router, business_router, admin_router]:
         dp.include_router(router)
 
-    # Инициализация и миграция базы данных
-    await init_db()
-    await migrate_db()
+    # Сначала создаем базу данных
+    try:
+        await init_db()
+        bot_logger.info("✅ База данных успешно создана")
+        # Только потом делаем миграцию
+        await migrate_db()
+        bot_logger.info("✅ Миграция успешно выполнена")
+    except Exception as e:
+        bot_logger.error(f"❌ Ошибка при инициализации базы данных: {e}")
+        raise
 
     # Запуск планировщика
     scheduler = AsyncIOScheduler()
