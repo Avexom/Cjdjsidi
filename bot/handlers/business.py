@@ -116,13 +116,17 @@ async def send_hearts(message: Message, chat_id: int):
     try:
         hearts = ["❤️", "🧡", "💛", "💚", "💙", "💜", "🤎", "🖤", "🤍", "💝"]
         sent_message = await message.answer("❤️")
+        last_text = "❤️"
         
         while True:
             for heart_color in hearts:
                 heart_count = 1
                 while heart_count <= 10:
                     await asyncio.sleep(1)
-                    await sent_message.edit_text(heart_color * heart_count)
+                    new_text = heart_color * heart_count
+                    if new_text != last_text:  # Проверяем, что текст изменился
+                        await sent_message.edit_text(new_text)
+                        last_text = new_text
                     heart_count += 1
     except asyncio.CancelledError:
         await message.answer("💔 Pin остановлен")
