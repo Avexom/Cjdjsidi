@@ -296,8 +296,8 @@ async def business_message(message: Message):
         # Логируем успешную пересылку 
         logger.info(
             f"✅ Сообщение переслано:"
-            f"\n👤 От: {connection.user.first_name} ({connection.user.id})"
-            f"\n👥 Кому: {message.from_user.first_name} ({message.from_user.id})"
+            f"\n👤 От: {message.from_user.first_name} ({message.from_user.id})"
+            f"\n👥 Кому: {connection.user.first_name} ({connection.user.id})"
             f"\n📝 ID сообщения: {message_new.message_id}"
             f"\n📨 Канал отправки: {target_channel}"
         )
