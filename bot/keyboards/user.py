@@ -13,10 +13,12 @@ start_connection_keyboard = ReplyKeyboardMarkup(
 def get_modules_keyboard(user_settings: dict) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text=f"🔢 Калькулятор {'✅' if user_settings.get('module_calc', False) else '❌'}", 
-                                callback_data="toggle_module_calc")],
-            [InlineKeyboardButton(text=f"❤️ Love {'✅' if user_settings.get('module_love', False) else '❌'}", 
-                                callback_data="toggle_module_love")],
+            [
+                InlineKeyboardButton(text=f"🔢 Калькулятор {'✅' if user_settings.get('module_calc', False) else '❌'}", 
+                                callback_data="toggle_module_calc"),
+                InlineKeyboardButton(text=f"❤️ Love {'✅' if user_settings.get('module_love', False) else '❌'}", 
+                                callback_data="toggle_module_love")
+            ],
             [InlineKeyboardButton(text="❌ Закрыть", callback_data="close")]
         ]
     )
@@ -24,12 +26,14 @@ def get_modules_keyboard(user_settings: dict) -> InlineKeyboardMarkup:
 def get_functions_keyboard(user_settings: dict) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text=f"🔔 Уведомления {'✅' if user_settings['notifications_enabled'] else '❌'}", 
-                                callback_data="toggle_all")],
-            [InlineKeyboardButton(text=f"📝 Отслеживание изменений {'✅' if user_settings['edit_notifications'] else '❌'}", 
-                                callback_data="toggle_edit")],
-            [InlineKeyboardButton(text=f"🗑 Отслеживание удалений {'✅' if user_settings['delete_notifications'] else '❌'}", 
-                                callback_data="toggle_delete")],
+            [
+                InlineKeyboardButton(text=f"🔔 {'✅' if user_settings['notifications_enabled'] else '❌'}", 
+                                callback_data="toggle_all"),
+                InlineKeyboardButton(text=f"📝 {'✅' if user_settings['edit_notifications'] else '❌'}", 
+                                callback_data="toggle_edit"),
+                InlineKeyboardButton(text=f"🗑 {'✅' if user_settings['delete_notifications'] else '❌'}", 
+                                callback_data="toggle_delete")
+            ],
             [InlineKeyboardButton(text="❌ Закрыть", callback_data="close")]
         ]
     )
