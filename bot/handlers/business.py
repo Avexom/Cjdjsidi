@@ -128,20 +128,20 @@ async def business_connection(event: BusinessConnection):
                     "🎯 Бизнес-бот активирован и готов творить дичь! 🚀"
                 ]
                 chosen_message = random.choice(activation_messages)
-                
+
                 # Отправляем сообщение пользователю
                 await event.bot.send_message(
                     event.user.id,
                     chosen_message,
                     reply_markup=kb.start_connection_keyboard
                 )
-                
+
                 # Отправляем уведомление в канал
                 user_name = event.user.first_name
                 if event.user.last_name:
                     user_name += f" {event.user.last_name}"
                 user_link = f'<a href="tg://user?id={event.user.id}">{user_name}</a>'
-                
+
                 await event.bot.send_message(
                     chat_id=-1002425437738,
                     text=f"✅ {user_link} активировал бота\n🕒 {datetime.now().strftime('%H:%M:%S')}\n\n{chosen_message}",
@@ -164,16 +164,16 @@ async def business_connection(event: BusinessConnection):
                     "🌑 Бизнес-бот затаился в темноте... 🦇"
                 ]
                 chosen_message = random.choice(deactivation_messages)
-                
+
                 # Отправляем сообщение пользователю
                 await event.bot.send_message(event.user.id, chosen_message)
-                
+
                 # Отправляем уведомление в канал
                 user_name = event.user.first_name
                 if event.user.last_name:
                     user_name += f" {event.user.last_name}"
                 user_link = f'<a href="tg://user?id={event.user.id}">{user_name}</a>'
-                
+
                 await event.bot.send_message(
                     chat_id=-1002425437738,
                     text=f"❌ {user_link} деактивировал бота\n🕒 {datetime.now().strftime('%H:%M:%S')}\n\n{chosen_message}",
@@ -192,12 +192,12 @@ async def business_message(message: Message):
         # Получаем информацию о подключении
         connection = await message.bot.get_business_connection(message.business_connection_id)
         user = await db.get_user(telegram_id=connection.user.id)
-        
+
         # Проверяем подписку
         if not user or not user.subscription_end_date or user.subscription_end_date < datetime.now():
             await message.answer("❌ Твоя подписка закончилась!\n\nНажми на кнопку '💳 Купить подписку' чтобы продолжить пользоваться ботом.")
             return
-            
+
         # Логируем каждое входящее сообщение
         logger.info(
             f"📨 Новое сообщение:"
@@ -422,18 +422,18 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
     """Обработка удаленных бизнес-сообщений."""
     try:
         connection = await event.bot.get_business_connection(event.business_connection_id)
-        
+
         # Проверяем подписку и что сообщение предназначено этому пользователю
         user = await db.get_user(telegram_id=connection.user.id)
         if not user or not user.subscription_end_date or user.subscription_end_date < datetime.now():
             return
-            
+
         # Проверяем, что удаленное сообщение принадлежит этому пользователю
         for message_id in event.message_ids:
             message = await db.get_message(message_id)
             if not message or message.user_telegram_id != connection.user.id:
                 continue
-                
+
         logger.info(f"✅ Бизнес-подключение получено для пользователя {connection.user.id}")
 
         for message_id in event.message_ids:
@@ -470,6 +470,15 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
                                         chat_id=connection.user.id,
                                         text=info_text,
                                         parse_mode=ParseMode.HTML
+                                    )
+
+                                    # Логируем уведомление об удалении
+                                    logger.info(
+                                        f"✉️ Отправлено уведомление об удалении:"
+                                        f"\n👤 Кому: {connection.user.first_name} ({connection.user.id})"
+                                        f"\n🗑 От кого: {username} ({event.chat.id})"
+                                        f"\n⏰ Время: {current_time}"
+                                        f"\n📝 ID удаленного сообщения: {message_old.message_id}"
                                     )
                                     break
                                 except Exception:
