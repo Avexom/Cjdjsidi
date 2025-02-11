@@ -5,23 +5,27 @@
     <title>Статистика пользователя</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         body {
             font-family: 'Segoe UI', system-ui, sans-serif;
             margin: 0;
             padding: 20px;
-            background: #f0f2f5;
+            background: #0a0a0a;
+            color: #fff;
         }
         .container {
             max-width: 1000px;
             margin: 0 auto;
         }
         .stats-card {
-            background: white;
+            background: rgba(255, 255, 255, 0.05);
             padding: 20px;
             border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
             margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 255, 255, 0.1);
         }
         .user-header {
             display: flex;
@@ -32,20 +36,10 @@
         .user-info {
             flex: 1;
         }
-        .actions-list {
-            list-style: none;
-            padding: 0;
+        .user-info h1 {
+            color: #0ff;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
             margin: 0;
-        }
-        .action-item {
-            padding: 12px;
-            border-bottom: 1px solid #eee;
-            display: flex;
-            justify-content: space-between;
-        }
-        .action-time {
-            color: #666;
-            font-size: 14px;
         }
         .stat-grid {
             display: grid;
@@ -54,10 +48,94 @@
             margin-top: 15px;
         }
         .stat-item {
-            background: #f8f9fa;
-            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
             border-radius: 8px;
             text-align: center;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        .stat-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+        }
+        .stat-item h3 {
+            color: #0ff;
+            font-size: 24px;
+            margin: 0;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+        .messages-container {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        .chat-item {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            border: 1px solid rgba(0, 255, 255, 0.1);
+        }
+        .chat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .chat-header h3 {
+            color: #0ff;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .chat-header h3 i {
+            font-size: 0.8em;
+        }
+        .message-count {
+            color: rgba(0, 255, 255, 0.7);
+            font-size: 14px;
+        }
+        .messages-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .message {
+            max-width: 80%;
+            padding: 10px;
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+        .message.sent {
+            align-self: flex-end;
+            background: linear-gradient(45deg, #00f2fe, #4facfe);
+            color: #fff;
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.3);
+        }
+        .message.received {
+            align-self: flex-start;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+        }
+        .message-time {
+            font-size: 12px;
+            opacity: 0.7;
+            margin-top: 4px;
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 255, 255, 0.3);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 255, 255, 0.5);
         }
     </style>
 </head>
@@ -66,21 +144,24 @@
         <div class="stats-card">
             <div class="user-header">
                 <div class="user-info">
-                    <h1>{{ user.first_name or 'Пользователь' }}</h1>
-                    <p>@{{ user.username or 'No username' }}</p>
+                    <h1><i class="fas fa-user-circle"></i> {{ user.first_name or 'Пользователь' }}</h1>
+                    <p><i class="fas fa-at"></i> {{ user.username or 'No username' }}</p>
                 </div>
             </div>
             
             <div class="stat-grid">
                 <div class="stat-item">
+                    <i class="fas fa-paper-plane fa-2x" style="color: #0ff; margin-bottom: 10px;"></i>
                     <h3>{{ stats.sent_messages }}</h3>
                     <p>Отправлено сообщений</p>
                 </div>
                 <div class="stat-item">
+                    <i class="fas fa-edit fa-2x" style="color: #0ff; margin-bottom: 10px;"></i>
                     <h3>{{ stats.edited_messages }}</h3>
                     <p>Изменено сообщений</p>
                 </div>
                 <div class="stat-item">
+                    <i class="fas fa-trash-alt fa-2x" style="color: #0ff; margin-bottom: 10px;"></i>
                     <h3>{{ stats.deleted_messages }}</h3>
                     <p>Удалено сообщений</p>
                 </div>
@@ -88,19 +169,21 @@
         </div>
 
         <div class="stats-card">
-            <h2>Диалоги пользователя 💬</h2>
+            <h2><i class="fas fa-comments"></i> Диалоги пользователя</h2>
             <div class="messages-container">
                 {% for chat in user_chats %}
                 <div class="chat-item">
                     <div class="chat-header">
-                        <h3>Чат с {{ chat.other_user_name }}</h3>
+                        <h3><i class="fas fa-user"></i> {{ chat.other_user_name }}</h3>
                         <span class="message-count">{{ chat.messages|length }} сообщений</span>
                     </div>
                     <div class="messages-list">
                         {% for msg in chat.messages %}
                         <div class="message {% if msg.from_id == user.telegram_id %}sent{% else %}received{% endif %}">
                             <div class="message-content">{{ msg.text }}</div>
-                            <div class="message-time">{{ msg.time.strftime('%H:%M %d.%m.%Y') }}</div>
+                            <div class="message-time">
+                                <i class="far fa-clock"></i> {{ msg.time.strftime('%H:%M %d.%m.%Y') }}
+                            </div>
                         </div>
                         {% endfor %}
                     </div>
@@ -108,53 +191,6 @@
                 {% endfor %}
             </div>
         </div>
-
-        <style>
-            .messages-container {
-                max-height: 600px;
-                overflow-y: auto;
-            }
-            .chat-item {
-                margin-bottom: 20px;
-                padding: 15px;
-                background: #f8f9fa;
-                border-radius: 8px;
-            }
-            .chat-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 10px;
-            }
-            .message-count {
-                color: #666;
-                font-size: 14px;
-            }
-            .messages-list {
-                display: flex;
-                flex-direction: column;
-                gap: 10px;
-            }
-            .message {
-                max-width: 80%;
-                padding: 10px;
-                border-radius: 12px;
-            }
-            .message.sent {
-                align-self: flex-end;
-                background: #0084ff;
-                color: white;
-            }
-            .message.received {
-                align-self: flex-start;
-                background: #e9ecef;
-            }
-            .message-time {
-                font-size: 12px;
-                opacity: 0.7;
-                margin-top: 4px;
-            }
-        </style>
     </div>
 </body>
 </html>
