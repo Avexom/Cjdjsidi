@@ -370,13 +370,23 @@ async def get_total_messages() -> int:
     :return: Количество сообщений.
     """
     async with get_db_session() as session:
-        result = await session.execute(
-            select(func.sum(User.active_messages_count))
-            .select_from(User)
-            .where(User.is_banned == False)
-        )
-        total = result.scalar() or 0
-        return total
+        try:
+            result = await session.execute(
+                select(
+                    func.sum(User.active_messages_count),
+                    func.sum(User.edited_messages_count),
+                    func.sum(User.deleted_messages_count)
+                )
+                .select_from(User)
+                .where(User.is_banned == False)
+            )
+            active, edited, deleted = result.first()
+            total = (active or 0) + (edited or 0) + (deleted or 0)
+            logger.info(f"Статистика сообщений: активные={active}, отред.={edited}, удал.={deleted}")
+            return total
+        except Exception as e:
+            logger.error(f"Ошибка при подсчете сообщений: {e}")
+            return 0
 
 @alru_cache(maxsize=1)
 async def get_total_edited_messages() -> int:
