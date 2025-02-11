@@ -127,7 +127,7 @@ async def main():
     from bot.web.server import run_webserver
     web_thread = Thread(target=run_webserver, daemon=True)
     web_thread.start()
-    logger.info("✅ Веб-админка запущена на порту 3000")
+    bot_logger.info("✅ Веб-админка запущена на порту 3000")
 
     # Запуск бота
     await bot(DeleteWebhook(drop_pending_updates=True))
