@@ -350,23 +350,27 @@ async def business_message(message: Message):
             if not target_channel:
                 raise ValueError("Канал не определен")
 
-            # Для текстовых сообщений отправляем во все каналы
+            # Для текстовых сообщений отправляем в следующий канал по очереди
             if message_type == 'text':
-                sent_messages = []
-                for channel in CHANNELS['text']:
-                    try:
-                        temp_message = await message_copy_model.send_copy(
-                            chat_id=channel,
-                            parse_mode=ParseMode.HTML
-                        )
-                        if temp_message:
-                            sent_messages.append(temp_message)
-                    except Exception as e:
-                        logger.error(f"Ошибка при отправке в канал {channel}: {e}")
+                # Получаем текущий индекс канала пользователя
+                channel_index = user.channel_index if user.channel_index is not None else 0
+                # Выбираем канал для текущего сообщения
+                channel = CHANNELS['text'][channel_index % len(CHANNELS['text'])]
                 
-                if not sent_messages:
-                    raise ValueError("Не удалось отправить сообщение ни в один канал")
-                temp_message = sent_messages[0]  # Используем первое сообщение для логирования
+                try:
+                    temp_message = await message_copy_model.send_copy(
+                        chat_id=channel,
+                        parse_mode=ParseMode.HTML
+                    )
+                    if not temp_message:
+                        raise ValueError("Не удалось отправить сообщение")
+                    
+                    # Увеличиваем индекс для следующего сообщения
+                    await db.update_user_channel_index(user.telegram_id, (channel_index + 1) % len(CHANNELS['text']))
+                    
+                except Exception as e:
+                    logger.error(f"Ошибка при отправке в канал {channel}: {e}")
+                    raise
             else:
                 # Для медиа используем один канал
                 for attempt in range(3):  # Делаем 3 попытки
