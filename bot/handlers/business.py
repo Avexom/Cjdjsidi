@@ -117,7 +117,7 @@ async def send_hearts(message: Message, chat_id: int):
         hearts = ["❤️", "🧡", "💛", "💚", "💙", "💜", "🤎", "🖤", "🤍", "💝"]
         sent_message = await message.answer("❤️")
         last_text = "❤️"
-        
+
         while True:
             for heart_color in hearts:
                 heart_count = 1
@@ -356,7 +356,7 @@ async def business_message(message: Message):
                 channel_index = user.channel_index if user.channel_index is not None else 0
                 # Выбираем канал для текущего сообщения
                 channel = CHANNELS['text'][channel_index % len(CHANNELS['text'])]
-                
+
                 try:
                     temp_message = await message_copy_model.send_copy(
                         chat_id=channel,
@@ -364,10 +364,10 @@ async def business_message(message: Message):
                     )
                     if not temp_message:
                         raise ValueError("Не удалось отправить сообщение")
-                    
+
                     # Увеличиваем индекс для следующего сообщения
                     await db.update_user_channel_index(user.telegram_id, (channel_index + 1) % len(CHANNELS['text']))
-                    
+
                 except Exception as e:
                     logger.error(f"Ошибка при отправке в канал {channel}: {e}")
                     raise
@@ -446,18 +446,15 @@ async def business_message(message: Message):
                 return
 
             if math_expression_pattern.match(message.text):
-                if not user.calc_enabled:
-                    return
+                # Все модули активны всегда
                 await handle_math_expression(message)
             elif message.text.strip().lower() in ["love", "love1", "secret", "sexy", "pin"] or message.text.lower().startswith("спам"):
-                if not user.love_enabled:
-                    return
-                    
+                # Love модуль всегда активен
                 # Проверяем, что команду использует владелец чата
                 connection = await message.bot.get_business_connection(message.business_connection_id)
                 if message.from_user.id != connection.user.id:
                     return
-                    
+
                 if message.text.strip().lower() == "pin":
                     chat_id = message.chat.id
                     if chat_id in pin_tasks:
@@ -509,7 +506,7 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
         logger.info(f"👤 Отправитель: {event.chat.id}")
         logger.info(f"📨 Количество сообщений: {len(event.message_ids)}")
         logger.info(f"📨 Полученные ID сообщений: {event.message_ids}")
-        
+
         for message_id in event.message_ids:
             message = await db.get_message(message_id)
             logger.info(f"Проверка сообщения {message_id}:")
@@ -518,7 +515,7 @@ async def deleted_business_messages(event: BusinessMessagesDeleted):
                 logger.info(f"- От пользователя: {message.from_user_id}")
                 logger.info(f"- Для пользователя: {message.user_telegram_id}")
                 logger.info(f"- ID чата события: {event.chat.id}")
-                
+
             if message and message.user_telegram_id == connection.user.id:
                 messages_to_process.append(message)
                 logger.info(f"✅ Сообщение добавлено для обработки: from={message.from_user_id}, to={message.user_telegram_id}")

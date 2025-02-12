@@ -4,7 +4,7 @@ start_connection_keyboard = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(text="👤 Профиль")],
         [KeyboardButton(text="💳 Купить подписку")],
-        [KeyboardButton(text="⚙️ Функции"), KeyboardButton(text="📱 Модули")],
+        [KeyboardButton(text="⚙️ Функции")],
         [KeyboardButton(text="💬 Поддержка"), KeyboardButton(text="📝 Отзывы")]
     ],
     resize_keyboard=True
